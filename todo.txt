@@ -1,0 +1,38 @@
+# TODO: withdrawn patent file into database
+# TODO: UPC to CPC concordance table
+# TODO: UPC class names and definitions
+# TODO:
+
+
+# TODO: FREF .. APS manual missed ICL as a possible datatype.
+Also OCL is not required.  It's not included all the time.
+
+#TODO: how to fix class numbers like this????: Mark as malformed and build scraper to fix later.
+# Sometimes length too long (period missing)
+
+XCL  12356821
+
+# Sometimes length too short (this case, class is first two, subclass is last 3)
+XCL 29234
+
+TODO: XCL/OCL class with array length 3 when split(" ")
+TODO: ICL with only 4 characters.
+
+# TODO: malformed class, main class is 29.  lstrip()????? to find the non-existant leading zero??
+OCL   29596
+XCL   29606
+XCL   29609
+XCL  310 42
+XCL  310259
+EDF  7
+ICL  H02K 1509
+FSC   29
+FSS  596;598;609;606
+FSC  310
+FSS  42;43;259
+
+#TODO: check this patent number 61675695 class parsing - SHOULD BE FIXED NOW
+
+#TODO: CLMS not found in 2001 file, but may be included in other files. need to parse.
+#TODO: DETD not found in 2001 files, but may be included in other year files. need to parse.
+#TODO: BSUM not found in 2001 file, but may be included in other year files.  Need to parse.

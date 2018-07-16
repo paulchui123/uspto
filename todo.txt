@@ -1,3 +1,55 @@
+
+# Branch the repo for the USPTO while I work on the database optimization.
+# Look at building a front-end for the python UI using tinkr or other front end.
+# Change MySQL query messages to SQL or even MySQL or PostgreSQL depending on database settings.
+
+# Are the zip files being discraded to free memory properly?  Here are some buffer cache reports starting two days after the program started.  The buff cache is large, maybe files are not being discarded efficiently.  So, are should tmp files be erased after file is finished being read?  Will that free up more free memory.  
+$ free
+              total        used        free      shared  buff/cache   available
+Mem:       11463156     4706292      611468      268748     6145396     6071548
+Swap:      11736060           0    11736060
+
+
+
+
+# Top Command showing load running 5 threads.  Load maxed out around 2.00.  For 4 cores, that's about 50% of the max load.
+https://www.booleanworld.com/guide-linux-top-command/
+
+top - 14:43:04 up 15 days, 15:23,  3 users,  load average: 1.60, 1.72, 1.95
+Tasks: 246 total,   1 running, 245 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  7.2 us,  2.3 sy,  0.0 ni, 71.6 id, 18.4 wa,  0.0 hi,  0.5 si,  0.0 st
+KiB Mem : 11463156 total,  2143780 free,  5966784 used,  3352592 buff/cache
+KiB Swap: 11736060 total, 11736060 free,        0 used.  4830708 avail Mem 
+
+# One day later, load average is down.  Is this because buff/cache is so large??
+top - 12:46:36 up 17 days, 13:26,  3 users,  load average: 1.47, 1.60, 1.58
+Tasks: 251 total,   1 running, 250 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  6.1 us,  2.1 sy,  0.0 ni, 73.1 id, 18.4 wa,  0.0 hi,  0.3 si,  0.0 st
+KiB Mem : 11463156 total,   579436 free,  4730196 used,  6153524 buff/cache
+KiB Swap: 11736060 total, 11736060 free,        0 used.  6047584 avail Mem 
+
+# Write a function that can create separate threads for the GPU
+https://stackoverflow.com/questions/5957554/python-gpu-programming
+https://www.youtube.com/watch?v=jKV1m8APttU
+https://www.youtube.com/watch?v=dPQnFXD7DxM
+
+# Will a db connection for each thread of the script reduce db connection bottleneck.. since CPU is not reached heavy load yet, then 
+
+
+# TODO: run 10 threads, see if load changes.
+
+# Address the Bottleneck caused by inserting data row by row:  
+# 1) Build CSV files in a data memory object such as list variable in python,  
+# 2) When the data object reaches a size (say 100mb or the contents of one file) write them to csv file and insert into database dependind on flags set 
+# when the program was instantiated.
+
+# TODO: make a config file with: number_of_threads, database config, and other required info.  Read the config file into the program at runtime.
+
+# address the number of threads issue bu
+
+# try to check if database error is "row already exists and don't log or stdout that error message." 
+
+
 # TODO: withdrawn patent file into database
 # TODO: UPC to CPC concordance table
 # TODO: UPC class names and definitions

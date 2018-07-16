@@ -3709,6 +3709,8 @@ def store_data_grant(processed_data_array, args_array):
                 database_connection.load(build_sql_insert_query(item, args_array), args_array, logger)
 
 # Funtion to store patent application data to csv and/or database
+# TODO: change function to append to csv files until threshhold reached
+# then dump CSV to database in batch, and erase CSV file if -csv flag not set.
 def store_data_application(processed_data_array, args_array):
 
     uspto_xml_format = args_array['uspto_xml_format']
@@ -4427,6 +4429,8 @@ def links_parser(link_type, url):
     return final_zip_file_link_array
 
 # Check the args_array log_lock_file and switch and write file as processed
+# TODO accept a passed arg to also write the log as processing, if needed by
+# to balance loads using log file in main_process.
 def write_process_log(args_array):
 
     document_type = args_array['document_type']
@@ -4534,6 +4538,15 @@ def main_process(link_pile, args_array, document_type):
     print 'Process {0} is starting to work! Start Time: {1}'.format(os.getpid(), time.strftime("%c"))
     # Set process start time
     process_start_time = time.time()
+
+    # Create the database connection here so that each process uses its own connection,
+    # hopefully to increase the bandwith to the database.
+    if "database" in args_array["command_args"]:
+        # Create a database connection for each thread processes
+        database_connection = SQLProcessor.SQLProcess(database_args)
+        database_connection.connect()
+        args_array['database_connection'] = database_connection
+
     # Set a file index variable in args array to track file
 
     # Go through each link in the array passed in.
@@ -4567,10 +4580,18 @@ def main_process(link_pile, args_array, document_type):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
-
+        # Print notification that one .zip package is finished
         print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c"))
 
-    print '[Process {0} is finished. Time consuming:{1} Time Finished: {1}]'.format(os.getpid(),time.time() - process_start_time, time.strftime("%c"))
+    # TODO: Look at the other link_piles from other processes and continue to process
+    # by moving links from another pile to this one.  May have to look at the log file,
+    # check for unprocessed (will have to add "processing" flag.) and add a check before starting
+    # processing to avoid collisions of link piles.  Make link_pile loop into a function and
+    # then call it again.  OR... make link pile a super global, and somehow be able to check against
+    # other processes and rebalance and pop off from link piles.
+
+    # Print message that process is finished
+    print '[Process {0} is finished. Time consuming:{1} Time Finished: {1}]'.format(time.time() - process_start_time, time.strftime("%c"))
 
 def start_thread_processes(links_array, args_array, document_type):
 
@@ -4580,11 +4601,11 @@ def start_thread_processes(links_array, args_array, document_type):
     number_of_threads = 5
     # Create array to hold piles of links
     thread_arrays = []
-    # Break links array into 5 separate arrays so that 5 threads will start
+    # Break links array into separate arrays so that number_of_threads threads will start
     number_of_links_per_pile = len(links_array) / number_of_threads
     remainder_for_last_pile = len(links_array) % number_of_threads
 
-    # Loop through five times and cut array.  Append section to thread_arrays
+    # Loop through number_of_threads and cut array.  Append section to thread_arrays
     for x in range(number_of_threads):
         # If last element then add remainder
         if x == number_of_threads - 1:
@@ -5040,6 +5061,7 @@ if __name__=="__main__":
     args_array = {
         "working_directory" : working_directory,
         "database_type" : database_args['database_type'],
+        "database_args" : database_args,
         "required_directory_array" : required_directory_array,
         "app_config_file" : app_config_file,
         "allowed_args_array" : allowed_args_array,
@@ -5118,9 +5140,10 @@ if __name__=="__main__":
                         # Load the database connection if required
                         if "database" in args_array["command_args"]:
                             # Create a database connection that can be passed with each thread processes
-                            database_connection = SQLProcessor.SQLProcess(database_args)
-                            database_connection.connect()
-                            args_array['database_connection'] = database_connection
+                            # Location of old databse connection
+                            #database_connection = SQLProcessor.SQLProcess(database_args)
+                            #database_connection.connect()
+                            #args_array['database_connection'] = database_connection
 
                             # Reset the database if arg provided on command line
                             if "dbreset" in args_array['command_args']:

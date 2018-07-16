@@ -47,8 +47,8 @@ class SQLProcess:
                 self._conn.rollback()
 
             # Print and log general fail comment
-            print "MySQL query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
-            logger.error("MySQL query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
+            print "Database (" + self.database_type + ") query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
+            logger.error("Database (" + self.database_type + ") query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
             # Print traceback
             traceback.print_exc()
             # Print exception information to file

@@ -4598,7 +4598,7 @@ def start_thread_processes(links_array, args_array, document_type):
     # Define array to hold processes to multithread
     processes=[]
     # Define how many threads should be started
-    number_of_threads = 5
+    number_of_threads = 10
     # Create array to hold piles of links
     thread_arrays = []
     # Break links array into separate arrays so that number_of_threads threads will start

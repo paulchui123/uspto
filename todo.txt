@@ -1,7 +1,6 @@
 
 # Branch the repo for the USPTO while I work on the database optimization.
 # Look at building a front-end for the python UI using tinkr or other front end.
-# Change MySQL query messages to SQL or even MySQL or PostgreSQL depending on database settings.
 
 # Are the zip files being discraded to free memory properly?  Here are some buffer cache reports starting two days after the program started.  The buff cache is large, maybe files are not being discarded efficiently.  So, are should tmp files be erased after file is finished being read?  Will that free up more free memory.  
 $ free
@@ -9,6 +8,12 @@ $ free
 Mem:       11463156     4706292      611468      268748     6145396     6071548
 Swap:      11736060           0    11736060
 
+
+# After making the database connections for each thread, swap space is being used(??) There is less memory being used, and for free memory.
+$ free
+              total        used        free      shared  buff/cache   available
+Mem:       11463156     5853332      821148      247228     4788676     4914848
+Swap:      11736060        3596    11732464
 
 
 
@@ -28,6 +33,18 @@ Tasks: 251 total,   1 running, 250 sleeping,   0 stopped,   0 zombie
 KiB Mem : 11463156 total,   579436 free,  4730196 used,  6153524 buff/cache
 KiB Swap: 11736060 total, 11736060 free,        0 used.  6047584 avail Mem 
 
+# After making database connections for each thread load average is larger, meaning better utilization of CPU power.
+$ top
+
+top - 16:25:58 up 18 days, 17:06,  3 users,  load average: 2.30, 2.50, 2.25
+Tasks: 255 total,   1 running, 253 sleeping,   1 stopped,   0 zombie
+%Cpu(s): 12.2 us,  8.3 sy,  0.0 ni, 59.6 id, 18.6 wa,  0.0 hi,  1.3 si,  0.0 st
+KiB Mem : 11463156 total,   802148 free,  5864856 used,  4796152 buff/cache
+KiB Swap: 11736060 total, 11732464 free,     3596 used.  4903560 avail Mem 
+
+# Finally, average transactions per second in PostgeSQL PGAdmin dashboard went up from about 100 tps to 200 tps. 
+
+
 # Write a function that can create separate threads for the GPU
 https://stackoverflow.com/questions/5957554/python-gpu-programming
 https://www.youtube.com/watch?v=jKV1m8APttU
@@ -44,8 +61,6 @@ https://www.youtube.com/watch?v=dPQnFXD7DxM
 # when the program was instantiated.
 
 # TODO: make a config file with: number_of_threads, database config, and other required info.  Read the config file into the program at runtime.
-
-# address the number of threads issue bu
 
 # try to check if database error is "row already exists and don't log or stdout that error message." 
 

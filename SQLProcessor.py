@@ -1,4 +1,4 @@
-# Used to operate the MySQL database.
+# Used to operate the database.
 # Remind to replace the arguments in the following funciton '__init__' with your own database parameters
 
 import MySQLdb
@@ -25,10 +25,8 @@ class SQLProcess:
         self._conn = None
         self._cursor = None
 
-
+    # Load the insert query into the database
     def load(self,sql, args_array, logger):
-
-        #print sql
 
         # Connect to database if not connected
         if self._conn == None:
@@ -47,17 +45,17 @@ class SQLProcess:
                 self._conn.rollback()
 
             # Print and log general fail comment
-            print "Database (" + self.database_type + ") query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
-            logger.error("Database (" + self.database_type + ") query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
+            print "Database INSERT query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
+            logger.error("Database INSERT query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
             # Print traceback
             traceback.print_exc()
             # Print exception information to file
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+            logger.error("Exception: " + str(exc_type) + "Code: " +  + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
 
-    # used to retrieve ID buy matching fields of values
+    # used to retrieve ID by matching fields of values
     def query(self,sql):
         #try:
         if self._conn == None:
@@ -73,6 +71,79 @@ class SQLProcess:
             return int(result[0])
         #finally:
             #self.close()
+
+    # used to remove records from database when a file previously
+    # started being processed and did not finish. (when insert duplicate ID error happens)
+    def remove_previous_file_records(self, call_type, file_name, logger):
+
+        # Print and log starting to check for previous attempt to process file
+        print "Checking database for previous attempt to process the " + call_type + " file: " + file_name + " ..."
+        logger.error("Checking database for previous attempt to process the " + call_type + " file:" + file_name + " ...")
+
+        # build array to hold all table names to have
+        # Records deleted for patent grants
+        if call_type == "grant":
+            table_name_array = [
+                "GRANT",
+                "INTCLASS_G",
+                "CPCCLASS_G",
+                "USCLASS_G",
+                "INVENTOR_G",
+                "AGENT_G",
+                "ASSIGNEE_G",
+                "APPLICANT_G",
+                "NONPATCIT_G",
+                "EXAMINER_G",
+                "GRACIT_G",
+                "FORPATCIT_G"
+            ]
+        # Records deleted for patent applications
+        elif call_type == "application":
+            table_name_array = [
+                "APPLICATION_PAIR",
+                "APPLICATION",
+                "INTCLASS_A",
+                "CPCCLASS_A",
+                "FOREIGNPRIORITY_A",
+                "AGENT_A",
+                "ASSIGNEE_A",
+                "APPLICANT_A"
+            ]
+
+        # Loop through each table_name defined by call_type
+        for table_name in table_name_array:
+
+            # Build the SQL query here
+            sql = "DELETE FROM uspto." + table_name + " WHERE FileName = '" + file_name + "'"
+
+            # Connect to database if not connected
+            if self._conn == None:
+                self.connect()
+
+            # Execute the query pass into funtion
+            try:
+                self._cursor.execute(sql)
+                #TODO: check the numer of records deleted from each table and log/print
+                # Print and log finished check for previous attempt to process file
+                print "Finished checking database for previous attempt to process the " + call_type + " file: " + file_name + " table: " + table_name
+                logger.error("Finished checking database for previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
+
+            except Exception as e:
+                # If there is an error and using databse postgresql
+                # Then rollback the commit??
+                if self.database_type == "postgresql":
+                    self._conn.rollback()
+
+                # Print and log general fail comment
+                print "Database delete failed... " + file_name + " from table: " + table_name + " Document ID Number "
+                logger.error("Database delete failed..." + file_name + " from table: " + table_name + " Document ID Number ")
+                # Print traceback
+                traceback.print_exc()
+                # Print exception information to file
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+
 
     # used to verify whether the applicationID is in the current table APPLICATION
     def verify(self,sql):
@@ -116,7 +187,7 @@ class SQLProcess:
                     port = self._port,
                     charset = self._charset
                 )
-                print "Connection to database established."
+                print "Connection to MySQL database established."
 
             if self._cursor == None:
                 self._cursor = self._conn.cursor()
@@ -126,7 +197,6 @@ class SQLProcess:
         if self.database_type == "postgresql":
 
             if self._conn == None:
-
                 # get a connection, if a connect cannot be made an exception will be raised here
                 self._conn = psycopg2.connect("host=" + self._host +  " dbname=" + self._dbname + " user=" + self._username + " password=" + self._password + " port=" + str(self._port))
                 self._conn.autocommit = True
@@ -134,7 +204,7 @@ class SQLProcess:
             if self._cursor == None:
                 # conn.cursor will return a cursor object, you can use this cursor to perform queries
                 self._cursor = self._conn.cursor()
-                print "Connection to database established."
+                print "Connection to PostgreSQL database established."
 
     def close(self):
         if self._cursor != None:

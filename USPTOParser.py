@@ -1,6 +1,7 @@
 # USPTO Bulk Data Parser
+# Description: Check README.md for instructions on seting up the paser with configuration settings.
 # Author: Joseph Lee
-# Email: joseph.lee.esl@gmail.com
+# Email: joseph@ripplesoftware.ca
 # Website: www.ripplesoftware.ca
 # Github: www.github.com/rippledj/uspto
 
@@ -131,8 +132,12 @@ def return_formatted_date(time_str):
     if time_str is None:
         return None
         logger.warning("None Type object was found as date.")
-    else:
 
+    # Check if '0000-01-01' has been passed in
+    elif time_str == '0000-01-01':
+        return None
+        logger.warning("'0000-01-01' was found as date.")
+    else:
         if len(time_str) ==  8:
             if  time_str[4:6] == "00" : month = "01"
             else: month = time_str[4:6]
@@ -427,7 +432,7 @@ def extract_XML4_grant(raw_data, args_array):
         # Find all references cited in the grant
         for rf in r.findall('us-references-cited'):
             for rfc in rf.findall('us-citation'):
-                #If the patent citation child is found must be a patent citation
+                # If the patent citation child is found must be a patent citation
                 if(rfc.find('patcit') != None):
                     position = 1
                     try: citation_position = strip_leading_zeros(rfc.find('patcit').attrib['num'])
@@ -450,7 +455,7 @@ def extract_XML4_grant(raw_data, args_array):
                                 citation_category = 0
                         except: citation_category = None
 
-                    #us patent citations
+                    # US patent citations
                     if(citation_country.strip().upper() == 'US'):
 
                         # Append SQL data into dictionary to be written later
@@ -493,7 +498,7 @@ def extract_XML4_grant(raw_data, args_array):
                     for x in rfc.findall('nplcit'):
                         try: citation_position = strip_leading_zeros(rfc.find('nplcit').attrib['num'])
                         except: citation_position = position
-                        # sometimes, there will be '<i> or <sup>, etc.' in the reference string; we need to remove it
+                        # Sometimes, there will be '<i> or <sup>, etc.' in the reference string; we need to remove it
                         try: non_patent_citation_text = x.findtext('othercit')
                         except: non_patent_citation_text = None
                         # TODO: check that strip tags is working
@@ -4565,6 +4570,10 @@ def main_process(link_pile, args_array, document_type):
         # Start the main processing of each link in link_pile array
         print "Processing .zip file: " + args_array['url_link'] + " Started at: " + time.strftime("%c")
 
+        # Check if the args_array['file_name'] has previously been partially processed.
+        # and if it has, then remove all records from the previous partial processing.
+        database_connection.remove_previous_file_records(args_array['document_type'], args_array['file_name'], logger)
+
         # Call the function to collect patent data from each link
         # and store it to specified place
         try:
@@ -4602,8 +4611,15 @@ def start_thread_processes(links_array, args_array, document_type):
     # Create array to hold piles of links
     thread_arrays = []
     # Break links array into separate arrays so that number_of_threads threads will start
-    number_of_links_per_pile = len(links_array) / number_of_threads
-    remainder_for_last_pile = len(links_array) % number_of_threads
+    # If there are less links than desired number of threads make as many threads as len(links_array)
+    if len(links_array) < number_of_threads:
+        number_of_links_per_pile = 1
+        number_of_threads = len(links_array)
+        remainder_for_last_pile = 0
+    # If there are more links per pile
+    else:
+        number_of_links_per_pile = len(links_array) / number_of_threads
+        remainder_for_last_pile = len(links_array) % number_of_threads
 
     # Loop through number_of_threads and cut array.  Append section to thread_arrays
     for x in range(number_of_threads):

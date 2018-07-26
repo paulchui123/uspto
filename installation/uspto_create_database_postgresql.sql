@@ -344,7 +344,7 @@ CREATE  TABLE IF NOT EXISTS uspto.INTCLASS_G (
   PRIMARY KEY (GrantID, Position, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.INTCLASS_G
+-- Table uspto.CPCCLASS_G
 -- -----------------------------------------------------
 
 CREATE  TABLE IF NOT EXISTS uspto.CPCCLASS_G (
@@ -519,4 +519,3 @@ CREATE USER uspto LOGIN PASSWORD 'Ld58KimTi06v2PnlXTFuLG4';
 -- Grant privileges to all corresponding databases
 GRANT USAGE ON SCHEMA uspto TO uspto;
 GRANT ALL ON ALL TABLES IN SCHEMA uspto TO uspto;
-

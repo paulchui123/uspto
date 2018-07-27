@@ -4,8 +4,10 @@
 import MySQLdb
 import psycopg2
 import traceback
+import time
 import sys
 import os
+from pprint import pprint
 
 class SQLProcess:
 
@@ -76,57 +78,62 @@ class SQLProcess:
     # started being processed and did not finish. (when insert duplicate ID error happens)
     def remove_previous_file_records(self, call_type, file_name, logger):
 
+        # Set process time
+        start_time = time.time()
+
         # Print and log starting to check for previous attempt to process file
         print "Checking database for previous attempt to process the " + call_type + " file: " + file_name + " ..."
         logger.error("Checking database for previous attempt to process the " + call_type + " file:" + file_name + " ...")
 
-        # build array to hold all table names to have
-        # Records deleted for patent grants
-        if call_type == "grant":
-            table_name_array = [
-                "GRANT",
-                "INTCLASS_G",
-                "CPCCLASS_G",
-                "USCLASS_G",
-                "INVENTOR_G",
-                "AGENT_G",
-                "ASSIGNEE_G",
-                "APPLICANT_G",
-                "NONPATCIT_G",
-                "EXAMINER_G",
-                "GRACIT_G",
-                "FORPATCIT_G"
-            ]
-        # Records deleted for patent applications
-        elif call_type == "application":
-            table_name_array = [
-                "APPLICATION_PAIR",
-                "APPLICATION",
-                "INTCLASS_A",
-                "CPCCLASS_A",
-                "FOREIGNPRIORITY_A",
-                "AGENT_A",
-                "ASSIGNEE_A",
-                "APPLICANT_A"
-            ]
+        # Connect to database if not connected
+        if self._conn == None:
+            self.connect()
 
-        # Loop through each table_name defined by call_type
-        for table_name in table_name_array:
+        # Set the table_name
+        table_name = "STARTED_FILES"
 
-            # Build the SQL query here
-            sql = "DELETE FROM uspto." + table_name + " WHERE FileName = '" + file_name + "'"
+        # Build query to check the STARTED_FILES table to see if this file has been started already.
+        check_file_started_sql = "SELECT COUNT(*) as count FROM uspto." + table_name + " WHERE FileName = '" + file_name + "' LIMIT 1"
 
-            # Connect to database if not connected
-            if self._conn == None:
-                self.connect()
+        # Execute the query to check if file has been stared before
+        try:
+            self._cursor.execute(check_file_started_sql)
+            # Check the count is true or false.
+            check_file_started = self._cursor.fetchone()
+            #pprint(check_file_started[0]['count'])
+            #print check_file_started
 
-            # Execute the query pass into funtion
+        except Exception as e:
+            # If there is an error and using databse postgresql
+            # Then rollback the commit??
+            if self.database_type == "postgresql":
+                self._conn.rollback()
+
+            # Print and log general fail comment
+            print "Database check if " + call_type + " file started failed... " + file_name + " from table: uspto.STARTED_FILES"
+            logger.error("Database check if " + call_type + " file started failed... " + file_name + " from table: uspto.STARTED_FILES")
+            # Print traceback
+            traceback.print_exc()
+            # Print exception information to file
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+
+        # If the file has not been started processing yet
+        if check_file_started[0] == 0:
+            # Insert the file_name into the table keeping track of STARTED_FILES
+            if self.database_type == "postgresql":
+                insert_file_started_sql = "INSERT INTO uspto." + table_name + "  (FileName) VALUES($$" + file_name + "$$)"
+            elif self.database_type == "mysql":
+                insert_file_started_sql = "INSERT INTO uspto." + table_name + " (FileName) VALUES('" + file_name + "')"
+
+            # Print and log not found previous attempt to process file
+            print "No previous attempt found to process the " + call_type + " file: " + file_name + "in table: uspto.STARTED_FILES"
+            logger.error("No previous attempt found to process the " + call_type + " file:" + file_name + "in table: uspto.STARTED_FILES")
+
+            # Insert the record into the database that the file has been started.
             try:
-                self._cursor.execute(sql)
-                #TODO: check the numer of records deleted from each table and log/print
-                # Print and log finished check for previous attempt to process file
-                print "Finished checking database for previous attempt to process the " + call_type + " file: " + file_name + " table: " + table_name
-                logger.error("Finished checking database for previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
+                self._cursor.execute(insert_file_started_sql)
 
             except Exception as e:
                 # If there is an error and using databse postgresql
@@ -135,14 +142,82 @@ class SQLProcess:
                     self._conn.rollback()
 
                 # Print and log general fail comment
-                print "Database delete failed... " + file_name + " from table: " + table_name + " Document ID Number "
-                logger.error("Database delete failed..." + file_name + " from table: " + table_name + " Document ID Number ")
+                print "Database insert " + call_type + " file started failed... " + file_name + " into table: uspto.STARTED_FILES"
+                logger.error("Database insert " + call_type + " file started failed... " + file_name + " into table: uspto.STARTED_FILES")
                 # Print traceback
                 traceback.print_exc()
                 # Print exception information to file
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+
+
+        # If the file was found in the STARTED_FILES table, delete all the records of that file in all tables.
+        elif check_file_started[0] != 0:
+
+            # Print and log found previous attempt to process file
+            print "Found previous attempt to process the " + call_type + " file: " + file_name + "in table: uspto.STARTED_FILES"
+            logger.error("Found previous attempt to process the " + call_type + " file:" + file_name + "in table: uspto.STARTED_FILES")
+
+            # Build array to hold all table names to have
+            # records deleted for patent grants
+            if call_type == "grant":
+                table_name_array = [
+                    "GRANT",
+                    "INTCLASS_G",
+                    "CPCCLASS_G",
+                    "USCLASS_G",
+                    "INVENTOR_G",
+                    "AGENT_G",
+                    "ASSIGNEE_G",
+                    "APPLICANT_G",
+                    "NONPATCIT_G",
+                    "EXAMINER_G",
+                    "GRACIT_G",
+                    "FORPATCIT_G"
+                ]
+            # Records deleted for patent applications
+            elif call_type == "application":
+                table_name_array = [
+                    "APPLICATION_PAIR",
+                    "APPLICATION",
+                    "INTCLASS_A",
+                    "CPCCLASS_A",
+                    "FOREIGNPRIORITY_A",
+                    "AGENT_A",
+                    "ASSIGNEE_A",
+                    "APPLICANT_A"
+                ]
+
+            # Loop through each table_name defined by call_type
+            for table_name in table_name_array:
+
+                # Build the SQL query here
+                sql = "DELETE FROM uspto." + table_name + " WHERE FileName = '" + file_name + "'"
+
+                # Execute the query pass into funtion
+                try:
+                    self._cursor.execute(sql)
+                    #TODO: check the numer of records deleted from each table and log/print
+                    # Print and log finished check for previous attempt to process file
+                    print "Finished database delete of previous attempt to process the " + call_type + " file: " + file_name + " table: " + table_name
+                    logger.error("Finished database delete of previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
+
+                except Exception as e:
+                    # If there is an error and using databse postgresql
+                    # Then rollback the commit??
+                    if self.database_type == "postgresql":
+                        self._conn.rollback()
+
+                    # Print and log general fail comment
+                    print "Database delete failed... " + file_name + " from table: " + table_name + " Document ID Number "
+                    logger.error("Database delete failed..." + file_name + " from table: " + table_name + " Document ID Number ")
+                    # Print traceback
+                    traceback.print_exc()
+                    # Print exception information to file
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                    logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
 
     # used to verify whether the applicationID is in the current table APPLICATION

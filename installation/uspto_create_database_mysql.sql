@@ -28,7 +28,7 @@ USE `uspto` ;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`APPLICATION_PAIR` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`APPLICATION_PAIR` (
+CREATE TABLE IF NOT EXISTS `uspto`.`APPLICATION_PAIR` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `FileDate` DATE DEFAULT NULL,
   `AppType` VARCHAR(45) DEFAULT NULL,
@@ -58,7 +58,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`APPLICATION` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`APPLICATION` (
+CREATE TABLE IF NOT EXISTS `uspto`.`APPLICATION` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `PublicationID` VARCHAR(20) DEFAULT NULL,
   `FileDate` DATE DEFAULT NULL,
@@ -81,7 +81,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`GRANT` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`GRANT` (
+CREATE TABLE IF NOT EXISTS `uspto`.`GRANT` (
   `GrantID` VARCHAR(20) NOT NULL,
   `IssueDate` DATE DEFAULT NULL,
   `Kind` VARCHAR(2) DEFAULT NULL,
@@ -106,7 +106,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`INTCLASS_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`INTCLASS_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`INTCLASS_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Section` VARCHAR(10) DEFAULT NULL,
@@ -124,7 +124,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`CPCCLASS_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`CPCCLASS_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`CPCCLASS_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Section` VARCHAR(10) DEFAULT NULL,
@@ -143,7 +143,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`USCLASS_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`USCLASS_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`USCLASS_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Class` VARCHAR(3) DEFAULT NULL,
@@ -159,7 +159,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`INVENTOR_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`INVENTOR_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`INVENTOR_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `FirstName` VARCHAR(100) DEFAULT NULL,
@@ -179,7 +179,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`ATTORNEY` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`ATTORNEY` (
+CREATE TABLE IF NOT EXISTS `uspto`.`ATTORNEY` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `RegNo` VARCHAR(20) DEFAULT NULL,
@@ -196,7 +196,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`FOREIGNPRIORITY_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`FOREIGNPRIORITY_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`FOREIGNPRIORITY_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `DocumentID` VARCHAR(45) NOT NULL,
   `Position` INT NOT NULL,
@@ -213,7 +213,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`TRANSACTION` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`TRANSACTION` (
+CREATE TABLE IF NOT EXISTS `uspto`.`TRANSACTION` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Description` TINYTEXT DEFAULT NULL,
@@ -228,7 +228,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`CORRESPONDENCE` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`CORRESPONDENCE` (
+CREATE TABLE IF NOT EXISTS `uspto`.`CORRESPONDENCE` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Name` VARCHAR(100) DEFAULT NULL,
   `Address` TINYTEXT DEFAULT NULL,
@@ -243,7 +243,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`CONTINUITY_PARENT` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`CONTINUITY_PARENT` (
+CREATE TABLE IF NOT EXISTS `uspto`.`CONTINUITY_PARENT` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Description` VARCHAR(100) DEFAULT NULL,
@@ -262,7 +262,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`CONTINUITY_CHILD` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`CONTINUITY_CHILD` (
+CREATE TABLE IF NOT EXISTS `uspto`.`CONTINUITY_CHILD` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Description` TINYTEXT DEFAULT NULL,
@@ -277,7 +277,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`ADJUSTMENT` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`ADJUSTMENT` (
+CREATE TABLE IF NOT EXISTS `uspto`.`ADJUSTMENT` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `PriorAfter` TINYINT(1) DEFAULT NULL,
   `FileDate` DATE DEFAULT NULL,
@@ -305,7 +305,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`ADJUSTMENTDESC` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`ADJUSTMENTDESC` (
+CREATE TABLE IF NOT EXISTS `uspto`.`ADJUSTMENTDESC` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `PriorAfter` TINYINT(1) DEFAULT NULL,
@@ -325,7 +325,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`EXTENSION` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`EXTENSION` (
+CREATE TABLE IF NOT EXISTS `uspto`.`EXTENSION` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `FileDate` DATE DEFAULT NULL,
   `USPTOAdjustDays` INT DEFAULT NULL,
@@ -342,7 +342,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`EXTENSIONDESC` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`EXTENSIONDESC` (
+CREATE TABLE IF NOT EXISTS `uspto`.`EXTENSIONDESC` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Date` DATE DEFAULT NULL,
@@ -359,7 +359,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`AGENT_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`AGENT_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`AGENT_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `OrgName` VARCHAR(200) DEFAULT NULL,
@@ -376,7 +376,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`ASSIGNEE_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`ASSIGNEE_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`ASSIGNEE_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `OrgName` VARCHAR(200) DEFAULT NULL,
@@ -393,7 +393,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`APPLICANT_A` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`APPLICANT_A` (
+CREATE TABLE IF NOT EXISTS `uspto`.`APPLICANT_A` (
   `ApplicationID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `OrgName` VARCHAR(256) DEFAULT NULL,
@@ -411,7 +411,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`USCLASSIFICATION` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`USCLASSIFICATION` (
+CREATE TABLE IF NOT EXISTS `uspto`.`USCLASSIFICATION` (
   `ClassID` INT(9) NOT NULL AUTO_INCREMENT ,
   `Class` VARCHAR(3) NULL,
   `Subclass` VARCHAR(6) DEFAULT NULL,
@@ -429,7 +429,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`INTCLASS_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`INTCLASS_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`INTCLASS_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Section` VARCHAR(10) DEFAULT NULL,
@@ -447,7 +447,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`CPCCLASS_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`CPCCLASS_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`CPCCLASS_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Section` VARCHAR(10) DEFAULT NULL,
@@ -465,7 +465,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`NONPATCIT_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`NONPATCIT_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`NONPATCIT_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Citation` TEXT DEFAULT NULL,
@@ -480,7 +480,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`APPLICANT_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`APPLICANT_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`APPLICANT_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `OrgName` VARCHAR(256) DEFAULT NULL,
@@ -498,7 +498,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`INVENTOR_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`INVENTOR_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`INVENTOR_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `FirstName` VARCHAR(100) DEFAULT NULL,
@@ -518,7 +518,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`USCLASS_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`USCLASS_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`USCLASS_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `Class` VARCHAR(3) DEFAULT NULL,
@@ -534,7 +534,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`AGENT_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`AGENT_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`AGENT_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `OrgName` VARCHAR(200) DEFAULT NULL,
@@ -551,7 +551,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`ASSIGNEE_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`ASSIGNEE_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`ASSIGNEE_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `OrgName` VARCHAR(200) DEFAULT NULL,
@@ -569,7 +569,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`EXAMINER_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`EXAMINER_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`EXAMINER_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `LastName` VARCHAR(45) DEFAULT NULL,
@@ -585,7 +585,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`GRACIT_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`GRACIT_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`GRACIT_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `CitedID` VARCHAR(20) DEFAULT NULL,
@@ -603,7 +603,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS `uspto`.`FORPATCIT_G` ;
 
-CREATE  TABLE IF NOT EXISTS `uspto`.`FORPATCIT_G` (
+CREATE TABLE IF NOT EXISTS `uspto`.`FORPATCIT_G` (
   `GrantID` VARCHAR(20) NOT NULL,
   `Position` INT NOT NULL,
   `CitedID` VARCHAR(20) DEFAULT NULL,
@@ -616,6 +616,15 @@ CREATE  TABLE IF NOT EXISTS `uspto`.`FORPATCIT_G` (
   PRIMARY KEY (`GrantID`, `Position`, `FileName`))
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `uspto`.`STARTED_FILES`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `uspto`.`STARTED_FILES` ;
+
+CREATE TABLE IF NOT EXISTS `uspto`.`STARTED_FILES` (
+  `FileName` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`FileName`))
+ENGINE = InnoDB;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

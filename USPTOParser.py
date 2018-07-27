@@ -4959,7 +4959,8 @@ def build_argument_output():
     argument_output += "After the script has been run the first time, use the -update flag. Data destination arguments will be re-used.\n"
     # Add a list of arguments that are accepted
     argument_output += "\nArgument flags:\n\n"
-    argument_output += "-h, -help : print help menu\n"
+    argument_output += "-h, -help : print help menu.\n"
+    argument_output += "-t : set the number of threads.\n"
     argument_output += "-csv : write the patent data files to csv.  Setting will be saved and used on update or restart.\n"
     argument_output += "-database : write the patent data to database.  Setting will be saved on update or restart.\n"
     argument_output += "-update : check for new patent bulk data files and process them\n"
@@ -5036,7 +5037,7 @@ if __name__=="__main__":
     # Declare variables
     start_time=time.time()
     working_directory = os.getcwd()
-    allowed_args_array = ["-csv", "-database", "-update", "-h", "-help", "-dbreset"]
+    allowed_args_array = ["-csv", "-database", "-update", "-h", "-t", "-help", "-dbreset"]
     all_files_processed = False
 
     # Declare filepaths

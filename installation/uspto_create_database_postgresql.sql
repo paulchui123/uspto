@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS uspto;
 -- Table uspto.APPLICATION_PAIR
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.APPLICATION_PAIR (
+CREATE TABLE IF NOT EXISTS uspto.APPLICATION_PAIR (
   ApplicationID VARCHAR(20) NOT NULL,
   FileDate DATE DEFAULT NULL,
   AppType VARCHAR(45) DEFAULT NULL,
@@ -36,7 +36,7 @@ CREATE  TABLE IF NOT EXISTS uspto.APPLICATION_PAIR (
 -- Table uspto.APPLICATION
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.APPLICATION (
+CREATE TABLE IF NOT EXISTS uspto.APPLICATION (
   ApplicationID VARCHAR(20) NOT NULL,
   PublicationID VARCHAR(20) DEFAULT NULL,
   FileDate DATE DEFAULT NULL,
@@ -56,7 +56,7 @@ CREATE  TABLE IF NOT EXISTS uspto.APPLICATION (
 -- Table uspto.GRANT
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.GRANT (
+CREATE TABLE IF NOT EXISTS uspto.GRANT (
   GrantID VARCHAR(20) NOT NULL,
   IssueDate DATE DEFAULT NULL,
   Kind VARCHAR(2) DEFAULT NULL,
@@ -78,7 +78,7 @@ CREATE  TABLE IF NOT EXISTS uspto.GRANT (
 -- Table uspto.INTCLASS_A
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.INTCLASS_A (
+CREATE TABLE IF NOT EXISTS uspto.INTCLASS_A (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Section VARCHAR(10) DEFAULT NULL,
@@ -94,7 +94,7 @@ CREATE  TABLE IF NOT EXISTS uspto.INTCLASS_A (
   -- Table uspto.CPCCLASS_A
   -- -----------------------------------------------------
 
-  CREATE  TABLE IF NOT EXISTS uspto.CPCCLASS_A (
+  CREATE TABLE IF NOT EXISTS uspto.CPCCLASS_A (
     ApplicationID VARCHAR(20) NOT NULL,
     Position INT NOT NULL,
     Section VARCHAR(10) DEFAULT NULL,
@@ -110,7 +110,7 @@ CREATE  TABLE IF NOT EXISTS uspto.INTCLASS_A (
 -- Table uspto.USCLASS_A
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.USCLASS_A (
+CREATE TABLE IF NOT EXISTS uspto.USCLASS_A (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Class VARCHAR(3) DEFAULT NULL,
@@ -123,7 +123,7 @@ CREATE  TABLE IF NOT EXISTS uspto.USCLASS_A (
 -- Table uspto.INVENTOR_A
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.INVENTOR_A (
+CREATE TABLE IF NOT EXISTS uspto.INVENTOR_A (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   FirstName VARCHAR(100) DEFAULT NULL,
@@ -140,7 +140,7 @@ CREATE  TABLE IF NOT EXISTS uspto.INVENTOR_A (
 -- Table uspto.ATTORNEY
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.ATTORNEY (
+CREATE TABLE IF NOT EXISTS uspto.ATTORNEY (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   RegNo VARCHAR(20) DEFAULT NULL,
@@ -154,7 +154,7 @@ CREATE  TABLE IF NOT EXISTS uspto.ATTORNEY (
 -- Table uspto.FOREIGNPRIORITY
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.FOREIGNPRIORITY_A (
+CREATE TABLE IF NOT EXISTS uspto.FOREIGNPRIORITY_A (
   ApplicationID VARCHAR(20) NOT NULL,
   DocumentID INT NOT NULL,
   Position INT NOT NULL,
@@ -168,7 +168,7 @@ CREATE  TABLE IF NOT EXISTS uspto.FOREIGNPRIORITY_A (
 -- Table uspto.TRANSACTION
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.TRANSACTION (
+CREATE TABLE IF NOT EXISTS uspto.TRANSACTION (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Description TEXT DEFAULT NULL,
@@ -180,7 +180,7 @@ CREATE  TABLE IF NOT EXISTS uspto.TRANSACTION (
 -- Table uspto.CORRESPONDENCE
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.CORRESPONDENCE (
+CREATE TABLE IF NOT EXISTS uspto.CORRESPONDENCE (
   ApplicationID VARCHAR(20) NOT NULL,
   Name VARCHAR(100) DEFAULT NULL,
   Address TEXT DEFAULT NULL,
@@ -192,7 +192,7 @@ CREATE  TABLE IF NOT EXISTS uspto.CORRESPONDENCE (
 -- Table uspto.CONTINUITY_PARENT
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.CONTINUITY_PARENT (
+CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_PARENT (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Description VARCHAR(100) DEFAULT NULL,
@@ -207,7 +207,7 @@ CREATE  TABLE IF NOT EXISTS uspto.CONTINUITY_PARENT (
 -- Table uspto.CONTINUITY_CHILD
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.CONTINUITY_CHILD (
+CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_CHILD (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Description TEXT DEFAULT NULL,
@@ -218,7 +218,7 @@ CREATE  TABLE IF NOT EXISTS uspto.CONTINUITY_CHILD (
 -- Table uspto.ADJUSTMENT
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.ADJUSTMENT (
+CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENT (
   ApplicationID VARCHAR(20) NOT NULL,
   PriorAfter BOOLEAN DEFAULT NULL,
   FileDate DATE DEFAULT NULL,
@@ -242,7 +242,7 @@ CREATE  TABLE IF NOT EXISTS uspto.ADJUSTMENT (
 -- Table uspto.ADJUSTMENTDESC
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.ADJUSTMENTDESC (
+CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENTDESC (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   PriorAfter BOOLEAN DEFAULT NULL,
@@ -259,7 +259,7 @@ CREATE  TABLE IF NOT EXISTS uspto.ADJUSTMENTDESC (
 -- Table uspto.EXTENSION
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.EXTENSION (
+CREATE TABLE IF NOT EXISTS uspto.EXTENSION (
   ApplicationID VARCHAR(20) NOT NULL,
   FileDate DATE DEFAULT NULL,
   USPTOAdjustDays INT DEFAULT NULL,
@@ -272,7 +272,7 @@ CREATE  TABLE IF NOT EXISTS uspto.EXTENSION (
 -- Table uspto.EXTENSIONDESC
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.EXTENSIONDESC (
+CREATE TABLE IF NOT EXISTS uspto.EXTENSIONDESC (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Date DATE DEFAULT NULL,
@@ -286,7 +286,7 @@ CREATE  TABLE IF NOT EXISTS uspto.EXTENSIONDESC (
 -- Table uspto.AGENT_A
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.AGENT_A (
+CREATE TABLE IF NOT EXISTS uspto.AGENT_A (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   OrgName VARCHAR(200) DEFAULT NULL,
@@ -300,7 +300,7 @@ CREATE  TABLE IF NOT EXISTS uspto.AGENT_A (
 -- Table uspto.ASSIGNEE_A
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.ASSIGNEE_A (
+CREATE TABLE IF NOT EXISTS uspto.ASSIGNEE_A (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   OrgName VARCHAR(200) DEFAULT NULL,
@@ -316,7 +316,7 @@ CREATE  TABLE IF NOT EXISTS uspto.ASSIGNEE_A (
 -- Table uspto.USCLASSIFICATION
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.USCLASSIFICATION (
+CREATE TABLE IF NOT EXISTS uspto.USCLASSIFICATION (
   ClassID INT NOT NULL,
   Class VARCHAR(3) NULL,
   Subclass VARCHAR(6) DEFAULT NULL,
@@ -331,7 +331,7 @@ CREATE  TABLE IF NOT EXISTS uspto.USCLASSIFICATION (
 -- Table uspto.INTCLASS_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.INTCLASS_G (
+CREATE TABLE IF NOT EXISTS uspto.INTCLASS_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Section VARCHAR(10) DEFAULT NULL,
@@ -347,7 +347,7 @@ CREATE  TABLE IF NOT EXISTS uspto.INTCLASS_G (
 -- Table uspto.CPCCLASS_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.CPCCLASS_G (
+CREATE TABLE IF NOT EXISTS uspto.CPCCLASS_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Section VARCHAR(10) DEFAULT NULL,
@@ -363,7 +363,7 @@ CREATE  TABLE IF NOT EXISTS uspto.CPCCLASS_G (
 -- Table uspto.NONPATCIT_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.NONPATCIT_G (
+CREATE TABLE IF NOT EXISTS uspto.NONPATCIT_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Citation TEXT DEFAULT NULL,
@@ -375,7 +375,7 @@ CREATE  TABLE IF NOT EXISTS uspto.NONPATCIT_G (
 -- Table uspto.APPLICANT_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.APPLICANT_G (
+CREATE TABLE IF NOT EXISTS uspto.APPLICANT_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   OrgName VARCHAR(256) DEFAULT NULL,
@@ -391,7 +391,7 @@ CREATE  TABLE IF NOT EXISTS uspto.APPLICANT_G (
 -- Table uspto.APPLICANT_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.APPLICANT_G (
+CREATE TABLE IF NOT EXISTS uspto.APPLICANT_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   OrgName VARCHAR(256) DEFAULT NULL,
@@ -407,7 +407,7 @@ CREATE  TABLE IF NOT EXISTS uspto.APPLICANT_G (
 -- Table uspto.INVENTOR_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.INVENTOR_G (
+CREATE TABLE IF NOT EXISTS uspto.INVENTOR_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   FirstName VARCHAR(100) DEFAULT NULL,
@@ -424,7 +424,7 @@ CREATE  TABLE IF NOT EXISTS uspto.INVENTOR_G (
 -- Table uspto.USCLASS_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.USCLASS_G (
+CREATE TABLE IF NOT EXISTS uspto.USCLASS_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Class VARCHAR(3) DEFAULT NULL,
@@ -437,7 +437,7 @@ CREATE  TABLE IF NOT EXISTS uspto.USCLASS_G (
 -- Table uspto.AGENT_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.AGENT_G (
+CREATE TABLE IF NOT EXISTS uspto.AGENT_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   OrgName VARCHAR(200) DEFAULT NULL,
@@ -451,7 +451,7 @@ CREATE  TABLE IF NOT EXISTS uspto.AGENT_G (
 -- Table uspto.ASSIGNEE_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.ASSIGNEE_G (
+CREATE TABLE IF NOT EXISTS uspto.ASSIGNEE_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   OrgName VARCHAR(200) DEFAULT NULL,
@@ -466,7 +466,7 @@ CREATE  TABLE IF NOT EXISTS uspto.ASSIGNEE_G (
 -- Table uspto.EXAMINER_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.EXAMINER_G (
+CREATE TABLE IF NOT EXISTS uspto.EXAMINER_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   LastName VARCHAR(45) DEFAULT NULL,
@@ -479,7 +479,7 @@ CREATE  TABLE IF NOT EXISTS uspto.EXAMINER_G (
 -- Table uspto.GRACIT_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.GRACIT_G (
+CREATE TABLE IF NOT EXISTS uspto.GRACIT_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   CitedID VARCHAR(20) DEFAULT NULL,
@@ -495,7 +495,7 @@ CREATE  TABLE IF NOT EXISTS uspto.GRACIT_G (
 -- Table uspto.FORPATCIT_G
 -- -----------------------------------------------------
 
-CREATE  TABLE IF NOT EXISTS uspto.FORPATCIT_G (
+CREATE TABLE IF NOT EXISTS uspto.FORPATCIT_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   CitedID VARCHAR(20) DEFAULT NULL,
@@ -507,6 +507,13 @@ CREATE  TABLE IF NOT EXISTS uspto.FORPATCIT_G (
   FileName VARCHAR(45),
   PRIMARY KEY (GrantID, Position, FileName));
 
+-- -----------------------------------------------------
+-- Table `uspto`.`STARTED_FILES`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS uspto.STARTED_FILES (
+  FileName VARCHAR(45),
+  PRIMARY KEY (FileName));
 
 -- -----------------------------------------------------
 -- Create PostgreSQL Users

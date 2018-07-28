@@ -83,7 +83,7 @@ class SQLProcess:
 
         # Print and log starting to check for previous attempt to process file
         print "Checking database for previous attempt to process the " + call_type + " file: " + file_name + " ..."
-        logger.error("Checking database for previous attempt to process the " + call_type + " file:" + file_name + " ...")
+        logger.info("Checking database for previous attempt to process the " + call_type + " file:" + file_name + " ...")
 
         # Connect to database if not connected
         if self._conn == None:
@@ -129,7 +129,7 @@ class SQLProcess:
 
             # Print and log not found previous attempt to process file
             print "No previous attempt found to process the " + call_type + " file: " + file_name + " in table: uspto.STARTED_FILES"
-            logger.error("No previous attempt found to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
+            logger.into("No previous attempt found to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
 
             # Insert the record into the database that the file has been started.
             try:
@@ -157,7 +157,7 @@ class SQLProcess:
 
             # Print and log found previous attempt to process file
             print "Found previous attempt to process the " + call_type + " file: " + file_name + " in table: uspto.STARTED_FILES"
-            logger.error("Found previous attempt to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
+            logger.warning("Found previous attempt to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
 
             # Build array to hold all table names to have
             # records deleted for patent grants
@@ -201,7 +201,7 @@ class SQLProcess:
                     #TODO: check the numer of records deleted from each table and log/print
                     # Print and log finished check for previous attempt to process file
                     print "Finished database delete of previous attempt to process the " + call_type + " file: " + file_name + " table: " + table_name
-                    logger.error("Finished database delete of previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
+                    logger.info("Finished database delete of previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
 
                 except Exception as e:
                     # If there is an error and using databse postgresql

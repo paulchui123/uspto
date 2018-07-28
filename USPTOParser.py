@@ -4589,7 +4589,7 @@ def main_process(link_queue, args_array, document_type):
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
         # Mark the task as done from the link_queue
-        link_queue.task_done()
+        #link_queue.task_done()
         # Print and log notification that one .zip package is finished
         print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c"))
         logger.info('[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c")))
@@ -4614,13 +4614,13 @@ def start_thread_processes(links_array, args_array, document_type):
         if "number_of_threads" in args_array["command_args"]:
             # Set number_of_threads appropriately
             # If requesting more threads than number of links to grab
-            if args_array["command_args"]['number_of_threads'] > len(links_array):
+            if int(args_array["command_args"]['number_of_threads']) > len(links_array):
                 # Set number of threads at number of links
                 number_of_threads = len(links_array)
             # If number of threads acceptable
             else:
                 # Set to command args number of threads
-                number_of_threads = args_array["command_args"]['number_of_threads']
+                number_of_threads = int(args_array["command_args"]['number_of_threads'])
         else:
             number_of_threads = args_array['default_threads']
     except Exception as e:
@@ -4662,6 +4662,10 @@ def start_thread_processes(links_array, args_array, document_type):
         #else:
             #thread_arrays.append(links_array[x * number_of_links_per_pile : (x * number_of_links_per_pile) + number_of_links_per_pile])
 
+
+    # Print and log the number of threads that are going to start
+    print "Starting " + str(number_of_threads) + " processes... "
+    logger.info("Starting " + str(number_of_threads) + " processes... ")
 
     # Loop for number_of_threads and append threads to process
     #for link_pile in thread_arrays:

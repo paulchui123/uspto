@@ -1,6 +1,7 @@
 # **USPTO PATENT DATA PARSER**
 
 Author: Joseph Lee
+
 Email: joseph@ripplesoftware.ca
 
 ## **Description:**
@@ -20,9 +21,11 @@ There are three steps.
 Run the appropriate database creation scripts depending if you intend to store the USPTO data in MySQL or PostgreSQL.  The script will create a user and limit the scope of the user to the uspto database. If you want to change the default password for the user that the script will create, edit the .sql file before running it.
 
 _MySQL_
+
 installation/uspto_create_database_mysql.sql
 
 _PostgreSQL_
+
 installation/uspto_create_database_postgresql.sql
 
 ### 2. Run the parser

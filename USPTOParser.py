@@ -14,6 +14,7 @@ import os
 import sys
 import urllib
 import multiprocessing
+#import Queue
 import logging
 from bs4 import BeautifulSoup
 import zipfile
@@ -3212,8 +3213,6 @@ def extract_XML4_application(raw_data, args_array):
             "FileName" : args_array['file_name']
         })
 
-    # Print message to stdout
-    print '[Extracted .xml. Time:{0}]'.format(time.time() - start_time)
 
     # Return a dictionary of the processed_ data arrays
     return {
@@ -3578,9 +3577,6 @@ def extract_XML1_application(raw_data, args_array):
 
     #print processed_application
 
-    # Print message to stdout
-    print '[Extracted .xml. Time:{0}]'.format(time.time() - start_time)
-
     # Return a dictionary of the processed_ data arrays
     return {
         "processed_application" : processed_application,
@@ -3794,7 +3790,7 @@ def store_data_application(processed_data_array, args_array):
     if "database" in args_array["command_args"]:
 
         # Print start message to stdout
-        #print '- Starting to write {0} to database. Start Time: {1}'.format(file_name, time.strftime("%c"))
+        print '- Starting to write {0} to database. Start Time: {1}'.format(file_name, time.strftime("%c"))
 
         # Reset the start time
         start_time = time.time()
@@ -4533,8 +4529,8 @@ def return_classification_array(line):
     # Return the class dictionary
     return class_dictionary
 
-# main function for multiprocessing
-def main_process(link_pile, args_array, document_type):
+# Main function for multiprocessing
+def main_process(link_queue, args_array, document_type):
 
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
@@ -4555,8 +4551,11 @@ def main_process(link_pile, args_array, document_type):
     # Set a file index variable in args array to track file
 
     # Go through each link in the array passed in.
-    for item in link_pile:
+    while not link_queue.empty():
+    #for item in link_pile:
 
+        # Get the next item in the queue
+        item = link_queue.get()
         # Separate link item into link and file_type and append to args_array for item
         args_array['url_link'] = item[0]
         args_array['uspto_xml_format'] = item[1]
@@ -4589,8 +4588,11 @@ def main_process(link_pile, args_array, document_type):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
-        # Print notification that one .zip package is finished
+        # Mark the task as done from the link_queue
+        link_queue.task_done()
+        # Print and log notification that one .zip package is finished
         print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c"))
+        logger.info(print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c")))
 
     # TODO: Look at the other link_piles from other processes and continue to process
     # by moving links from another pile to this one.  May have to look at the log file,
@@ -4607,29 +4609,66 @@ def start_thread_processes(links_array, args_array, document_type):
     # Define array to hold processes to multithread
     processes=[]
     # Define how many threads should be started
-    number_of_threads = 10
+    try:
+        # If number_of_threads is set in args
+        if "number_of_threads" in args_array["command_args"]:
+            # Set number_of_threads appropriately
+            # If requesting more threads than number of links to grab
+            if args_array["command_args"]['number_of_threads'] > len(links_array):
+                # Set number of threads at number of links
+                number_of_threads = len(links_array)
+            # If number of threads acceptable
+            else:
+                # Set to command args number of threads
+                number_of_threads = args_array["command_args"]['number_of_threads']
+        else:
+            number_of_threads = args_array['default_threads']
+    except Exception as e:
+        # If there is a problem creating the number of threads set again and log the error
+        number_of_threads = 10
+        # Print and log general fail comment
+        print "Calculating number of threads failed... "
+        # Print traceback
+        traceback.print_exc()
+        # Print exception information to file
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+
+    # Create a Queue to hold link pile and share between threads
+    link_queue = multiprocessing.Queue()
+    # Put all the links into the queue
+    for link in links_array:
+        link_queue.put(link)
+
     # Create array to hold piles of links
-    thread_arrays = []
+    #thread_arrays = []
     # Break links array into separate arrays so that number_of_threads threads will start
     # If there are less links than desired number of threads make as many threads as len(links_array)
-    if len(links_array) < number_of_threads:
-        number_of_links_per_pile = 1
-        number_of_threads = len(links_array)
-        remainder_for_last_pile = 0
+    #if len(links_array) < number_of_threads:
+        #number_of_links_per_pile = 1
+        #number_of_threads = len(links_array)
+        #remainder_for_last_pile = 0
     # If there are more links per pile
-    else:
-        number_of_links_per_pile = len(links_array) / number_of_threads
-        remainder_for_last_pile = len(links_array) % number_of_threads
+    #else:
+        #number_of_links_per_pile = len(links_array) / number_of_threads
+        #remainder_for_last_pile = len(links_array) % number_of_threads
 
     # Loop through number_of_threads and cut array.  Append section to thread_arrays
-    for x in range(number_of_threads):
+    #for x in range(number_of_threads):
         # If last element then add remainder
-        if x == number_of_threads - 1:
-            thread_arrays.append(links_array[x * number_of_links_per_pile : (x * number_of_links_per_pile) + number_of_links_per_pile + remainder_for_last_pile])
-        else:
-            thread_arrays.append(links_array[x * number_of_links_per_pile : (x * number_of_links_per_pile) + number_of_links_per_pile])
-    for link_pile in thread_arrays:
-        processes.append(multiprocessing.Process(target=main_process,args=(link_pile, args_array, document_type)))
+        #if x == number_of_threads - 1:
+            #thread_arrays.append(links_array[x * number_of_links_per_pile : (x * number_of_links_per_pile) + number_of_links_per_pile + remainder_for_last_pile])
+        #else:
+            #thread_arrays.append(links_array[x * number_of_links_per_pile : (x * number_of_links_per_pile) + number_of_links_per_pile])
+
+
+    # Loop for number_of_threads and append threads to process
+    #for link_pile in thread_arrays:
+    for i in range(number_of_threads):
+        #processes.append(multiprocessing.Process(target=main_process,args=(link_pile, args_array, document_type)))
+        # Create a thread and append to list
+        processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array, document_type)))
     for p in processes:
         p.start()
     for p in processes:
@@ -4906,38 +4945,56 @@ def build_command_arguments(argument_array, args_array):
 
     try:
         # Create an array to store modified command line arguemnts
-        command_args = []
-        # Create a flag to set if argument validation fails
-        argument_validation_success = True
+        command_args = {}
+
         # Pop off the first element of array because it's the application filename
         argument_array.pop(0)
 
         # Check that the argument array is proper length (4)
         if len(argument_array) < 1 or len(argument_array) > 4:
-            # Argument length is not ok, set flag to failed
-            argument_validation_success = False
-
-        # For loop to modify elements and strip "-" and check if arguement expected
-        for item in argument_array:
-            if item in args_array['allowed_args_array']:
-                command_args.append(item.replace('-', ''))
-            else:
-                # Argument is not expected, set flag to failed
-                argument_validation_success = False
-
-        # Check return from command line arg bulder and if no command line args
-        if argument_validation_success == False or command_args[0] == "h" or command_args[0] == "help":
-            # Check for failed arguements to print error notification
-            if argument_validation_success == False:
-                print "Command argument error...."
+            # Argument length is not ok, print message and return False
+            print "Command argument error...."
             # Print out full argument help menu
             print build_argument_output()
             # Return false to the main function to indicate not continue
             return False
 
+        # For loop to modify elements and strip "-" and check if arguement expected
+        for i in range(len(argument_array)):
+            if argument_array[i] in args_array['allowed_args_array']:
+                # Check for help menu requested
+                if argument_array[i] == "-h" or argument_array[i] == "-help":
+                    # Print out full argument help menu
+                    print build_argument_output()
+                    # Return false to the main function to indicate not continue
+                    return False
+                elif argument_array[i] == "-t":
+                    # Check that next argument is integer between 0 and 20
+                    if argument_array[i + 1] > 0 and argument_array[i + 1] < 21:
+                        command_args['number_of_threads'] = argument_array[i + 1]
+                        # Pop off the argument and value
+                        argument_array.pop(i)
+                        argument_array.pop(i + 1)
+                    # If the argument for number_of_threads is invalid append the default
+                    else:
+                        command_args['number_of_threads'] = args_array['default_threads']
+                else:
+                    # If the argument is expected but not other, append as key to command_args
+                    command_args[argument_array[i].replace('-', '')] = True
+            else:
+                # Argument is not expected, print message and return False
+                print "Command argument error...."
+                # Print out full argument help menu
+                print build_argument_output()
+                # Return false to the main function to indicate not continue
+                return False
+
+        # Finally correct that number_of_threads value is definitely in the array
+        if "number_of_threads" not in command_args:
+            command_args['number_of_threads'] = args_array['default_threads']
+
         # If arguments passed then return array of arguments
-        else:
-            return command_args
+        return command_args
 
     except Exception as e:
         # Print the error to stdout
@@ -4960,11 +5017,10 @@ def build_argument_output():
     # Add a list of arguments that are accepted
     argument_output += "\nArgument flags:\n\n"
     argument_output += "-h, -help : print help menu.\n"
-    argument_output += "-t : set the number of threads.\n"
+    argument_output += "-t [int]: set the number of threads.  Must be 1-20 default = 10.\n"
     argument_output += "-csv : write the patent data files to csv.  Setting will be saved and used on update or restart.\n"
     argument_output += "-database : write the patent data to database.  Setting will be saved on update or restart.\n"
     argument_output += "-update : check for new patent bulk data files and process them\n"
-    argument_output += "-dbreset : reset the database using sql installtion file\n"
     return argument_output
 
 # Set the config settings in file based on command arguments
@@ -5037,7 +5093,8 @@ if __name__=="__main__":
     # Declare variables
     start_time=time.time()
     working_directory = os.getcwd()
-    allowed_args_array = ["-csv", "-database", "-update", "-h", "-t", "-help", "-dbreset"]
+    allowed_args_array = ["-csv", "-database", "-update", "-h", "-t", "-help"]
+    app_default_threads = 10
     all_files_processed = False
 
     # Declare filepaths
@@ -5077,6 +5134,7 @@ if __name__=="__main__":
     # and appended to as needed
     args_array = {
         "working_directory" : working_directory,
+        "default_threads" : app_default_threads,
         "database_type" : database_args['database_type'],
         "database_args" : database_args,
         "required_directory_array" : required_directory_array,
@@ -5153,42 +5211,6 @@ if __name__=="__main__":
                     logger.info(str(len(all_links_array["grants"])) + " grant links will be collected. Start time: " + time.strftime("%c"))
                     logger.info(str(len(all_links_array["applications"])) + " application links will be collected. Start time: " + time.strftime("%c"))
 
-                    try:
-                        # Load the database connection if required
-                        if "database" in args_array["command_args"]:
-                            # Create a database connection that can be passed with each thread processes
-                            # Location of old databse connection
-                            #database_connection = SQLProcessor.SQLProcess(database_args)
-                            #database_connection.connect()
-                            #args_array['database_connection'] = database_connection
-
-                            # Reset the database if arg provided on command line
-                            if "dbreset" in args_array['command_args']:
-                                # load sql from file
-                                if args_array['database_type'] == "mysql":
-                                    args_array['database_reset_file'] = mysql_database_reset_filename
-                                    reset_database(database_args, args_array)
-                                    #sql_script_file = open(mysql_database_reset_filename, 'r')
-                                    #sql = "".join(sql_script_file.readlines()).replace("\n", " ")
-                                    #database_connection.load(sql, args_array, logger)
-                                    #database_connection.close()
-                                    # Create a database connection that can be passed with each thread processes
-                                    #database_connection = SQLProcessor.SQLProcess(database_args)
-                                    #database_connection.connect()
-                                    #args_array['database_connection'] = database_connection
-                                elif args_array['database_type'] == "postgresql":
-                                    database_connection.load(sql, args_array, logger)
-                                # pass to function to rest database
-                                #reset_database(database_args, args_array)
-
-                    except Exception as e:
-                        # Print the exception to stdout
-                        traceback.print_exc()
-                        # Collect the exception information
-                        exc_type, exc_obj, exc_tb = sys.exc_info()
-                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                        # Log error with creating filepath
-                        logger.error('Database Connection Failed: ' + str(e) + str(exc_type) + str(fname) + str(exc_tb.tb_lineno))
 
                     # Start the threading processes for Patent Grants
                     start_thread_processes(all_links_array["grants"], args_array, "grant")

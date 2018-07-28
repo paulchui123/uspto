@@ -128,8 +128,8 @@ class SQLProcess:
                 insert_file_started_sql = "INSERT INTO uspto." + table_name + " (FileName) VALUES('" + file_name + "')"
 
             # Print and log not found previous attempt to process file
-            print "No previous attempt found to process the " + call_type + " file: " + file_name + "in table: uspto.STARTED_FILES"
-            logger.error("No previous attempt found to process the " + call_type + " file:" + file_name + "in table: uspto.STARTED_FILES")
+            print "No previous attempt found to process the " + call_type + " file: " + file_name + " in table: uspto.STARTED_FILES"
+            logger.error("No previous attempt found to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
 
             # Insert the record into the database that the file has been started.
             try:
@@ -156,8 +156,8 @@ class SQLProcess:
         elif check_file_started[0] != 0:
 
             # Print and log found previous attempt to process file
-            print "Found previous attempt to process the " + call_type + " file: " + file_name + "in table: uspto.STARTED_FILES"
-            logger.error("Found previous attempt to process the " + call_type + " file:" + file_name + "in table: uspto.STARTED_FILES")
+            print "Found previous attempt to process the " + call_type + " file: " + file_name + " in table: uspto.STARTED_FILES"
+            logger.error("Found previous attempt to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
 
             # Build array to hold all table names to have
             # records deleted for patent grants

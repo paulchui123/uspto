@@ -3,12 +3,14 @@
 # 1) recaculate all thread piles
 # 2) EASIER: Only when thread expires, take one from another stack.  (ok because low CPU usage).  Should pop finished from the stack immedietely to ensure not taking completed item. Should pop moved items from the stack also.
 
-# To avoid so many 'already exists' errors on a restart, if one is encountered, then wipe all same file records from all database records and re-insert the last one, then continue with the file. This will avoid error message stacking up in log file.
-
 # Branch the repo for the USPTO while I work on the database optimization.
 # Look at building a front-end for the python UI using tinkr or other front end.
 
-# Are the zip files being discraded to free memory properly?  Here are some buffer cache reports starting two days after the program started.  The buff cache is large, maybe files are not being discarded efficiently.  So, are should tmp files be erased after file is finished being read?  Will that free up more free memory.
+# Are the zip files being discraded to free memory efficiently properly?
+
+# Write a thread process that checks the system CPU and then uses $ top command to check load average for the longest avaiable moving average.  Then, start new threads if the load average drops below 50% until it stays around 75%-80%.
+
+# Run a python script from within the USPTO parser to check a timestamp every 20 minutes and restart the whole thing if the timestamp is expired.
 
 # Write a function that can create separate threads for the GPU
 https://stackoverflow.com/questions/5957554/python-gpu-programming

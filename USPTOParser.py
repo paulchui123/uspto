@@ -4592,7 +4592,7 @@ def main_process(link_queue, args_array, document_type):
         link_queue.task_done()
         # Print and log notification that one .zip package is finished
         print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c"))
-        logger.info(print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c")))
+        logger.info('[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c")))
 
     # TODO: Look at the other link_piles from other processes and continue to process
     # by moving links from another pile to this one.  May have to look at the log file,

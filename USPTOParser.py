@@ -4953,7 +4953,7 @@ def build_command_arguments(argument_array, args_array):
         # Check that the argument array is proper length (4)
         if len(argument_array) < 1 or len(argument_array) > 4:
             # Argument length is not ok, print message and return False
-            print "Command argument error...."
+            print "Command argument error [incorrect number of arguments]...."
             # Print out full argument help menu
             print build_argument_output()
             # Return false to the main function to indicate not continue
@@ -4961,6 +4961,9 @@ def build_command_arguments(argument_array, args_array):
 
         # For loop to modify elements and strip "-" and check if arguement expected
         for i in range(len(argument_array)):
+            skip = 0
+            if skip + i == len(argument_array):
+                break
             if argument_array[i] in args_array['allowed_args_array']:
                 # Check for help menu requested
                 if argument_array[i] == "-h" or argument_array[i] == "-help":
@@ -4970,20 +4973,26 @@ def build_command_arguments(argument_array, args_array):
                     return False
                 elif argument_array[i] == "-t":
                     # Check that next argument is integer between 0 and 20
-                    if argument_array[i + 1] > 0 and argument_array[i + 1] < 21:
+                    if int(argument_array[i + 1]) > 0 and int(argument_array[i + 1]) < 21:
                         command_args['number_of_threads'] = argument_array[i + 1]
-                        # Pop off the argument and value
-                        argument_array.pop(i)
+                        # Pop the value off
                         argument_array.pop(i + 1)
-                    # If the argument for number_of_threads is invalid append the default
+                        # Increment i to avoid the number of threads value
+                        skip = skip + 1
+                    # If the argument for number_of_threads is invalid return error
                     else:
-                        command_args['number_of_threads'] = args_array['default_threads']
+                        # Argument length is not ok, print message and return False
+                        print "Command argument error [illegal number of threads]...."
+                        # Print out full argument help menu
+                        print build_argument_output()
+                        # Return false to the main function to indicate not continue
+                        return False
                 else:
                     # If the argument is expected but not other, append as key to command_args
                     command_args[argument_array[i].replace('-', '')] = True
             else:
                 # Argument is not expected, print message and return False
-                print "Command argument error...."
+                print "Command argument error [illegal argument]...."
                 # Print out full argument help menu
                 print build_argument_output()
                 # Return false to the main function to indicate not continue
@@ -5009,7 +5018,7 @@ def build_command_arguments(argument_array, args_array):
         return False
 
 def build_argument_output():
-    argument_output = "\nUsage : USPTOParser.py [-csv, &| -database]\n\n"
+    argument_output = "\nUsage : USPTOParser.py [-t [int]] & [-csv, &| -database] | [-update]\n\n"
     # Add the description of how to run the parser
     argument_output += "USPTOParser.py requires data destination arguments (-csv, -database) when running for the first time. \n"
     argument_output += "Database credentials are defined an a dictionary in the main function for if the database flag is set. \n"

@@ -49,6 +49,8 @@ class SQLProcess:
             # Print and log general fail comment
             print "Database INSERT query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
             logger.error("Database INSERT query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
+            print "Query string: " + sql
+            logger.error("Query string: " + sql)
             # Print traceback
             traceback.print_exc()
             # Print exception information to file

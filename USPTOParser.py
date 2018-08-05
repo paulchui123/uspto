@@ -4448,6 +4448,7 @@ def links_parser(link_type, url):
 # to balance loads using log file in main_process.
 def write_process_log(args_array):
 
+    # Set the document type for processing
     document_type = args_array['document_type']
 
     # Import logger
@@ -4549,7 +4550,7 @@ def main_process(link_queue, args_array, spooling_value):
     # Check the spooling value in args_array and set a wait time
     args_array['spooling_value'] = spooling_value
     if args_array['spooling_value'] > 6:
-        time.sleep((args_array['spooling_value']-1) * 30)
+        time.sleep((args_array['spooling_value']) * 30)
         args_array['spooling_value'] = 0
 
     # Import logger
@@ -4590,7 +4591,7 @@ def main_process(link_queue, args_array, spooling_value):
 
         # Check if the args_array['file_name'] has previously been partially processed.
         # and if it has, then remove all records from the previous partial processing.
-        #database_connection.remove_previous_file_records(args_array['document_type'], args_array['file_name'], logger)
+        database_connection.remove_previous_file_records(args_array['document_type'], args_array['file_name'], logger)
 
         # Call the function to collect patent data from each link
         # and store it to specified place
@@ -4623,6 +4624,9 @@ def main_process(link_queue, args_array, spooling_value):
     print '[Process {0} is finished. Time consuming:{1} Time Finished: {1}]'.format(time.time() - process_start_time, time.strftime("%c"))
 
 def start_thread_processes(links_array, args_array):
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
 
     # Define array to hold processes to multithread
     processes=[]
@@ -4702,11 +4706,52 @@ def start_thread_processes(links_array, args_array):
         #processes.append(multiprocessing.Process(target=main_process,args=(link_pile, args_array, document_type)))
         # Create a thread and append to list
         processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array, i)))
+        # Print to stdout and log that all initial main processes have started
+        print "All " + str(number_of_threads) + " initial main processes have been loaded... "
+        logger.info("All " + str(number_of_threads) + " initial main processes have been loaded... ")
+        # Print to stdout and log that load balancing process starting
+        print "[Starting to load balancing thread... ]"
+        logger.info("[Starting to load balacing thread... ]")
+        processes.append(multiprocessing.Process(target=load_balancer_thread, args=(link_queue, args_array)))
+
     for p in processes:
         p.start()
     for p in processes:
         p.join()
 
+
+# Load balancer that returns a value to function
+def load_balancer_value():
+    # return the 15 minute average CPU balance
+    return os.getloadavg()[2]
+
+# Load balancer thread function
+def load_balancer_thread(link_queue, args_array):
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
+
+    # Sleep the balancer for 10 minutes to allow initial threads and CPU load to balance
+    # at the initial number of threads
+    time.sleep(600)
+    # While there is still links in queue
+    while not link_queue.empty():
+        # Check the 15 minute average CPU load balance
+        load_average = os.getloadavg()[1]
+        if load_average < 6:
+            # Print message and log that load balancer is starting another thread
+            print "Starting another thread due to low CPU load balance of: " + str(load_average) + "..."
+            logger.info("Starting another thread due to low CPU load balance of: " + str(load_average) + "...")
+            # Start another thread and pass in 0 to start right away
+            start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, 0))
+            start_new_thread.start()
+            time.sleep(300)
+        else:
+            # Print message and log that load balancer is starting another thread
+            print "Reporting CPU load balance: " + str(load_average)
+            logger.info("Reporting CPU load balance: " + str(load_average))
+            # Sleep for another 5 minutes while
+            time.sleep(300)
 
 # Write all log links to files
 def write_link_arrays_to_file(all_links_array, args_array):

@@ -3889,6 +3889,12 @@ def download_zip_file(link):
     try:
         print '[Downloading .zip file: {0}]'.format(link)
         file_name = urllib.urlretrieve(link)[0]
+        #uuid_path = ''.join([random.choice(string.letters + string.digits) for i in range(10)])
+        #file_name = os.path.join(args_array['temp_dirpath'], uuid_path)
+        #file_name = open(temp_path, 'w')
+        #response = urllib2.urlopen(link)
+        #temp_file.write(response.read())
+        #temp_file.close()
         print '[Downloaded .zip file: {0} Time:{1} Finish Time: {2}]'.format(file_name,time.time()-start_time, time.strftime("%c"))
         # Return the filename
         return file_name
@@ -4538,7 +4544,13 @@ def return_classification_array(line):
     return class_dictionary
 
 # Main function for multiprocessing
-def main_process(link_queue, args_array):
+def main_process(link_queue, args_array, spooling_value):
+
+    # Check the spooling value in args_array and set a wait time
+    args_array['spooling_value'] = spooling_value
+    if args_array['spooling_value'] > 6:
+        time.sleep((args_array['spooling_value']-1) * 30)
+        args_array['spooling_value'] = 0
 
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
@@ -4655,6 +4667,8 @@ def start_thread_processes(links_array, args_array):
         link.append("application")
         link_queue.put(link)
 
+    # Calculate a wait time for each link and append to array
+
     # Create array to hold piles of links
     #thread_arrays = []
     # Break links array into separate arrays so that number_of_threads threads will start
@@ -4684,9 +4698,10 @@ def start_thread_processes(links_array, args_array):
     # Loop for number_of_threads and append threads to process
     #for link_pile in thread_arrays:
     for i in range(number_of_threads):
+        # Set an argument to hold the thread number for spooling up downloads.
         #processes.append(multiprocessing.Process(target=main_process,args=(link_pile, args_array, document_type)))
         # Create a thread and append to list
-        processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array)))
+        processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array, i)))
     for p in processes:
         p.start()
     for p in processes:
@@ -5125,6 +5140,7 @@ if __name__=="__main__":
     all_files_processed = False
 
     # Declare filepaths
+    app_temp_filepath = working_directory + "/TMP/"
     app_log_file = working_directory + "/LOG/USPTO_app.log"
     app_config_file = working_directory + "/.USPTO_config.cnf"
     log_lock_file = working_directory + "/LOG/.logfile.lock"
@@ -5172,7 +5188,8 @@ if __name__=="__main__":
         "classification_text_filename" : classification_text_filename,
         "grant_process_log_file" : grant_process_log_file,
         "application_process_log_file" : application_process_log_file,
-        "pair_process_log_file" : pair_process_log_file
+        "pair_process_log_file" : pair_process_log_file,
+        "temp_path" : app_temp_filepath
     }
 
     # Setup logger

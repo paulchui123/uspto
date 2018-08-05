@@ -342,46 +342,47 @@ def extract_XML4_grant(raw_data, args_array):
                 position += 1
 
         # Find all CPC classifications
-        position = 1
-        nat_class_element = r.find('us-field-of-classification-search')
+        cpc = r.find('us-field-of-classification-search')
         #print nat_class_element
-        for cpc in nat_class_element.findall('classification-cpc-text'):
+        if cpc is not None:
+            position = 1
+            for cpcc in nat_class_element.findall('classification-cpc-text'):
 
-            try:
-                #print cpc.text
-                cpc_text = cpc.text
-                #print cpc_text
-                cpc_class_string, cpc_group_string = cpc_text.split(" ")
-                #print cpc_class_string + " " + cpc_group_string
-                cpc_class_sec = cpc_text[0]
-                cpc_class = cpc_class_string[1:3]
-                cpc_subclass = cpc_class_string[3]
-                cpc_class_mgr, cpc_class_sgr = cpc_group_string.split("/")
-                #print cpc_class_sec + " " + cpc_class + " " + cpc_subclass + " " + cpc_class_mgr + " " + cpc_class_sgr
-            except:
-                #traceback.print_exc()
-                cpc_class_sec = None
-                cpc_class = None
-                cpc_subclass = None
-                cpc_class_mgr = None
-                cpc_class_sgr = None
-                logger.warning("There was an error parsing the cpc class for Grant ID: " + document_id + " in file: " + url_link)
-                logger.warning("Traceback: " + traceback.format_exc())
+                try:
+                    #print cpc.text
+                    cpc_text = cpcc.text
+                    #print cpc_text
+                    cpc_class_string, cpc_group_string = cpc_text.split(" ")
+                    #print cpc_class_string + " " + cpc_group_string
+                    cpc_class_sec = cpc_text[0]
+                    cpc_class = cpc_class_string[1:3]
+                    cpc_subclass = cpc_class_string[3]
+                    cpc_class_mgr, cpc_class_sgr = cpc_group_string.split("/")
+                    #print cpc_class_sec + " " + cpc_class + " " + cpc_subclass + " " + cpc_class_mgr + " " + cpc_class_sgr
+                except:
+                    #traceback.print_exc()
+                    cpc_class_sec = None
+                    cpc_class = None
+                    cpc_subclass = None
+                    cpc_class_mgr = None
+                    cpc_class_sgr = None
+                    logger.warning("There was an error parsing the cpc class for Grant ID: " + document_id + " in file: " + url_link)
+                    logger.warning("Traceback: " + traceback.format_exc())
 
-            # Append SQL data into dictionary to be written later
-            processed_cpcclass.append({
-                "table_name" : "uspto.CPCCLASS_G",
-                "GrantID" : document_id,
-                "Position" : position,
-                "Section" : cpc_class_sec,
-                "Class" : cpc_class,
-                "SubClass" : cpc_subclass,
-                "MainGroup" : cpc_class_mgr,
-                "SubGroup" : cpc_class_sgr,
-                "FileName" : args_array['file_name']
-            })
+                # Append SQL data into dictionary to be written later
+                processed_cpcclass.append({
+                    "table_name" : "uspto.CPCCLASS_G",
+                    "GrantID" : document_id,
+                    "Position" : position,
+                    "Section" : cpc_class_sec,
+                    "Class" : cpc_class,
+                    "SubClass" : cpc_subclass,
+                    "MainGroup" : cpc_class_mgr,
+                    "SubGroup" : cpc_class_sgr,
+                    "FileName" : args_array['file_name']
+                })
 
-            position += 1
+                position += 1
 
         # Find all US classifications
         for nc in r.findall('classification-national'):
@@ -3904,7 +3905,7 @@ def process_link_file(args_array):
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
 
-    # Download the file and append temp locatio to args array
+    # Download the file and append temp location to args array
     args_array['temp_zip_file_name'] = download_zip_file(args_array['url_link'])
 
     #print args_array['uspto_xml_format']
@@ -3934,25 +3935,31 @@ def process_XML_grant_content(args_array):
     zip_file = zipfile.ZipFile(args_array['temp_zip_file_name'],'r')
 
     # Find the xml file from the extracted filenames
-    xml_file_name = ""
     for name in zip_file.namelist():
         if '.xml' in name:
             xml_file_name = name
             # Print stdout message that xml file was found
             print '[xml file found. Filename:{0}]'.format(xml_file_name)
 
-    # If xml file not found, then print error message
-    if xml_file_name == "":
+    # Look for the found xml file
+    try:
+        # Open the file to read lines out of
+        xml_file = zip_file.open(xml_file_name, 'r')
+    except:
         # Print and log that the xml file was not found
         print '[xml file not found.  Filename{0}]'.format(args_array['url_link'])
         logger.error('xml file not found. Filename: ' + args_array['url_link'])
 
-    # Open the file to read lines out of
-    xml_file = zip_file.open(xml_file_name, 'r')
-    # Remove the temp files
-    urllib.urlcleanup()
-    #os.remove(file_name)
-    zip_file.close()
+    # Clean up the zip file
+    try:
+        # Remove the temp files
+        urllib.urlcleanup()
+        #os.remove(file_name)
+        zip_file.close()
+    except:
+        # Print and log that xml file could not be closed properly
+        print '[Error cleaning up .zip file.  Filename{0}]'.format(args_array['url_link'])
+        logger.error('Error cleaning up .zip file. Filename: ' + args_array['url_link'])
 
     # create variables needed to parse the file
     xml_string = ''
@@ -3960,7 +3967,10 @@ def process_XML_grant_content(args_array):
     # read through the file and append into groups of string.
     # Send the finished strings to be parsed
     # Use uspto_xml_format to determine file contents and parse accordingly
+    #print "The xml format is: " + args_array['uspto_xml_format']
     if args_array['uspto_xml_format'] == "gXML4":
+
+        #print "The xml format is: " + args_array['uspto_xml_format']
 
         # Loop through all lines in the xml file
         for line in xml_file.readlines():
@@ -4548,7 +4558,6 @@ def main_process(link_queue, args_array, document_type):
         database_connection.connect()
         args_array['database_connection'] = database_connection
 
-    # Set a file index variable in args array to track file
 
     # Go through each link in the array passed in.
     while not link_queue.empty():
@@ -4571,7 +4580,7 @@ def main_process(link_queue, args_array, document_type):
 
         # Check if the args_array['file_name'] has previously been partially processed.
         # and if it has, then remove all records from the previous partial processing.
-        database_connection.remove_previous_file_records(args_array['document_type'], args_array['file_name'], logger)
+        #database_connection.remove_previous_file_records(args_array['document_type'], args_array['file_name'], logger)
 
         # Call the function to collect patent data from each link
         # and store it to specified place

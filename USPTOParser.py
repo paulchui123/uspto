@@ -346,7 +346,7 @@ def extract_XML4_grant(raw_data, args_array):
         #print nat_class_element
         if cpc is not None:
             position = 1
-            for cpcc in nat_class_element.findall('classification-cpc-text'):
+            for cpcc in cpc.findall('classification-cpc-text'):
 
                 try:
                     #print cpc.text
@@ -2799,7 +2799,7 @@ def extract_XML4_application(raw_data, args_array):
     start_time = time.time()
 
     # Print start message to stdout
-    print '- Starting to extract xml in USPTO application format ' + uspto_xml_format + " Start time: " + time.strftime("%c")
+    #print '- Starting to extract xml in USPTO application format ' + uspto_xml_format + " Start time: " + time.strftime("%c")
 
     # Pass the raw data into Element tree xml object
     patent_root = ET.fromstring(raw_data)
@@ -3881,7 +3881,8 @@ def build_sql_insert_query(insert_data_array, args_array):
 
 # Download a link into temporary memory and return filename
 def download_zip_file(link):
-    # Set current working directory for storage of
+
+    # Set process start time
     start_time = time.time()
 
     # Try to download the zip file to temporary location
@@ -3889,15 +3890,12 @@ def download_zip_file(link):
         print '[Downloading .zip file: {0}]'.format(link)
         file_name = urllib.urlretrieve(link)[0]
         print '[Downloaded .zip file: {0} Time:{1} Finish Time: {2}]'.format(file_name,time.time()-start_time, time.strftime("%c"))
+        # Return the filename
+        return file_name
     except Exception as e:
-        urllib.urlcleanup()
-        if os.path.exists(file_name):
-            os.remove(file_name)
-        print 'Downloading zip contents failed...'
+        print 'Downloading  contents of ' + link + ' failed...'
         traceback.print_exc()
 
-    # Return the filename
-    return file_name
 
 # Function to route the extraction of raw data from a link
 def process_link_file(args_array):
@@ -4540,7 +4538,7 @@ def return_classification_array(line):
     return class_dictionary
 
 # Main function for multiprocessing
-def main_process(link_queue, args_array, document_type):
+def main_process(link_queue, args_array):
 
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
@@ -4568,7 +4566,7 @@ def main_process(link_queue, args_array, document_type):
         # Separate link item into link and file_type and append to args_array for item
         args_array['url_link'] = item[0]
         args_array['uspto_xml_format'] = item[1]
-        args_array['document_type'] = document_type
+        args_array['document_type'] = item[2]
         # file_name is used to keep track of the .zip base filename
         args_array['file_name'] = os.path.basename(args_array['url_link']).replace(".zip", "")
 
@@ -4586,6 +4584,10 @@ def main_process(link_queue, args_array, document_type):
         # and store it to specified place
         try:
             process_link_file(args_array)
+            # Print and log notification that one .zip package is finished
+            print '[Finished processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c"))
+            logger.info('[Finished processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c")))
+
         except Exception as e:
             # Print and log general fail comment
             print "Processing a file failed... " + args_array['file_name'] + " from link " + args_array['url_link'] + " at: " + time.strftime("%c")
@@ -4597,11 +4599,6 @@ def main_process(link_queue, args_array, document_type):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
-        # Mark the task as done from the link_queue
-        #link_queue.task_done()
-        # Print and log notification that one .zip package is finished
-        print '[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c"))
-        logger.info('[Finishing processing one .zip package! Time consuming:{0} Time Finished: {1}]'.format(time.time() - start_time, time.strftime("%c")))
 
     # TODO: Look at the other link_piles from other processes and continue to process
     # by moving links from another pile to this one.  May have to look at the log file,
@@ -4613,19 +4610,22 @@ def main_process(link_queue, args_array, document_type):
     # Print message that process is finished
     print '[Process {0} is finished. Time consuming:{1} Time Finished: {1}]'.format(time.time() - process_start_time, time.strftime("%c"))
 
-def start_thread_processes(links_array, args_array, document_type):
+def start_thread_processes(links_array, args_array):
 
     # Define array to hold processes to multithread
     processes=[]
+
+    # Calculate the total length of all links to collect
+    total_links_count = len(links_array['grants']) + len(links_array['applications'])
     # Define how many threads should be started
     try:
         # If number_of_threads is set in args
         if "number_of_threads" in args_array["command_args"]:
             # Set number_of_threads appropriately
             # If requesting more threads than number of links to grab
-            if int(args_array["command_args"]['number_of_threads']) > len(links_array):
+            if int(args_array["command_args"]['number_of_threads']) > total_links_count:
                 # Set number of threads at number of links
-                number_of_threads = len(links_array)
+                number_of_threads = total_links_count
             # If number of threads acceptable
             else:
                 # Set to command args number of threads
@@ -4647,7 +4647,12 @@ def start_thread_processes(links_array, args_array, document_type):
     # Create a Queue to hold link pile and share between threads
     link_queue = multiprocessing.Queue()
     # Put all the links into the queue
-    for link in links_array:
+    #TODO write classification parser and also append to queue
+    for link in links_array['grants']:
+        link.append("grant")
+        link_queue.put(link)
+    for link in links_array['applications']:
+        link.append("application")
         link_queue.put(link)
 
     # Create array to hold piles of links
@@ -4681,7 +4686,7 @@ def start_thread_processes(links_array, args_array, document_type):
     for i in range(number_of_threads):
         #processes.append(multiprocessing.Process(target=main_process,args=(link_pile, args_array, document_type)))
         # Create a thread and append to list
-        processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array, document_type)))
+        processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array)))
     for p in processes:
         p.start()
     for p in processes:
@@ -4986,7 +4991,7 @@ def build_command_arguments(argument_array, args_array):
                     return False
                 elif argument_array[i] == "-t":
                     # Check that next argument is integer between 0 and 20
-                    if int(argument_array[i + 1]) > 0 and int(argument_array[i + 1]) < 21:
+                    if int(argument_array[i + 1]) > 0 and int(argument_array[i + 1]) < 31:
                         command_args['number_of_threads'] = argument_array[i + 1]
                         # Pop the value off
                         argument_array.pop(i + 1)
@@ -5235,9 +5240,7 @@ if __name__=="__main__":
 
 
                     # Start the threading processes for Patent Grants
-                    start_thread_processes(all_links_array["grants"], args_array, "grant")
-                    # Start the threading processes for Patent Applications
-                    start_thread_processes(all_links_array["applications"], args_array, "application")
+                    start_thread_processes(all_links_array, args_array)
 
                 # If both link lists are empty then all files have been processed, set main loop to exit
                 else:

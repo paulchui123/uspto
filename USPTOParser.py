@@ -1115,11 +1115,11 @@ def extract_XML2_grant(raw_data, args_array):
                         try: inventor_first_name = return_element_text(i.find('NAM').find('FNM'))
                         except: inventor_first_name = None
                         try: inventor_last_name = return_element_text(i.find('NAM').find('SNM'))
-                        except: inventor_last_name
+                        except: inventor_last_name = None
                         try: inventor_city = return_element_text(i.find('ADR').find('CITY'))
-                        except: inventor_city
+                        except: inventor_city = None
                         try: inventor_state = return_element_text(i.find('ADR').find('STATE'))
-                        except: inventor_state
+                        except: inventor_state = None
                         # TODO: find out if country can be other than US
                         inventor_country = "US"
                         inventor_nationality = None

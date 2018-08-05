@@ -1,11 +1,4 @@
 -- -----------------------------------------------------
--- Create Databse uspto
--- -----------------------------------------------------
-
-DROP SCHEMA IF EXISTS uspto CASCADE;
-CREATE SCHEMA IF NOT EXISTS uspto;
-
--- -----------------------------------------------------
 -- Table uspto.APPLICATION_PAIR
 -- -----------------------------------------------------
 
@@ -53,28 +46,6 @@ CREATE TABLE IF NOT EXISTS uspto.APPLICATION (
   PRIMARY KEY (ApplicationID, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.GRANT
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.GRANT (
-  GrantID VARCHAR(20) NOT NULL,
-  IssueDate DATE DEFAULT NULL,
-  Kind VARCHAR(2) DEFAULT NULL,
-  USSeriesCode VARCHAR(2) DEFAULT NULL,
-  Title VARCHAR(500) DEFAULT NULL,
-  Abstract TEXT DEFAULT NULL,
-  Claims TEXT DEFAULT NULL,
-  ClaimsNum INT DEFAULT NULL,
-  DrawingsNum INT DEFAULT NULL,
-  FiguresNum INT DEFAULT NULL,
-  GrantLength INT DEFAULT NULL,
-  ApplicationID VARCHAR(20) DEFAULT NULL,
-  FileDate DATE DEFAULT NULL,
-  AppType VARCHAR(45) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, FileName));
-
--- -----------------------------------------------------
 -- Table uspto.INTCLASS_A
 -- -----------------------------------------------------
 
@@ -90,21 +61,21 @@ CREATE TABLE IF NOT EXISTS uspto.INTCLASS_A (
   FileName VARCHAR(45),
   PRIMARY KEY (ApplicationID, Position, FileName));
 
-  -- -----------------------------------------------------
-  -- Table uspto.CPCCLASS_A
-  -- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Table uspto.CPCCLASS_A
+-- -----------------------------------------------------
 
-  CREATE TABLE IF NOT EXISTS uspto.CPCCLASS_A (
-    ApplicationID VARCHAR(20) NOT NULL,
-    Position INT NOT NULL,
-    Section VARCHAR(10) DEFAULT NULL,
-    Class VARCHAR(15) DEFAULT NULL,
-    Subclass VARCHAR(15) DEFAULT NULL,
-    MainGroup VARCHAR(10) DEFAULT NULL,
-    SubGroup VARCHAR(10) DEFAULT NULL,
-    Malformed BOOLEAN DEFAULT NULL,
-    FileName VARCHAR(45),
-    PRIMARY KEY (ApplicationID, Position, FileName));
+CREATE TABLE IF NOT EXISTS uspto.CPCCLASS_A (
+  ApplicationID VARCHAR(20) NOT NULL,
+  Position INT NOT NULL,
+  Section VARCHAR(10) DEFAULT NULL,
+  Class VARCHAR(15) DEFAULT NULL,
+  Subclass VARCHAR(15) DEFAULT NULL,
+  MainGroup VARCHAR(10) DEFAULT NULL,
+  SubGroup VARCHAR(10) DEFAULT NULL,
+  Malformed BOOLEAN DEFAULT NULL,
+  FileName VARCHAR(45),
+  PRIMARY KEY (ApplicationID, Position, FileName));
 
 -- -----------------------------------------------------
 -- Table uspto.USCLASS_A
@@ -327,185 +298,6 @@ CREATE TABLE IF NOT EXISTS uspto.USCLASSIFICATION (
   FileName VARCHAR(45),
   PRIMARY KEY (ClassID, FileName));
 
--- -----------------------------------------------------
--- Table uspto.INTCLASS_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.INTCLASS_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  Section VARCHAR(10) DEFAULT NULL,
-  Class VARCHAR(15) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
-  MainGroup VARCHAR(10) DEFAULT NULL,
-  SubGroup VARCHAR(10) DEFAULT NULL,
-  Malformed BOOLEAN DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.CPCCLASS_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.CPCCLASS_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  Section VARCHAR(10) DEFAULT NULL,
-  Class VARCHAR(15) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
-  MainGroup VARCHAR(10) DEFAULT NULL,
-  SubGroup VARCHAR(10) DEFAULT NULL,
-  Malformed BOOLEAN DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.NONPATCIT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.NONPATCIT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  Citation TEXT DEFAULT NULL,
-  Category SMALLINT DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.APPLICANT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.APPLICANT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  OrgName VARCHAR(256) DEFAULT NULL,
-  FirstName VARCHAR(100) DEFAULT NULL,
-  LastName VARCHAR(100) DEFAULT NULL,
-  City VARCHAR(100) DEFAULT NULL,
-  State VARCHAR(100) DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.APPLICANT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.APPLICANT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  OrgName VARCHAR(256) DEFAULT NULL,
-  FirstName VARCHAR(100) DEFAULT NULL,
-  LastName VARCHAR(100) DEFAULT NULL,
-  City VARCHAR(100) DEFAULT NULL,
-  State VARCHAR(100) DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.INVENTOR_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.INVENTOR_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  FirstName VARCHAR(100) DEFAULT NULL,
-  LastName VARCHAR(100) DEFAULT NULL,
-  City VARCHAR(100) DEFAULT NULL,
-  State VARCHAR(100) DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  Nationality VARCHAR(100) DEFAULT NULL,
-  Residence VARCHAR(258) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.USCLASS_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.USCLASS_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  Class VARCHAR(3) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
-  Malformed BOOLEAN DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.AGENT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.AGENT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  OrgName VARCHAR(200) DEFAULT NULL,
-  LastName VARCHAR(100) DEFAULT NULL,
-  FirstName VARCHAR(100) DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.ASSIGNEE_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.ASSIGNEE_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  OrgName VARCHAR(200) DEFAULT NULL,
-  Role VARCHAR(45) DEFAULT NULL,
-  City VARCHAR(100) DEFAULT NULL,
-  State VARCHAR(100) DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.EXAMINER_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.EXAMINER_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  LastName VARCHAR(45) DEFAULT NULL,
-  FirstName VARCHAR(45) DEFAULT NULL,
-  Department VARCHAR(100) DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.GRACIT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.GRACIT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  CitedID VARCHAR(20) DEFAULT NULL,
-  Kind VARCHAR(10) DEFAULT NULL,
-  Name VARCHAR(100) DEFAULT NULL,
-  Date DATE DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  Category SMALLINT DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.FORPATCIT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.FORPATCIT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  CitedID VARCHAR(20) DEFAULT NULL,
-  Kind VARCHAR(10) DEFAULT NULL,
-  Name VARCHAR(100) DEFAULT NULL,
-  Date DATE DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
-  Category SMALLINT DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
 
 -- -----------------------------------------------------
 -- Table `uspto`.`STARTED_FILES`

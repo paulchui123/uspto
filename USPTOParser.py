@@ -23,6 +23,7 @@ import HTMLParser
 import csv
 from htmlentitydefs import name2codepoint
 import string
+import psutil
 
 # Function to accept raw xml data and route to the appropriate function to parse
 # either grant, application or PAIR data.
@@ -1307,11 +1308,17 @@ def extract_XML2_grant(raw_data, args_array):
 # Used to parse xml files of the type APS
 def process_APS_grant_content(args_array):
 
-    url_link = args_array['url_link']
-    uspto_xml_format = args_array['uspto_xml_format']
-
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
+
+    # If csv file insertion is required, then open all the files
+    # into args_array
+    if "csv" in args_array['command_args']:
+        args_array['csv_file_array'], args_array['table_name_array'] = open_csv_files("grant", args_array['filename'], args_array['csv_directory'])
+
+    # Colect arguments from args array
+    url_link = args_array['url_link']
+    uspto_xml_format = args_array['uspto_xml_format']
 
     # Define all arrays to hold the data
     processed_grant = []
@@ -1329,7 +1336,7 @@ def process_APS_grant_content(args_array):
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
 
-    # extract the zipfile to read it
+    # Extract the zipfile to read it
     zip_file = zipfile.ZipFile(args_array['temp_zip_file_name'],'r')
 
     data_file_name = ""
@@ -2775,6 +2782,10 @@ def process_APS_grant_content(args_array):
     write_process_log(args_array)
     # Close the file being read
     data_reader.close()
+    # Close all the open csv files
+    close_csv_files(args_array['csv_file_array'])
+    if args_array['database_insert_mode'] == 'bulk':
+        args_array['database_connection'].load_csv_bulk_data(args_array['csv_file_array'], args_array, logger)
     print '[Processed .bat or .txt File. Total time:{0}  Time: {1}]'.format(time.time()-start_time, time.strftime('%c'))
     #print data_list
 
@@ -3589,6 +3600,115 @@ def extract_XML1_application(raw_data, args_array):
         "processed_cpcclass" : processed_cpcclass
     }
 
+# Function used to open the required csv files and create a csv.DictWrite object
+# for each one.  This function also creates arrays of table column names for each table
+# and returns both the csv.DictWrite and table column arrays back to the args_array.
+def open_csv_files(filetype, filename, csv_directory):
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
+
+    # Create an array of files to append to
+    csv_writer_array = [["grant"],["applications"]]
+    field_names_array = [["grant"],["applications"]]
+
+    # Define filename for csv file
+    csv_file_name = file_name + '.csv'
+
+    # If the grant CSV file will be written
+    if filetype == "grant":
+
+        # Create array of field names for each application table and append to array to be passed back with args array
+        field_names_array['grant']['grant'] = ['GrantID', 'IssueDate', 'Kind', 'USSeriesCode', 'Title', 'Abstract', 'Claims', 'ClaimsNum', 'DrawingsNum', 'FiguresNum', 'GrantLength', 'ApplicationID', 'FileDate', 'AppType', 'FileName']
+        field_names_array['grant']['applicant'] = ['GrantID', 'Position', 'OrgName', 'FirstName', 'LastName', 'City', 'State', 'Country', 'FileName']
+        field_names_array['grant']['examiner'] = ['GrantID', 'Position', 'LastName', 'FirstName', 'Department', 'FileName']
+        field_names_array['grant']['agent'] = ['GrantID', 'Position', 'OrgName', 'LastName', 'FirstName', 'Country', 'FileName']
+        field_names_array['grant']['assignee'] = ['GrantID', 'Position', 'OrgName', 'Role', 'City', 'State', 'Country', 'FileName']
+        field_names_array['grant']['inventor'] = ['GrantID', 'Position', 'FirstName', 'LastName', 'City', 'State', 'Country', 'Nationality', 'Residence', 'FileName']
+        field_names_array['grant']['gracit'] = ['GrantID', 'Position', 'CitedID', 'Kind', 'Name', 'Date', 'Country', 'Category', 'FileName']
+        field_names_array['grant']['forpatcit'] = ['GrantID', 'Position', 'CitedID', 'Kind', 'Name', 'Date', 'Country', 'Category', 'FileName']
+        field_names_array['grant']['nonpatcit'] = ['GrantID', 'Position', 'Citation', 'Category', 'FileName']
+        field_names_array['grant']['usclass'] = ['GrantID','Position', 'Class', 'Subclass', 'Malformed', 'FileName']
+        field_names_array['grant']['intclass'] = ['GrantID', 'Position', 'Section', 'Class', 'Subclass', 'MainGroup', 'SubGroup', 'Malformed', 'FileName']
+        field_names_array['grant']['cpcclass'] = ['GrantID', 'Position', 'Section', 'Class', 'Subclass', 'MainGroup', 'SubGroup', 'Malformed', 'FileName']
+
+        # Open all CSV files to write to and append to array
+        csv_writer_array['grant']['w_grant'] = DictWriter(open(csv_directory + '/CSV_G/grant_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['grant'])
+        csv_writer_array['grant']['w_applicant'] = DictWriter(open(csv_directory + '/CSV_G/applicant_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['applicant'])
+        csv_writer_array['grant']['w_examiner'] = DictWriter(open(csv_directory + '/CSV_G/examiner_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['examiner'])
+        csv_writer_array['grant']['w_agent'] = DictWriter(open(csv_directory + '/CSV_G/agent_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['agent'])
+        csv_writer_array['grant']['w_assignee'] = DictWriter(open(csv_directory + '/CSV_G/assignee_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['assignee'])
+        csv_writer_array['grant']['w_inventor'] = DictWriter(open(csv_directory + '/CSV_G/inventor_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['inventor'])
+        csv_writer_array['grant']['w_gracit'] = DictWriter(open(csv_directory + '/CSV_G/gracit_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['gracit`'])
+        csv_writer_array['grant']['w_forpatcit'] = DictWriter(open(csv_directory + '/CSV_G/forpatcit_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['forpatcit`'])
+        csv_writer_array['grant']['w_nonpatcit'] = DictWriter(open(csv_directory + 'CSV_G/nonpatcit_' + csv_file_name,'wt'), fieldnames = field_names_array['grant']['nonpatcit'])
+        csv_writer_array['grant']['w_usclass'] = DictWriter(open(csv_directory + '/CSV_G/usclass_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['usclass'])
+        csv_writer_array['grant']['w_intclass'] = DictWriter(open(csv_directory + '/CSV_G/intclass_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['intclass'])
+        csv_writer_array['grant']['w_cpcclass'] = DictWriter(open(csv_directory + '/CSV_G/cpcclass_' + csv_file_name, 'wt'), fieldnames = field_names_array['grant']['cpcclass'])
+
+        # Write the header to each file
+        csv_writer_array['grant']['w_grant'].writeheader()
+        csv_writer_array['grant']['w_applicant'].writeheader()
+        csv_writer_array['grant']['w_examiner'].writeheader()
+        csv_writer_array['grant']['w_agent'].writeheader()
+        csv_writer_array['grant']['w_assignee'].writeheader()
+        csv_writer_array['grant']['w_inventor'].writeheader()
+        csv_writer_array['grant']['w_gracit'].writeheader()
+        csv_writer_array['grant']['w_forpatcit'].writeheader()
+        csv_writer_array['grant']['w_nonpatcit'].writeheader()
+        csv_writer_array['grant']['w_usclass'].writeheader()
+        csv_writer_array['grant']['w_intclass'].writeheader()
+        csv_writer_array['grant']['w_cpcclass'].writeheader()
+
+    # If the application CSV file will be written
+    if filetype == "application":
+
+        # Create array of field names for each application table and append to array to be passed back with args array
+        field_names_array['application']['application'] = ['ApplicationID', 'PublicationID', 'FileDate', 'Kind', 'USSeriesCode', 'AppType', 'PublishDate', 'Title', 'Abstract', 'ClaimsNum', 'DrawingsNum', 'FiguresNum', 'FileName']
+        field_names_array['application']['agent'] = ['ApplicationID', 'Position', 'OrgName', 'LastName', 'FirstName', 'Country', 'FileName']
+        field_names_array['application']['assignee'] = ['ApplicationID', 'Position', 'OrgName', 'Role', 'City', 'State', 'Country', 'FileName']
+        field_names_array['application']['inventor'] = ['ApplicationID', 'Position', 'FirstName', 'LastName', 'City', 'State', 'Country', 'Nationality', 'Residence', 'FileName']
+        field_names_array['application']['usclass'] = ['ApplicationID','Position', 'Class', 'Subclass', 'Malformed', 'FileName']
+        field_names_array['application']['intclass'] = ['ApplicationID', 'Position', 'Section', 'Class', 'Subclass', 'MainGroup', 'SubGroup', 'Malformed', 'FileName']
+        field_names_array['application']['cpcclass'] = ['ApplicationID', 'Position', 'Section', 'Class', 'Subclass', 'MainGroup', 'SubGroup', 'Malformed', 'FileName']
+
+        # Open all CSV files to write to and append to array
+        csv_writer_array['application']['w_application'] = open(csv_directory + '/CSV_A/application_' + csv_file_name, 'wt')
+        csv_writer_array['application']['w_agent'] = open(csv_directory + '/CSV_A/agent_' + csv_file_name, 'wt')
+        csv_writer_array['application']['w_assignee'] = open(csv_directory + '/CSV_A/assignee_' + csv_file_name, 'wt')
+        csv_writer_array['application']['w_inventor'] = open(csv_directory + '/CSV_A/inventor_' + csv_file_name, 'wt')
+        csv_writer_array['application']['w_usclass'] = open(csv_directory + '/CSV_A/usclass_' + csv_file_name, 'wt')
+        csv_writer_array['application']['w_intclass'] = open(csv_directory + '/CSV_A/intclass_' + csv_file_name, 'wt')
+        csv_writer_array['application']['w_cpcclass'] = open(csv_directory + '/CSV_A/cpcclass_' + csv_file_name, 'wt')
+
+        # Write header for all application csv files
+        csv_writer_array['application']['w_application'].writeheader()
+        csv_writer_array['application']['w_agent'].writeheader()
+        csv_writer_array['application']['w_assignee'].writeheader()
+        csv_writer_array['application']['w_inventor'].writeheader()
+        csv_writer_array['application']['w_usclass'].writeheader()
+        csv_writer_array['application']['w_intclass'].writeheader()
+        csv_writer_array['application']['w_cpcclass'].writeheader()
+
+    # Write message to stdout and log that all csv files are open
+    print '[Opened all CSV files for ' + filetype + ' ' + filename + ' storage Time: {0}]'.format(time.strftime('%c'))
+    logger.info('[Opened all CSV files for ' + filetype + ' ' + filename + ' storage Time: {0}]'.format(time.strftime('%c')))
+
+    # Return the array
+    return csv_writer_array, field_names_array
+
+# Function used to close all csv files in array
+def close_csv_files(csv_file_array):
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
+
+    # Create an array of files to append to
+    for csv_file in csv_file_array:
+        csv_file.close()
+
+    print '[Closed all CSV files Time: {0}]'.format(time.strftime('%c'))
+    logger.info('[Closed all CSV files Time: {0}]'.format(time.strftime('%c')))
 
 # Function used to store grant data in CSV and/or database
 def store_data_grant(processed_data_array, args_array):
@@ -3612,64 +3732,55 @@ def store_data_grant(processed_data_array, args_array):
         # Print start message to stdout
         #print '- Starting to write {0} to CSV file. Start Time: {1}'.format(file_name, time.strftime("%c"))
 
-        # Define filename for csv file
-        file_name = file_name + '.csv'
-        # Define Paths to write data to
-        working_directory = os.getcwd()
-
-        # Open all CSV files to write to
-        f_grant = open(working_directory + '/CSV_G/grant_' + file_name, 'wt')
-        f_application = open(working_directory + '/CSV_A/application_' + file_name, 'wt')
-        f_examiner = open(working_directory + '/CSV_G/examiner_' + file_name, 'wt')
-        f_agent = open(working_directory + '/CSV_G/agent_' + file_name, 'wt')
-        f_assignee = open(working_directory + '/CSV_G/assignee_' + file_name, 'wt')
-        f_inventor = open(working_directory + '/CSV_G/inventor_' + file_name, 'wt')
-        f_pubcit = open(working_directory + '/CSV_G/gracit_' + file_name, 'wt')
-        f_gracit = open(working_directory + '/CSV_G/gracit_' + file_name, 'wt')
-        f_forpatcit = open(working_directory + '/CSV_G/forpatcit_' + file_name, 'wt')
-        f_nonpatcit = open(csvPath_nonpatcit + file_name,'wt')
-        f_usclass = open(working_directory + '/CSV_G/nonpatcit_' + file_name, 'wt')
-        f_intclass = open(working_directory + '/CSV_G/usclass_' + file_name, 'wt')
-
         # Configure csv writer and write sql files into csv appropriate file
-        w_grant=csv.writer(f_grant, delimiter = '\t', lineterminator = '\n')
-        w_grant.writerows(processed_data_array["processed_grant"])
-        w_application = csv.writer(f_application, delimiter = '\t', lineterminator = '\n')
-        w_application.writerows(processed_data_array["processed_application"])
-        w_examiner=csv.writer(f_examiner, delimiter='\t', lineterminator = '\n')
-        w_examiner.writerows(processed_data_array["processed_examiner"])
-        w_agent=csv.writer(f_agent, delimiter = '\t', lineterminator = '\n')
-        w_agent.writerows(processed_data_array["processed_agent"])
-        w_assignee=csv.writer(f_assignee, delimiter = '\t', lineterminator = '\n')
-        w_assignee.writerows(processed_data_array["processed_assignee"])
-        w_inventor=csv.writer(f_inventor, delimiter = '\t', lineterminator = '\n')
-        w_inventor.writerows(processed_data_array["processed_inventor"])
-        w_pubcit=csv.writer(f_pubcit, delimiter='\t', lineterminator = '\n')
-        w_pubcit.writerows(processed_data_array["processed_pubcit"])
-        w_gracit=csv.writer(f_gracit, delimiter='\t', lineterminator = '\n')
-        w_gracit.writerows(processed_data_array["processed_gracit"])
-        w_forpatcit=csv.writer(f_forpatcit, delimiter = '\t', lineterminator = '\n')
-        w_forpatcit.writerows(processed_data_array["processed_forpatcit"])
-        w_nonpatcit=csv.writer(f_nonpatcit, delimiter = '\t', lineterminator = '\n')
-        w_nonpatcit.writerows(processed_data_array["processed_nonpatcit"])
-        w_usclass=csv.writer(f_usclass, delimiter='\t', lineterminator = '\n')
-        w_usclass.writerows(processed_data_array["processed_usclass"])
-        w_intclass=csv.writer(f_intclass, delimiter = '\t', lineterminator = '\n')
-        w_intclass.writerows(processed_data_array["processed_intclass"])
+        # Process all the collected grant data for one patent record into csv file
+        w_grant = csv.DictWriter(args_array['csv_file_array']['f_grant'], field_names = args_array['field_names']['grant'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_grant"]:
+            w_grant.writerows(processed_data_array["processed_grant"])
 
-        # Close open csv files
-        f_grant.close()
-        f_application.close()
-        f_examiner.close()
-        f_agent.close()
-        f_assignee.close()
-        f_inventor.close()
-        f_pubcit.close()
-        f_gracit.close()
-        f_forpatcit.close()
-        f_nonpatcit.close()
-        f_usclass.close()
-        f_intclass.close()
+        w_application = csv.DictWriter(args_array['csv_file_array']['f_application'], field_names = args_array['field_names']['application'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_application"]:
+            w_application.writerows(processed_data_array["processed_application"])
+
+        w_examiner = csv.DictWriter(args_array['csv_file_array']['f_examiner'], field_names = args_array['field_names']['f_examiner'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_examiner"]:
+            w_examiner.writerows(processed_data_array["processed_examiner"])
+
+        w_agent = csv.DictWriter(args_array['csv_file_array']['f_agent'], field_names = args_array['field_names']['f_agent'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_agent"]:
+            w_agent.writerows(processed_data_array["processed_agent"])
+
+        w_assignee = csv.DictWriter(args_array['csv_file_array']['f_assignee'], field_names = args_array['field_names']['f_assignee'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_assignee"]:
+            w_assignee.writerows(processed_data_array["processed_assignee"])
+
+        w_inventor = csv.DictWriter(args_array['csv_file_array']['f_inventor'], field_names = args_array['field_names']['f_inventor'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_inventor"]:
+            w_inventor.writerows(processed_data_array["processed_inventor"])
+
+        w_pubcit = csv.DictWriter(args_array['csv_file_array']['f_pubcit'], field_names = args_array['field_names']['f_pubcit'], delimiter='\t', lineterminator = '\n')
+        for item in processed_data_array["processed_pubcit"]:
+            w_pubcit.writerows(processed_data_array["processed_pubcit"])
+
+        w_gracit = csv.DictWriter(args_array['csv_file_array']['f_gracit'], field_names = args_array['field_names']['f_gracit'], delimiter='\t', lineterminator = '\n')
+        for item in processed_data_array["processed_gracit"]:
+            w_gracit.writerows(processed_data_array["processed_gracit"])
+
+        w_forpatcit = csv.DictWriter(args_array['csv_file_array']['f_forpatcit'], field_names = args_array['field_names']['f_forpatcit'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_forpatcit"]:
+            w_forpatcit.writerows(processed_data_array["processed_forpatcit"])
+
+        w_nonpatcit = csv.DictWriter(args_array['csv_file_array']['f_nonpatcit'], field_names = args_array['field_names']['f_nonpatcit'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_forpatcit"]:
+            w_nonpatcit.writerows(processed_data_array["processed_forpatcit"])
+
+        w_usclass = csv.DictWriter(args_array['csv_file_array']['f_usclass'], field_names = args_array['field_names']['f_usclass'], delimiter='\t', lineterminator = '\n')
+        for item in processed_data_array["processed_forpatcit"]:
+            w_usclass.writerows(processed_data_array["processed_forpatcit"])
+
+        w_intclass = csv.DictWriter(args_array['csv_file_array']['f_intclass'], field_names = args_array['field_names']['f_intclass'], delimiter = '\t', lineterminator = '\n')
+        for item in processed_data_array["processed_forpatcit"]:
+            w_intclass.writerows(processed_data_array["processed_intclass"])
 
         # Log and print finished message to stdout
         print '[{0} CSV file(s) has been written successfully. Time consuming:{1}] Time Finished: {2}'.format(args_array['document_type'], time.time() - start_time, time.strftime("%c"))
@@ -3677,38 +3788,39 @@ def store_data_grant(processed_data_array, args_array):
 
     # If command arg is set to put data into database
     if "database" in args_array["command_args"]:
+        # If the database mode is set to insert each patent record
+        if args_array['database_insert_mode'] == "each":
+            # Print start message to stdout
+            print '- Starting to write {0} to database. Start Time: {1}'.format(file_name, time.strftime("%c"))
 
-        # Print start message to stdout
-        print '- Starting to write {0} to database. Start Time: {1}'.format(file_name, time.strftime("%c"))
+            # Reset the start time
+            start_time = time.time()
 
-        # Reset the start time
-        start_time = time.time()
+            #print processed_data_array
 
-        #print processed_data_array
-
-        # Strip the processed_grant item off the array and process it first
-        processed_grant = processed_data_array['processed_grant']
-        del processed_data_array['processed_grant']
-        for item in processed_grant:
-            # Store table name for stdout
-            args_array['table_name'] = item['table_name']
-            args_array['document_id'] = item['GrantID']
-            # Build query and pass to database loader
-            #print "Grant Data for " + args_array['GrantID'] + " being inserted"
-            database_connection.load(build_sql_insert_query(item, args_array), args_array, logger)
-
-        #for key, value in processed_data_array.items():
-            #print "Type: " + key + " Length: " + str(len(value))
-
-        # Loop throught the processed_data_array and create sql queries and execute them
-        for key, value in processed_data_array.items():
-            for item in value:
+            # Strip the processed_grant item off the array and process it first
+            processed_grant = processed_data_array['processed_grant']
+            del processed_data_array['processed_grant']
+            for item in processed_grant:
                 # Store table name for stdout
                 args_array['table_name'] = item['table_name']
                 args_array['document_id'] = item['GrantID']
                 # Build query and pass to database loader
                 #print "Grant Data for " + args_array['GrantID'] + " being inserted"
                 database_connection.load(build_sql_insert_query(item, args_array), args_array, logger)
+
+            #for key, value in processed_data_array.items():
+                #print "Type: " + key + " Length: " + str(len(value))
+
+            # Loop throught the processed_data_array and create sql queries and execute them
+            for key, value in processed_data_array.items():
+                for item in value:
+                    # Store table name for stdout
+                    args_array['table_name'] = item['table_name']
+                    args_array['document_id'] = item['GrantID']
+                    # Build query and pass to database loader
+                    #print "Grant Data for " + args_array['GrantID'] + " being inserted"
+                    database_connection.load(build_sql_insert_query(item, args_array), args_array, logger)
 
 # Funtion to store patent application data to csv and/or database
 # TODO: change function to append to csv files until threshhold reached
@@ -3771,19 +3883,6 @@ def store_data_application(processed_data_array, args_array):
         w_usclass.writerows(processed_usclass)
         w_intclass = csv.writer(f_intclass, delimiter='\t', lineterminator = '\n')
         w_intclass.writerows(processed_data_array['processed_intclass'])
-
-        # Close all open CSV files
-        f_application.close()
-        f_examiner.close()
-        f_agent.close()
-        f_assignee.close()
-        f_inventor.close()
-        f_pubcit.close()
-        f_gracit.close()
-        f_forpatcit.close()
-        f_nonpatcit.close()
-        f_usclass.close()
-        f_intclass.close()
 
         print '[{0} CSV file(s) has been written successfully. Time consuming:{1}] Time Finished: {2}'.format(args_array['document_type'], time.time() - start_time, time.strftime("%c"))
         logger.info('Loaded {0} data into csv. Time:{1} Finished Time: {2}'.format(args_array['document_type'], time.time() - start_time, time.strftime("%c")))
@@ -3932,6 +4031,11 @@ def process_XML_grant_content(args_array):
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
 
+    # If csv file insertion is required, then open all the files
+    # into args_array
+    if "csv" in args_array['command_args']:
+        args_array['csv_file_array'], args_array['table_name_array'] = open_csv_files("grant", args_array['filename'], args_array['csv_directory'])
+
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
 
@@ -4053,16 +4157,29 @@ def process_XML_grant_content(args_array):
                 #line_number += 1
 
 
-    print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
-    logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
     # Send the information to write_process_log to have log file rewritten to "Processed"
     write_process_log(args_array)
     # Close the xml file
     xml_file.close()
+    # Close all the open csv files
+    close_csv_files(args_array['csv_file_array'])
+    if args_array['database_insert_mode'] == 'bulk':
+        args_array['database_connection'].load_csv_bulk_data(args_array['csv_file_array'], args_array, logger)
+    print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
+    logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+
 
 # Function opens the zip file for XML based patent application files and parses, inserts to database
 # and writes log file success
 def process_XML_application_content(args_array):
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
+
+    # If csv file insertion is required, then open all the files
+    # into args_array
+    if "csv" in args_array['command_args']:
+        args_array['csv_file_array'], args_array['table_name_array'] = open_csv_files("grant", args_array['filename'], args_array['csv_directory'])
 
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
@@ -4174,7 +4291,12 @@ def process_XML_application_content(args_array):
     write_process_log(args_array)
     # Close the xml file
     xml_file.close()
-
+    # Close all the open csv files
+    close_csv_files(args_array['csv_file_array'])
+    if args_array['database_insert_mode'] == 'bulk':
+        args_array['database_connection'].load_csv_bulk_data(args_array['csv_file_array'], args_array, logger)
+    print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
+    logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
 
 #Converts html encoding to hex encoding
 def replace_old_html_characters(line):
@@ -4579,7 +4701,7 @@ def main_process(link_queue, args_array, spooling_value):
         # Separate link item into link and file_type and append to args_array for item
         args_array['url_link'] = item[0]
         args_array['uspto_xml_format'] = item[1]
-        args_array['document_type'] = item[2]
+        args_array['document_type'] = item[3]
         # file_name is used to keep track of the .zip base filename
         args_array['file_name'] = os.path.basename(args_array['url_link']).replace(".zip", "")
 
@@ -4700,56 +4822,127 @@ def start_thread_processes(links_array, args_array):
     logger.info("Starting " + str(number_of_threads) + " processes... ")
 
     # Loop for number_of_threads and append threads to process
-    #for link_pile in thread_arrays:
+    # for link_pile in thread_arrays:
     for i in range(number_of_threads):
         # Set an argument to hold the thread number for spooling up downloads.
-        #processes.append(multiprocessing.Process(target=main_process,args=(link_pile, args_array, document_type)))
         # Create a thread and append to list
         processes.append(multiprocessing.Process(target=main_process,args=(link_queue, args_array, i)))
-        # Print to stdout and log that all initial main processes have started
-        print "All " + str(number_of_threads) + " initial main processes have been loaded... "
-        logger.info("All " + str(number_of_threads) + " initial main processes have been loaded... ")
-        # Print to stdout and log that load balancing process starting
-        print "[Starting to load balancing thread... ]"
-        logger.info("[Starting to load balacing thread... ]")
-        processes.append(multiprocessing.Process(target=load_balancer_thread, args=(link_queue, args_array)))
 
+    # Append the load balancer thread once to the loop
+    processes.append(multiprocessing.Process(target=load_balancer_thread, args=(link_queue, args_array)))
+
+    # Loop through and start all processes
     for p in processes:
         p.start()
+
+    # Print to stdout and log that all initial threads have been started
+    print "All " + str(number_of_threads) + " initial main processes have been loaded... "
+    logger.info("All " + str(number_of_threads) + " initial main processes have been loaded... ")
+
+    # This .join() function prevents the script from progressing further.
     for p in processes:
         p.join()
 
 
-# Load balancer that returns a value to function
-def load_balancer_value():
-    # return the 15 minute average CPU balance
-    return os.getloadavg()[2]
-
-# Load balancer thread function
-def load_balancer_thread(link_queue, args_array):
+# Spool down the thread balance when load is too high
+def spool_down_load_balance():
 
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
 
-    # Sleep the balancer for 10 minutes to allow initial threads and CPU load to balance
+    # Print to stdout and log that load balancing process starting
+    print "[Calculating load balancing proccess... ]"
+    logger.info("[Calculating load balacing process... ]")
+
+    # get the count of CPU cores
+    try:
+        core_count = psutil.cpu_count()
+    except Exception as e:
+        core_count = 4
+        print "Number of CPU cores could not be detected. Setting number of CPU cores to 4"
+        logger.info("Number of CPU cores could not be detected. Setting number of CPU cores to 4")
+        traceback.print_exc()
+
+    # Set flag to keep loop running
+    # TODO should I use a break here
+    immediate_load_too_high = True
+    load_check_count = 1
+
+    # Loop while load balance is too high
+    while immediate_load_too_high is True:
+        # Calulate the immediate short term load balance of last minute average
+        one_minute_load_average = os.getloadavg()[0] / core_count
+        # If load balance is too high sleep process and print msg to stdout and log
+        if one_minute_load_average > 2:
+            print "Unacceptable load balance detected. Process " + os.getpid() + " taking a break..."
+            logger.info("Unacceptable load balance detected. Process " + os.getpid() + " taking a break...")
+            load_check_count = load_check_count + 1
+            time.sleep(30)
+        # Else if the thread had been sleeping for 5 minutes, start again
+        elif load_check_count >= 10:
+            immediate_load_too_high = False
+        # If load balance is OK, then keep going
+        else:
+            immediate_load_too_high = False
+
+# Load balancer thread function
+def load_balancer_thread(link_queue, args_array):
+
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
+
+    # Print to stdout and log that load balancing process starting
+    print "[Starting load balancing proccess... ]"
+    logger.info("[Starting load balacing process... ]")
+
+    # get the count of CPU cores
+    try:
+        core_count = psutil.cpu_count()
+        print core_count + " CPU cores were detected..."
+        logger.info(core_count + " CPU cores were detected...")
+    except Exception as e:
+        core_count = 4
+        print "Number of CPU cores could not be detected. Setting number of CPU cores to 4"
+        logger.info("Number of CPU cores could not be detected. Setting number of CPU cores to 4")
+        traceback.print_exc()
+
+    # Sleep the balancer for 5 minutes to allow initial threads and CPU load to balance
     # at the initial number of threads
-    time.sleep(600)
+    time.sleep(300)
     # While there is still links in queue
     while not link_queue.empty():
         # Check the 15 minute average CPU load balance
-        load_average = os.getloadavg()[1]
-        if load_average < 6:
+        five_minute_load_average = os.getloadavg()[1] / core_count
+
+        # If the load average is very small, start a group of new threads
+        if (five_minute_load_average) < 0.75:
             # Print message and log that load balancer is starting another thread
-            print "Starting another thread due to low CPU load balance of: " + str(load_average) + "..."
-            logger.info("Starting another thread due to low CPU load balance of: " + str(load_average) + "...")
+            print "Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average) + "%"
+            logger.info("Starting another thread group due to low CPU load balance of: " str(five_minute_load_average) + "%"
+            # Start another 3 threads and pass in 0 to start right away
+            for i in range(1):
+                start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
+                start_new_thread.start()
+                time.sleep(2)
+            time.sleep(300)
+
+        # If load average less than 1 start single thread
+        elif (five_minute_load_average) < 1:
+            # Print message and log that load balancer is starting another thread
+            print "Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average) + "%"
+            logger.info("Starting another single thread due to low CPU load balance of: " str(five_minute_load_average) + "%"
             # Start another thread and pass in 0 to start right away
-            start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, 0))
+            start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
             start_new_thread.start()
             time.sleep(300)
+
+
+
         else:
             # Print message and log that load balancer is starting another thread
-            print "Reporting CPU load balance: " + str(load_average)
-            logger.info("Reporting CPU load balance: " + str(load_average))
+            print "Reporting CPU load balance: " + str(five_minute_load_average) + "%"
+            logger.info("Reporting CPU load balance: " + str(five_minute_load_average) + "%")
             # Sleep for another 5 minutes while
             time.sleep(300)
 
@@ -5182,10 +5375,11 @@ if __name__=="__main__":
     working_directory = os.getcwd()
     allowed_args_array = ["-csv", "-database", "-update", "-h", "-t", "-help"]
     app_default_threads = 10
-    all_files_processed = False
+    database_insert_mode = "each" # values include `each` and `bulk`
 
     # Declare filepaths
     app_temp_filepath = working_directory + "/TMP/"
+    app_csv_filepath = working_directory + "/CSV/"
     app_log_file = working_directory + "/LOG/USPTO_app.log"
     app_config_file = working_directory + "/.USPTO_config.cnf"
     log_lock_file = working_directory + "/LOG/.logfile.lock"
@@ -5225,6 +5419,7 @@ if __name__=="__main__":
         "default_threads" : app_default_threads,
         "database_type" : database_args['database_type'],
         "database_args" : database_args,
+        "database_insert_mode" : database_insert_mode,
         "required_directory_array" : required_directory_array,
         "app_config_file" : app_config_file,
         "allowed_args_array" : allowed_args_array,

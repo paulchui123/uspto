@@ -1,0 +1,429 @@
+-- -----------------------------------------------------
+-- Table uspto.APPLICATION_PAIR
+-- -----------------------------------------------------
+
+  ApplicationID VARCHAR(20) NOT NULL
+  FileDate DATE DEFAULT NULL
+  AppType VARCHAR(45) DEFAULT NULL
+  ExaminerName VARCHAR(100) DEFAULT NULL
+  GroupArtUnit VARCHAR(45) DEFAULT NULL
+  ConfirmationNum VARCHAR(45) DEFAULT NULL
+  AttorneyDNum VARCHAR(45) DEFAULT NULL
+  ClassSubclass VARCHAR(45) DEFAULT NULL
+  InventorFName VARCHAR(100) DEFAULT NULL
+  CustomerNum VARCHAR(45) DEFAULT NULL
+  Status VARCHAR(200) DEFAULT NULL
+  StatusDate DATE DEFAULT NULL
+  Location VARCHAR(100) DEFAULT NULL
+  LocationDate DATE DEFAULT NULL
+  PubNoEarliest VARCHAR(45) DEFAULT NULL
+  PubDateEarliest DATE DEFAULT NULL
+  PatentNum VARCHAR(45) DEFAULT NULL
+  PatentIssueDate DATE DEFAULT NULL
+  TitleInvention VARCHAR(500) DEFAULT NULL
+  FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.APPLICATION
+-- -----------------------------------------------------
+
+  ApplicationID VARCHAR(20) NOT NULL
+  PublicationID VARCHAR(20) DEFAULT NULL
+  FileDate DATE DEFAULT NULL
+  Kind VARCHAR(2) DEFAULT NULL
+  USSeriesCode VARCHAR(2) DEFAULT NULL
+  AppType VARCHAR(45) DEFAULT NULL
+  PublishDate DATE DEFAULT NULL
+  Title VARCHAR(500) DEFAULT NULL
+  Abstract TEXT DEFAULT NULL
+  ClaimsNum INT DEFAULT NULL
+  DrawingsNum INT DEFAULT NULL
+  FiguresNum INT DEFAULT NULL
+  FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.GRANT
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+IssueDate DATE DEFAULT NULL
+Kind VARCHAR(2) DEFAULT NULL
+USSeriesCode VARCHAR(2) DEFAULT NULL
+Title VARCHAR(500) DEFAULT NULL
+Abstract TEXT DEFAULT NULL
+Claims TEXT DEFAULT NULL
+ClaimsNum INT DEFAULT NULL
+DrawingsNum INT DEFAULT NULL
+FiguresNum INT DEFAULT NULL
+GrantLength INT DEFAULT NULL
+ApplicationID VARCHAR(20) DEFAULT NULL
+FileDate DATE DEFAULT NULL
+AppType VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.INTCLASS_A
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Section VARCHAR(10) DEFAULT NULL
+Class VARCHAR(15) DEFAULT NULL
+Subclass VARCHAR(15) DEFAULT NULL
+MainGroup VARCHAR(10) DEFAULT NULL
+SubGroup VARCHAR(11) DEFAULT NULL
+Malformed BOOLEAN DEFAULT NULL
+FileName VARCHAR(45)
+
+  -- -----------------------------------------------------
+  -- Table uspto.CPCCLASS_A
+  -- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Section VARCHAR(10) DEFAULT NULL
+Class VARCHAR(15) DEFAULT NULL
+Subclass VARCHAR(15) DEFAULT NULL
+MainGroup VARCHAR(10) DEFAULT NULL
+SubGroup VARCHAR(11) DEFAULT NULL
+Malformed BOOLEAN DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.USCLASS_A
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Class VARCHAR(3) DEFAULT NULL
+Subclass VARCHAR(15) DEFAULT NULL
+Malformed BOOLEAN DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.INVENTOR_A
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+FirstName VARCHAR(100) DEFAULT NULL
+LastName VARCHAR(100) DEFAULT NULL
+City VARCHAR(100) DEFAULT NULL
+State VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+Nationality VARCHAR(100) DEFAULT NULL
+Residence VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.ATTORNEY
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+RegNo VARCHAR(20) DEFAULT NULL
+FirstName VARCHAR(45) DEFAULT NULL
+LastName VARCHAR(45) DEFAULT NULL
+Phone VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.FOREIGNPRIORITY
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+DocumentID VARCHAR(100) NOT NULL
+Position INT NOT NULL
+Kind VARCHAR(45) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+PriorityDate DATE DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.TRANSACTION
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Description TEXT DEFAULT NULL
+Date DATE DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.CORRESPONDENCE
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Name VARCHAR(100) DEFAULT NULL
+Address TEXT DEFAULT NULL
+CustomerNum VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.CONTINUITY_PARENT
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Description VARCHAR(100) DEFAULT NULL
+ParentNum VARCHAR(45) DEFAULT NULL
+FileDate DATE DEFAULT NULL
+ParentStatus VARCHAR(45) DEFAULT NULL
+PatentNum VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.CONTINUITY_CHILD
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Description TEXT DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.ADJUSTMENT
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+PriorAfter BOOLEAN DEFAULT NULL
+FileDate DATE DEFAULT NULL
+IssueDate DATE DEFAULT NULL
+PreIssuePetitions VARCHAR(45) DEFAULT NULL
+PostIssuePetitions VARCHAR(45) DEFAULT NULL
+USPTOAdjustDays VARCHAR(45) DEFAULT NULL
+USPTODelayDays VARCHAR(45) DEFAULT NULL
+ThreeYears VARCHAR(45) DEFAULT NULL
+APPLDelayDays VARCHAR(45) DEFAULT NULL
+TotalTermAdjustDays VARCHAR(45) DEFAULT NULL
+ADelays VARCHAR(45) DEFAULT NULL
+BDelays VARCHAR(45) DEFAULT NULL
+CDelays VARCHAR(45) DEFAULT NULL
+OverlapDays VARCHAR(45) DEFAULT NULL
+NonOverlapDelays VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.ADJUSTMENTDESC
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+PriorAfter BOOLEAN DEFAULT NULL
+Number INT DEFAULT NULL
+Date DATE DEFAULT NULL
+ContentDesc TEXT DEFAULT NULL
+PTODays VARCHAR(45) DEFAULT NULL
+APPLDays VARCHAR(45) DEFAULT NULL
+Start VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.EXTENSION
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+FileDate DATE DEFAULT NULL
+USPTOAdjustDays INT DEFAULT NULL
+USPTODelays INT DEFAULT NULL
+CorrectDelays INT DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.EXTENSIONDESC
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Date DATE DEFAULT NULL
+Description TEXT DEFAULT NULL
+PTODays VARCHAR(45) DEFAULT NULL
+APPLDays VARCHAR(45) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.AGENT_A
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+OrgName VARCHAR(200) DEFAULT NULL
+LastName VARCHAR(100) DEFAULT NULL
+FirstName VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.ASSIGNEE_A
+-- -----------------------------------------------------
+
+ApplicationID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+OrgName VARCHAR(200) DEFAULT NULL
+Role VARCHAR(45) DEFAULT NULL
+City VARCHAR(100) DEFAULT NULL
+State VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+
+-- -----------------------------------------------------
+-- Table uspto.USCLASSIFICATION
+-- -----------------------------------------------------
+
+ClassID INT NOT NULL
+Class VARCHAR(3) NULL
+Subclass VARCHAR(6) DEFAULT NULL
+Indent VARCHAR(2) DEFAULT  NULL
+SubclsSqsNum VARCHAR(4) DEFAULT NULL
+NextHigherSub VARCHAR(6) DEFAULT NULL
+Title VARCHAR(200) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.INTCLASS_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Section VARCHAR(10) DEFAULT NULL
+Class VARCHAR(15) DEFAULT NULL
+Subclass VARCHAR(15) DEFAULT NULL
+MainGroup VARCHAR(10) DEFAULT NULL
+SubGroup VARCHAR(10) DEFAULT NULL
+Malformed BOOLEAN DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.CPCCLASS_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Section VARCHAR(10) DEFAULT NULL
+Class VARCHAR(15) DEFAULT NULL
+Subclass VARCHAR(15) DEFAULT NULL
+MainGroup VARCHAR(10) DEFAULT NULL
+SubGroup VARCHAR(11) DEFAULT NULL
+Malformed BOOLEAN DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.NONPATCIT_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Citation TEXT DEFAULT NULL
+Category SMALLINT DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.APPLICANT_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+OrgName VARCHAR(256) DEFAULT NULL
+FirstName VARCHAR(100) DEFAULT NULL
+LastName VARCHAR(100) DEFAULT NULL
+City VARCHAR(100) DEFAULT NULL
+State VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+
+-- -----------------------------------------------------
+-- Table uspto.INVENTOR_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+FirstName VARCHAR(100) DEFAULT NULL
+LastName VARCHAR(100) DEFAULT NULL
+City VARCHAR(100) DEFAULT NULL
+State VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+Nationality VARCHAR(100) DEFAULT NULL
+Residence VARCHAR(258) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.USCLASS_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+Class VARCHAR(3) DEFAULT NULL
+Subclass VARCHAR(15) DEFAULT NULL
+Malformed BOOLEAN DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.AGENT_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+OrgName VARCHAR(200) DEFAULT NULL
+LastName VARCHAR(100) DEFAULT NULL
+FirstName VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.ASSIGNEE_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+OrgName VARCHAR(200) DEFAULT NULL
+Role VARCHAR(45) DEFAULT NULL
+City VARCHAR(100) DEFAULT NULL
+State VARCHAR(100) DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.EXAMINER_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+LastName VARCHAR(45) DEFAULT NULL
+FirstName VARCHAR(45) DEFAULT NULL
+Department VARCHAR(100) DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.GRACIT_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+CitedID VARCHAR(20) DEFAULT NULL
+Kind VARCHAR(10) DEFAULT NULL
+Name VARCHAR(100) DEFAULT NULL
+Date DATE DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+Category SMALLINT DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table uspto.FORPATCIT_G
+-- -----------------------------------------------------
+
+GrantID VARCHAR(20) NOT NULL
+Position INT NOT NULL
+CitedID VARCHAR(20) DEFAULT NULL
+Kind VARCHAR(10) DEFAULT NULL
+Name VARCHAR(100) DEFAULT NULL
+Date DATE DEFAULT NULL
+Country VARCHAR(100) DEFAULT NULL
+Category SMALLINT DEFAULT NULL
+FileName VARCHAR(45)
+
+-- -----------------------------------------------------
+-- Table `uspto`.`STARTED_FILES`
+-- -----------------------------------------------------
+FileName VARCHAR(45)

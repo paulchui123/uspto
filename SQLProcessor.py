@@ -34,7 +34,7 @@ class SQLProcess:
         if self._conn == None:
             self.connect()
 
-        # Execute the query pass into funtion
+        # Execute the query passed into funtion
         try:
             self._cursor.execute(sql)
             #self._conn.commit()
@@ -59,7 +59,63 @@ class SQLProcess:
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
 
-    # used to retrieve ID by matching fields of values
+    # This function accepts an array of csv files which need to be inserted
+    # using COPY command in postgresql and ?? in MySQL
+    def load_csv_bulk_data(csv_file_array, args_array, logger):
+
+        # Print message to stdout and log starting of bulk upload
+        print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'
+        logger.info('[Staring to load csv files in bulk to ' + args_array['database_type'] + ']')
+
+        # Set the start time
+        start_time = time.time()
+
+        # Connect to database if not connected
+        if self._conn == None:
+            self.connect()
+
+        # Loop through each csv file and bulk copy into database
+        for csv_file in csv_file_array:
+
+            # Print message to stdout and log starting of bulk upload
+            print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'
+            logger.info('[Staring to load csv files in bulk to ' + args_array['database_type'] + ']')
+
+            # If postgresql build query
+            if self.database_type == "postgresql":
+                sql = "COPY " + table_name + " FROM " + input_file + " (ERROR_LOGGING, ERROR_LOGGING_SKIP_BAD_ROWS)" 
+            # If MySQL build query
+            elif self.database_type == "mysql":
+                sql = "SOURCE"
+
+            # Build the query for COPY statement
+
+            # Execute the query built abovee
+            try:
+                self._cursor.execute(sql)
+                #self._conn.commit()
+                #result = self._cursor.fetchall()  #fetchone(), fetchmany(n)
+                #return result  #return affected rows
+            except Exception as e:
+                # If there is an error and using databse postgresql
+                # Then rollback the commit??
+                if self.database_type == "postgresql":
+                    self._conn.rollback()
+
+                # Print and log general fail comment
+                print "Database INSERT query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
+                logger.error("Database INSERT query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
+                print "Query string: " + sql
+                logger.error("Query string: " + sql)
+                # Print traceback
+                traceback.print_exc()
+                # Print exception information to file
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+
+
+    # Used to retrieve ID by matching fields of values
     def query(self,sql):
         #try:
         if self._conn == None:
@@ -76,7 +132,7 @@ class SQLProcess:
         #finally:
             #self.close()
 
-    # used to remove records from database when a file previously
+    # Used to remove records from database when a file previously
     # started being processed and did not finish. (when insert duplicate ID error happens)
     def remove_previous_file_records(self, call_type, file_name, logger):
 
@@ -131,7 +187,7 @@ class SQLProcess:
 
             # Print and log not found previous attempt to process file
             print "No previous attempt found to process the " + call_type + " file: " + file_name + " in table: uspto.STARTED_FILES"
-            logger.into("No previous attempt found to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
+            logger.info("No previous attempt found to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
 
             # Insert the record into the database that the file has been started.
             try:

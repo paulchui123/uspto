@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS uspto.INTCLASS_A (
     Class VARCHAR(15) DEFAULT NULL,
     Subclass VARCHAR(15) DEFAULT NULL,
     MainGroup VARCHAR(10) DEFAULT NULL,
-    SubGroup VARCHAR(10) DEFAULT NULL,
+    SubGroup VARCHAR(11) DEFAULT NULL,
     Malformed BOOLEAN DEFAULT NULL,
     FileName VARCHAR(45),
     PRIMARY KEY (ApplicationID, Position, FileName));
@@ -368,22 +368,6 @@ CREATE TABLE IF NOT EXISTS uspto.NONPATCIT_G (
   Position INT NOT NULL,
   Citation TEXT DEFAULT NULL,
   Category SMALLINT DEFAULT NULL,
-  FileName VARCHAR(45),
-  PRIMARY KEY (GrantID, Position, FileName));
-
--- -----------------------------------------------------
--- Table uspto.APPLICANT_G
--- -----------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS uspto.APPLICANT_G (
-  GrantID VARCHAR(20) NOT NULL,
-  Position INT NOT NULL,
-  OrgName VARCHAR(256) DEFAULT NULL,
-  FirstName VARCHAR(100) DEFAULT NULL,
-  LastName VARCHAR(100) DEFAULT NULL,
-  City VARCHAR(100) DEFAULT NULL,
-  State VARCHAR(100) DEFAULT NULL,
-  Country VARCHAR(100) DEFAULT NULL,
   FileName VARCHAR(45),
   PRIMARY KEY (GrantID, Position, FileName));
 

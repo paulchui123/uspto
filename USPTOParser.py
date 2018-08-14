@@ -3754,19 +3754,30 @@ def close_csv_files(csv_file_array, args_array):
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
 
+    print '[Cleaning up .csv files... Time: {0}]'.format(time.strftime('%c'))
+    logger.info('[Closed .csv files... Time: {0}]'.format(time.strftime('%c')))
+
     # Loop through each file in array of open csv files
     for csv_file in csv_file_array:
-        # Close file being written to
-        csv_file.close()
-        print '[Closed CSV file: ' + csv_file + ' Time: {0}]'.format(time.strftime('%c'))
-        logger.info('[Closed CSV file: ' + csv_file + ' Time: {0}]'.format(time.strftime('%c')))
-        # Remove csv file from the CSV directory if 'csv' not in args_array['command_args']
-        if "csv" not in args_array['command_args']:
-            if os.path.exists(csv_file):
-                os.remove(csv_file)
-            print '[Removed CSV file: ' + csv_file + ' Time: {0}]'.format(time.strftime('%c'))
-            logger.info('[Removed CSV file: ' + csv_file + ' Time: {0}]'.format(time.strftime('%c')))
-
+        try:
+            # Close file being written to
+            csv_file['csv_writer'].close()
+            print 'Closed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
+            logger.info('Closed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
+            # Remove csv file from the CSV directory if 'csv' not in args_array['command_args']
+            if "csv" not in args_array['command_args']:
+                if os.path.exists(csv_file['file_name']):
+                    os.remove(csv_file['file_name'])
+                print 'Removed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
+                logger.info('Removed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
+        except Exception e:
+            # Print exception information to file
+            print 'Error removing .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
+            logger.error('Error removing .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+            traceback.print_exc()
 
 # Function used to store grant data in CSV and/or database
 def store_grant_data(processed_data_array, args_array):
@@ -3791,7 +3802,7 @@ def store_grant_data(processed_data_array, args_array):
         for data_item in processed_data_array['processed_grant']:
             # Print start message to stdout and log
             print '- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c"))
-            logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c")))
+            #logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c")))
             # Move the table name to temp variable and remove from table
             table_name = data_item['table_name']
             del data_item['table_name']
@@ -3799,7 +3810,7 @@ def store_grant_data(processed_data_array, args_array):
             # htmlentity characters found or other error occurs
             try:
                 # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['grant'].writerow(data_item)
+                args_array['csv_file_array']['grant']['csv_writer'].writerow(data_item)
                 # Append the table onto the array
                 args_array['csv_file_array']['grant']['table_name'] = table_name
             except Exception as e:
@@ -3994,7 +4005,7 @@ def store_application_data(processed_data_array, args_array):
         for data_item in processed_data_array["processed_application"]:
             # Print start message to stdout and log
             print '- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c"))
-            logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c")))
+            #logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c")))
             del data_item['table_name']
             args_array['csv_file_array']['application']['csv_writer'].writerow(data_item)
         for data_item in processed_data_array["processed_agent"]:

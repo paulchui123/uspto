@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS uspto.APPLICATION_PAIR (
   GroupArtUnit VARCHAR(45) DEFAULT NULL,
   ConfirmationNum VARCHAR(45) DEFAULT NULL,
   AttorneyDNum VARCHAR(45) DEFAULT NULL,
-  ClassSubclass VARCHAR(45) DEFAULT NULL,
+  ClassSubClass VARCHAR(45) DEFAULT NULL,
   InventorFName VARCHAR(100) DEFAULT NULL,
   CustomerNum VARCHAR(45) DEFAULT NULL,
   Status VARCHAR(200) DEFAULT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS uspto.INTCLASS_A (
   Position INT NOT NULL,
   Section VARCHAR(10) DEFAULT NULL,
   Class VARCHAR(15) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
+  SubClass VARCHAR(15) DEFAULT NULL,
   MainGroup VARCHAR(10) DEFAULT NULL,
   SubGroup VARCHAR(10) DEFAULT NULL,
   Malformed BOOLEAN DEFAULT NULL,
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS uspto.INTCLASS_A (
     Position INT NOT NULL,
     Section VARCHAR(10) DEFAULT NULL,
     Class VARCHAR(15) DEFAULT NULL,
-    Subclass VARCHAR(15) DEFAULT NULL,
+    SubClass VARCHAR(15) DEFAULT NULL,
     MainGroup VARCHAR(10) DEFAULT NULL,
     SubGroup VARCHAR(11) DEFAULT NULL,
     Malformed BOOLEAN DEFAULT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS uspto.USCLASS_A (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Class VARCHAR(3) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
+  SubClass VARCHAR(15) DEFAULT NULL,
   Malformed BOOLEAN DEFAULT NULL,
   FileName VARCHAR(45),
   PRIMARY KEY (ApplicationID, Position, FileName));
@@ -137,10 +137,10 @@ CREATE TABLE IF NOT EXISTS uspto.INVENTOR_A (
   PRIMARY KEY (ApplicationID, Position, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.ATTORNEY
+-- Table uspto.ATTORNEY_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.ATTORNEY (
+CREATE TABLE IF NOT EXISTS uspto.ATTORNEY_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   RegNo VARCHAR(20) DEFAULT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS uspto.ATTORNEY (
   PRIMARY KEY (ApplicationID, Position, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.FOREIGNPRIORITY
+-- Table uspto.FOREIGNPRIORITY_A
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS uspto.FOREIGNPRIORITY_A (
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS uspto.FOREIGNPRIORITY_A (
 -- Table uspto.TRANSACTION
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.TRANSACTION (
+CREATE TABLE IF NOT EXISTS uspto.TRANSACTION_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Description TEXT DEFAULT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS uspto.TRANSACTION (
 -- Table uspto.CORRESPONDENCE
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.CORRESPONDENCE (
+CREATE TABLE IF NOT EXISTS uspto.CORRESPONDENCE_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Name VARCHAR(100) DEFAULT NULL,
   Address TEXT DEFAULT NULL,
@@ -189,10 +189,10 @@ CREATE TABLE IF NOT EXISTS uspto.CORRESPONDENCE (
   PRIMARY KEY (ApplicationID, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.CONTINUITY_PARENT
+-- Table uspto.CONTINUITY_PARENT_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_PARENT (
+CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_PARENT_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Description VARCHAR(100) DEFAULT NULL,
@@ -204,10 +204,10 @@ CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_PARENT (
   PRIMARY KEY (ApplicationID, Position, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.CONTINUITY_CHILD
+-- Table uspto.CONTINUITY_CHILD_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_CHILD (
+CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_CHILD_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Description TEXT DEFAULT NULL,
@@ -215,10 +215,10 @@ CREATE TABLE IF NOT EXISTS uspto.CONTINUITY_CHILD (
   PRIMARY KEY (ApplicationID, Position, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.ADJUSTMENT
+-- Table uspto.ADJUSTMENT_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENT (
+CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENT_P (
   ApplicationID VARCHAR(20) NOT NULL,
   PriorAfter BOOLEAN DEFAULT NULL,
   FileDate DATE DEFAULT NULL,
@@ -239,10 +239,10 @@ CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENT (
   PTOManualAdjust VARCHAR(45) DEFAULT NULL);
 
 -- -----------------------------------------------------
--- Table uspto.ADJUSTMENTDESC
+-- Table uspto.ADJUSTMENTDESC_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENTDESC (
+CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENTDESC_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   PriorAfter BOOLEAN DEFAULT NULL,
@@ -256,10 +256,10 @@ CREATE TABLE IF NOT EXISTS uspto.ADJUSTMENTDESC (
   PRIMARY KEY (ApplicationID, Position, FileName));
 
 -- -----------------------------------------------------
--- Table uspto.EXTENSION
+-- Table uspto.EXTENSION_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.EXTENSION (
+CREATE TABLE IF NOT EXISTS uspto.EXTENSION_P (
   ApplicationID VARCHAR(20) NOT NULL,
   FileDate DATE DEFAULT NULL,
   USPTOAdjustDays INT DEFAULT NULL,
@@ -269,10 +269,10 @@ CREATE TABLE IF NOT EXISTS uspto.EXTENSION (
   TotalExtensionDays INT DEFAULT NULL);
 
 -- -----------------------------------------------------
--- Table uspto.EXTENSIONDESC
+-- Table uspto.EXTENSIONDESC_P
 -- -----------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS uspto.EXTENSIONDESC (
+CREATE TABLE IF NOT EXISTS uspto.EXTENSIONDESC_P (
   ApplicationID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Date DATE DEFAULT NULL,
@@ -319,9 +319,9 @@ CREATE TABLE IF NOT EXISTS uspto.ASSIGNEE_A (
 CREATE TABLE IF NOT EXISTS uspto.USCLASSIFICATION (
   ClassID INT NOT NULL,
   Class VARCHAR(3) NULL,
-  Subclass VARCHAR(6) DEFAULT NULL,
+  SubClass VARCHAR(6) DEFAULT NULL,
   Indent VARCHAR(2) DEFAULT  NULL,
-  SubclsSqsNum VARCHAR(4) DEFAULT NULL,
+  SubClassSqsNum VARCHAR(4) DEFAULT NULL,
   NextHigherSub VARCHAR(6) DEFAULT NULL,
   Title VARCHAR(200) DEFAULT NULL,
   FileName VARCHAR(45),
@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS uspto.INTCLASS_G (
   Position INT NOT NULL,
   Section VARCHAR(10) DEFAULT NULL,
   Class VARCHAR(15) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
+  SubClass VARCHAR(15) DEFAULT NULL,
   MainGroup VARCHAR(10) DEFAULT NULL,
   SubGroup VARCHAR(10) DEFAULT NULL,
   Malformed BOOLEAN DEFAULT NULL,
@@ -352,7 +352,7 @@ CREATE TABLE IF NOT EXISTS uspto.CPCCLASS_G (
   Position INT NOT NULL,
   Section VARCHAR(10) DEFAULT NULL,
   Class VARCHAR(15) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
+  SubClass VARCHAR(15) DEFAULT NULL,
   MainGroup VARCHAR(10) DEFAULT NULL,
   SubGroup VARCHAR(10) DEFAULT NULL,
   Malformed BOOLEAN DEFAULT NULL,
@@ -412,7 +412,7 @@ CREATE TABLE IF NOT EXISTS uspto.USCLASS_G (
   GrantID VARCHAR(20) NOT NULL,
   Position INT NOT NULL,
   Class VARCHAR(3) DEFAULT NULL,
-  Subclass VARCHAR(15) DEFAULT NULL,
+  SubClass VARCHAR(15) DEFAULT NULL,
   Malformed BOOLEAN DEFAULT NULL,
   FileName VARCHAR(45),
   PRIMARY KEY (GrantID, Position, FileName));

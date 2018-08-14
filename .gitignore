@@ -14,6 +14,8 @@ Thumbs.db
 
 # Logs
 ######################
+LOG/old_log_files
+LOG/old_link_files
 *.log
 
 # CSV Files

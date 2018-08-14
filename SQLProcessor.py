@@ -61,7 +61,7 @@ class SQLProcess:
 
     # This function accepts an array of csv files which need to be inserted
     # using COPY command in postgresql and ?? in MySQL
-    def load_csv_bulk_data(csv_file_array, args_array, logger):
+    def load_csv_bulk_data(args_array, logger):
 
         # Print message to stdout and log starting of bulk upload
         print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'
@@ -75,7 +75,7 @@ class SQLProcess:
             self.connect()
 
         # Loop through each csv file and bulk copy into database
-        for csv_file in csv_file_array:
+        for csv_file in args_array['csv_file_array']:
 
             # Print message to stdout and log starting of bulk upload
             print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'
@@ -83,14 +83,15 @@ class SQLProcess:
 
             # If postgresql build query
             if self.database_type == "postgresql":
-                sql = "COPY " + table_name + " FROM " + input_file + " (ERROR_LOGGING, ERROR_LOGGING_SKIP_BAD_ROWS)" 
+                sql = "COPY " + csv_file['table_name'] + " FROM " + csv_file['csv_writer'] + " (ERROR_LOGGING, ERROR_LOGGING_SKIP_BAD_ROWS)"
             # If MySQL build query
             elif self.database_type == "mysql":
-                sql = "SOURCE"
+                # TODO: consider "SET foreign_key_checks = 0" to ignore
+                # LOCAL is used to set duplicate key to warning instead of error
+                # IGNORE is also used to ignore rows that violate duplicate unique key constraints
+                sql = "LOAD DATA LOCAL INFILE " + csv_file['csv_writer'] + " INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY ',' ENCLOSED BY '' ESCAPED BY '\\' LINES TERMINATED BY '\n' STARTING BY '' IGNORE 1 LINES"
 
-            # Build the query for COPY statement
-
-            # Execute the query built abovee
+            # Execute the query built above
             try:
                 self._cursor.execute(sql)
                 #self._conn.commit()
@@ -140,8 +141,8 @@ class SQLProcess:
         start_time = time.time()
 
         # Print and log starting to check for previous attempt to process file
-        print "Checking database for previous attempt to process the " + call_type + " file: " + file_name + " ..."
-        logger.info("Checking database for previous attempt to process the " + call_type + " file:" + file_name + " ...")
+        print "[Checking database for previous attempt to process the " + call_type + " file: " + file_name + "...]"
+        logger.info("[Checking database for previous attempt to process the " + call_type + " file:" + file_name + "...]")
 
         # Connect to database if not connected
         if self._conn == None:

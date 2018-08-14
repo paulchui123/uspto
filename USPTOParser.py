@@ -3770,7 +3770,7 @@ def close_csv_files(csv_file_array, args_array):
                     os.remove(csv_file['file_name'])
                 print 'Removed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
                 logger.info('Removed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
-        except Exception e:
+        except Exception as e:
             # Print exception information to file
             print 'Error removing .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
             logger.error('Error removing .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))

@@ -28,7 +28,7 @@ class SQLProcess:
         self._cursor = None
 
     # Load the insert query into the database
-    def load(self,sql, args_array, logger):
+    def load(self, sql, args_array, logger):
 
         # Connect to database if not connected
         if self._conn == None:
@@ -61,7 +61,7 @@ class SQLProcess:
 
     # This function accepts an array of csv files which need to be inserted
     # using COPY command in postgresql and ?? in MySQL
-    def load_csv_bulk_data(args_array, logger):
+    def load_csv_bulk_data(self, args_array, logger):
 
         # Print message to stdout and log starting of bulk upload
         print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'
@@ -77,26 +77,20 @@ class SQLProcess:
         # Loop through each csv file and bulk copy into database
         for key, csv_file in args_array['csv_file_array'].items():
 
-            # Print message to stdout and log starting of bulk upload
-            print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'
-            logger.info('[Staring to load csv files in bulk to ' + args_array['database_type'] + ']')
-
             # If postgresql build query
             if self.database_type == "postgresql":
-                sql = "COPY " + csv_file['table_name'] + " FROM " + csv_file['csv_writer'] + " (ERROR_LOGGING, ERROR_LOGGING_SKIP_BAD_ROWS)"
+                sql = "COPY " + csv_file['table_name'] + " FROM '" + csv_file['csv_file_name'] + "' delimiter ',' csv header"
             # If MySQL build query
             elif self.database_type == "mysql":
                 # TODO: consider "SET foreign_key_checks = 0" to ignore
                 # LOCAL is used to set duplicate key to warning instead of error
                 # IGNORE is also used to ignore rows that violate duplicate unique key constraints
-                sql = "LOAD DATA LOCAL INFILE " + csv_file['csv_writer'] + " INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY ',' ENCLOSED BY '' ESCAPED BY '\\' LINES TERMINATED BY '\n' STARTING BY '' IGNORE 1 LINES"
-
+                sql = "LOAD DATA LOCAL INFILE " + csv_file['csv_file_name'] + " INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY ',' ENCLOSED BY '' ESCAPED BY '\\' LINES TERMINATED BY '\n' STARTING BY '' IGNORE 1 LINES"
             # Execute the query built above
             try:
                 self._cursor.execute(sql)
-                #self._conn.commit()
-                #result = self._cursor.fetchall()  #fetchone(), fetchmany(n)
-                #return result  #return affected rows
+                # Return a successfull insertion flag
+                return True
             except Exception as e:
                 # If there is an error and using databse postgresql
                 # Then rollback the commit??
@@ -104,8 +98,8 @@ class SQLProcess:
                     self._conn.rollback()
 
                 # Print and log general fail comment
-                print "Database INSERT query failed... " + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id']
-                logger.error("Database INSERT query failed..." + args_array['file_name'] + " into table: " + args_array['table_name'] + " Document ID Number " + args_array['document_id'])
+                print "Database bulk load query failed... " + csv_file['csv_file_name'] + " into table: " + csv_file['table_name']
+                logger.error("Database bulk load query failed..." + csv_file['csv_file_name'] + " into table: " + csv_file['table_name'])
                 print "Query string: " + sql
                 logger.error("Query string: " + sql)
                 # Print traceback
@@ -114,7 +108,8 @@ class SQLProcess:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
-
+                # Return a unsucessful flag
+                return False
 
     # Used to retrieve ID by matching fields of values
     def query(self,sql):

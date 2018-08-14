@@ -2779,15 +2779,20 @@ def process_APS_grant_content(args_array):
 
     # Close the xml file
     xml_file.close()
-    # Close all the open csv files
-    close_csv_files(args_array)
+
+    # Set a flag file_processed to ensure that the bulk insert succeeds
+    file_processed = True
 
     # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':
-        args_array['database_connection'].load_csv_bulk_data(args_array, logger)
+        file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
     # Send the information to write_process_log to have log file rewritten to "Processed"
-    write_process_log(args_array)
+    if file_processed:
+        write_process_log(args_array)
+
+    # Close all the open csv files
+    close_csv_files(args_array)
 
     # Print message to stdout and log
     print '[Processed .bat or .txt File. Total time:{0}  Time: {1}]'.format(time.time()-start_time, time.strftime('%c'))
@@ -3799,7 +3804,7 @@ def close_csv_files(args_array):
             if "csv" not in args_array['command_args']:
                 if os.path.exists(csv_file['csv_file_name']):
                     os.remove(csv_file['csv_file_name'])
-                # Print message to stdout and log 
+                # Print message to stdout and log
                 print 'Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
                 logger.info('Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c')))
         except Exception as e:
@@ -4207,9 +4212,6 @@ def process_XML_grant_content(args_array):
     if "csv" in args_array['command_args'] or ("database" in args_array['command_args'] and args_array['database_insert_mode'] == "bulk"):
         args_array['csv_file_array'] = open_csv_files(args_array['document_type'], args_array['file_name'], args_array['csv_directory'])
 
-
-    close_csv_files(args_array)
-
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
 
@@ -4319,15 +4321,20 @@ def process_XML_grant_content(args_array):
 
     # Close the xml file
     xml_file.close()
-    # Close all the open csv files
-    close_csv_files(args_array)
+
+    # Set a flag file_processed to ensure that the bulk insert succeeds
+    file_processed = True
 
     # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':
-        args_array['database_connection'].load_csv_bulk_data(args_array, logger)
+        file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
     # Send the information to write_process_log to have log file rewritten to "Processed"
-    write_process_log(args_array)
+    if file_processed:
+        write_process_log(args_array)
+
+    # Close all the open csv files
+    close_csv_files(args_array)
 
     # Print message to stdout and log
     print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
@@ -4436,15 +4443,20 @@ def process_XML_application_content(args_array):
 
     # Close the xml file
     xml_file.close()
-    # Close all the open csv files
-    close_csv_files(args_array)
+
+    # Set a flag file_processed to ensure that the bulk insert succeeds
+    file_processed = True
 
     # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':
-        args_array['database_connection'].load_csv_bulk_data(args_array, logger)
+        file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
     # Send the information to write_process_log to have log file rewritten to "Processed"
-    write_process_log(args_array)
+    if file_processed:
+        write_process_log(args_array)
+
+    # Close all the open csv files
+    close_csv_files(args_array)
 
     # Print message to stdout and log
     print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))

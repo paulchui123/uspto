@@ -36,8 +36,6 @@ Secondly, you can set the number of threads with a command line argument '-t [in
 
 Finally, you must specify the location for the data to be stored.  These options are: '-csv' and '-database'.  You must include at least one. These arguemnts tell the script where you want the data to be stored. The following example is the command to store in csv file and database with 20 process threads.  You should set the 'database_insert_mode' to specify whether you want the data to be inserted into the database after each data object is found and parsed (`each`), or in bulk post parsing of each file (`bulk`).  `bulk` setting improve database transactions per second.
 
-NOTE: The csv storage is not functional yet.
-
 $ python USPTOParser.py -csv -database -t 20
 
 ### 3. Schedule the updater
@@ -49,3 +47,15 @@ parsed and stored in the destinations you previously specified.  Since database 
 week, the updater can be scheduled once a week to keep your data up-to-date.  Also, you can reduce the number of threads for the updater script to not disrupt the user experience during update time.
 
 $ python USPTOParser.py -update -t 3
+
+## **Further Information:**
+
+### CPU Load balancing
+
+The script currently uses a load balancer which initially calculates the number of CPU cores in your computer and then will check periodically how much CPU load is being consumed.  If the overall CPU load is less than 75%, another thread is added.  These settings can be adjusted in the script.
+
+### Bulk Database Insertion Performance
+
+The option to insert each document's data into the database can be done two ways.  The script can insert each document record immediately after it is parsed or in bulk after a file is finished being parsed.  Using bulk storage utilizes .csv files to temporarily store the data before it is inserted in bulk.  If the `-csv` command line argument is not set, then the .csv. files are erased after being used to load the data.  
+
+Performance of using bulk uploader resulted in... ??? 

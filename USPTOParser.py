@@ -357,7 +357,7 @@ def extract_XML4_grant(raw_data, args_array):
                     cpc_class_sec = cpc_text[0]
                     cpc_class = cpc_class_string[1:3]
                     cpc_subclass = cpc_class_string[3]
-                    cpc_class_mgr, cpc_class_sgr = cpc_group_string.split("/")
+                    cpc_class_mgr, cpc_class_sgr = cpc_group_string.rsplit("/", 1)
                     #print cpc_class_sec + " " + cpc_class + " " + cpc_subclass + " " + cpc_class_mgr + " " + cpc_class_sgr
                 except:
                     #traceback.print_exc()
@@ -2777,14 +2777,19 @@ def process_APS_grant_content(args_array):
                     data_parse_completed = True
                     next_line_loaded_already = True
 
-    # Send the information to write_process_log to have log file rewritten to "Processed"
-    write_process_log(args_array)
-    # Close the file being read
-    data_reader.close()
+    # Close the xml file
+    xml_file.close()
     # Close all the open csv files
-    close_csv_files(args_array['csv_file_array'], args_array)
+    close_csv_files(args_array)
+
+    # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':
         args_array['database_connection'].load_csv_bulk_data(args_array, logger)
+
+    # Send the information to write_process_log to have log file rewritten to "Processed"
+    write_process_log(args_array)
+
+    # Print message to stdout and log
     print '[Processed .bat or .txt File. Total time:{0}  Time: {1}]'.format(time.time()-start_time, time.strftime('%c'))
     #print data_list
 
@@ -3646,32 +3651,46 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['cpcclass'] = {}
 
         # Define all the .csv filenames fullpath and append to array
-        csv_writer_array['grant']['csv_file_name'] = csv_directory + '/CSV_G/grant_' + csv_file_name
-        csv_writer_array['applicant']['csv_file_name'] = csv_directory + '/CSV_G/applicant_' + csv_file_name
-        csv_writer_array['examiner']['csv_file_name'] = csv_directory + '/CSV_G/examiner_' + csv_file_name
-        csv_writer_array['agent']['csv_file_name'] = csv_directory + '/CSV_G/agent_' + csv_file_name
-        csv_writer_array['assignee']['csv_file_name'] = csv_directory + '/CSV_G/assignee_' + csv_file_name
-        csv_writer_array['inventor']['csv_file_name'] = csv_directory + '/CSV_G/inventor_' + csv_file_name
-        csv_writer_array['gracit']['csv_file_name'] = csv_directory + '/CSV_G/gracit_' + csv_file_name
-        csv_writer_array['forpatcit']['csv_file_name'] = csv_directory + '/CSV_G/forpatcit_' + csv_file_name
-        csv_writer_array['nonpatcit']['csv_file_name'] = csv_directory + '/CSV_G/nonpatcit_' + csv_file_name
-        csv_writer_array['usclass']['csv_file_name'] = csv_directory + '/CSV_G/usclass_' + csv_file_name
-        csv_writer_array['intclass']['csv_file_name'] = csv_directory + '/CSV_G/intclass_' + csv_file_name
-        csv_writer_array['cpcclass']['csv_file_name'] = csv_directory + '/CSV_G/cpcclass_' + csv_file_name
+        csv_writer_array['grant']['csv_file_name'] = csv_directory + 'CSV_G/grant_' + csv_file_name
+        csv_writer_array['applicant']['csv_file_name'] = csv_directory + 'CSV_G/applicant_' + csv_file_name
+        csv_writer_array['examiner']['csv_file_name'] = csv_directory + 'CSV_G/examiner_' + csv_file_name
+        csv_writer_array['agent']['csv_file_name'] = csv_directory + 'CSV_G/agent_' + csv_file_name
+        csv_writer_array['assignee']['csv_file_name'] = csv_directory + 'CSV_G/assignee_' + csv_file_name
+        csv_writer_array['inventor']['csv_file_name'] = csv_directory + 'CSV_G/inventor_' + csv_file_name
+        csv_writer_array['gracit']['csv_file_name'] = csv_directory + 'CSV_G/gracit_' + csv_file_name
+        csv_writer_array['forpatcit']['csv_file_name'] = csv_directory + 'CSV_G/forpatcit_' + csv_file_name
+        csv_writer_array['nonpatcit']['csv_file_name'] = csv_directory + 'CSV_G/nonpatcit_' + csv_file_name
+        csv_writer_array['usclass']['csv_file_name'] = csv_directory + 'CSV_G/usclass_' + csv_file_name
+        csv_writer_array['intclass']['csv_file_name'] = csv_directory + 'CSV_G/intclass_' + csv_file_name
+        csv_writer_array['cpcclass']['csv_file_name'] = csv_directory + 'CSV_G/cpcclass_' + csv_file_name
+
+        # Define all the dictionary arrays to hold writers and filenames
+        csv_writer_array['grant']['file'] = open(csv_writer_array['grant']['csv_file_name'], 'w')
+        csv_writer_array['applicant']['file'] = open(csv_writer_array['applicant']['csv_file_name'], 'w')
+        csv_writer_array['examiner']['file'] = open(csv_writer_array['examiner']['csv_file_name'], 'w')
+        csv_writer_array['agent']['file'] = open(csv_writer_array['agent']['csv_file_name'], 'w')
+        csv_writer_array['assignee']['file'] = open(csv_writer_array['assignee']['csv_file_name'], 'w')
+        csv_writer_array['inventor']['file'] = open(csv_writer_array['inventor']['csv_file_name'], 'w')
+        csv_writer_array['gracit']['file'] = open(csv_writer_array['gracit']['csv_file_name'], 'w')
+        csv_writer_array['forpatcit']['file'] = open(csv_writer_array['forpatcit']['csv_file_name'], 'w')
+        csv_writer_array['nonpatcit']['file'] = open(csv_writer_array['nonpatcit']['csv_file_name'], 'w')
+        csv_writer_array['usclass']['file'] = open(csv_writer_array['usclass']['csv_file_name'], 'w')
+        csv_writer_array['intclass']['file'] = open(csv_writer_array['intclass']['csv_file_name'], 'w')
+        csv_writer_array['cpcclass']['file'] = open(csv_writer_array['cpcclass']['csv_file_name'], 'w')
 
         # Open all CSV files to write to and append to array
-        csv_writer_array['grant']['csv_writer'] = csv.DictWriter(open(csv_writer_array['grant']['csv_file_name'], 'w'), fieldnames = field_names_array['grant'])
-        csv_writer_array['applicant']['csv_writer'] = csv.DictWriter(open(csv_writer_array['applicant']['csv_file_name'], 'w'), fieldnames = field_names_array['applicant'])
-        csv_writer_array['examiner']['csv_writer'] = csv.DictWriter(open(csv_writer_array['examiner']['csv_file_name'], 'w'), fieldnames = field_names_array['examiner'])
-        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(open(csv_writer_array['agent']['csv_file_name'], 'w'), fieldnames = field_names_array['agent'])
-        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(open(csv_writer_array['assignee']['csv_file_name'], 'w'), fieldnames = field_names_array['assignee'])
-        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(open(csv_writer_array['inventor']['csv_file_name'], 'w'), fieldnames = field_names_array['inventor'])
-        csv_writer_array['gracit']['csv_writer'] = csv.DictWriter(open(csv_writer_array['gracit']['csv_file_name'], 'w'), fieldnames = field_names_array['gracit'])
-        csv_writer_array['forpatcit']['csv_writer'] = csv.DictWriter(open(csv_writer_array['forpatcit']['csv_file_name'], 'w'), fieldnames = field_names_array['forpatcit'])
-        csv_writer_array['nonpatcit']['csv_writer'] = csv.DictWriter(open(csv_writer_array['nonpatcit']['csv_file_name'],'w'), fieldnames = field_names_array['nonpatcit'])
-        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(open(csv_writer_array['usclass']['csv_file_name'], 'w'), fieldnames = field_names_array['usclass'])
-        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(open(csv_writer_array['intclass']['csv_file_name'], 'w'), fieldnames = field_names_array['intclass'])
-        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(open(csv_writer_array['cpcclass']['csv_file_name'], 'w'), fieldnames = field_names_array['cpcclass'])
+        csv_writer_array['grant']['csv_writer'] = csv.DictWriter(csv_writer_array['grant']['file'], fieldnames = field_names_array['grant'])
+        csv_writer_array['applicant']['csv_writer'] = csv.DictWriter(csv_writer_array['applicant']['file'], fieldnames = field_names_array['applicant'])
+        csv_writer_array['examiner']['csv_writer'] = csv.DictWriter(csv_writer_array['examiner']['file'], fieldnames = field_names_array['examiner'])
+        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'])
+        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'])
+        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'])
+        csv_writer_array['gracit']['csv_writer'] = csv.DictWriter(csv_writer_array['gracit']['file'], fieldnames = field_names_array['gracit'])
+        csv_writer_array['forpatcit']['csv_writer'] = csv.DictWriter(csv_writer_array['forpatcit']['file'], fieldnames = field_names_array['forpatcit'])
+        csv_writer_array['nonpatcit']['csv_writer'] = csv.DictWriter(csv_writer_array['nonpatcit']['file'], fieldnames = field_names_array['nonpatcit'])
+        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'])
+        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'])
+        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'])
 
         # Write the header to each file
         csv_writer_array['grant']['csv_writer'].writeheader()
@@ -3720,15 +3739,25 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['cpcclass']['csv_file_name'] = csv_directory + '/CSV_A/cpcclass_' + csv_file_name
         csv_writer_array['foreignpriority']['csv_file_name'] = csv_directory + '/CSV_A/foreignpriority_' + csv_file_name
 
+        # Define all the dicionaries to hold the csv data
+        csv_writer_array['application']['file'] = open(csv_writer_array['application']['csv_file_name'], 'w')
+        csv_writer_array['agent']['file'] = open(csv_writer_array['agent']['csv_file_name'], 'w')
+        csv_writer_array['assignee']['file'] = open(csv_writer_array['assignee']['csv_file_name'], 'w')
+        csv_writer_array['inventor']['file'] = open(csv_writer_array['inventor']['csv_file_name'], 'w')
+        csv_writer_array['usclass']['file'] = open(csv_writer_array['usclass']['csv_file_name'], 'w')
+        csv_writer_array['intclass']['file'] = open(csv_writer_array['intclass']['csv_file_name'], 'w')
+        csv_writer_array['cpcclass']['file'] = open(csv_writer_array['cpcclass']['csv_file_name'], 'w')
+        csv_writer_array['foreignpriority']['file'] = open(csv_writer_array['foreignpriority']['csv_file_name'], 'w')
+
         # Open all CSV files to write to and append to array
-        csv_writer_array['application']['csv_writer'] = csv.DictWriter(open(csv_writer_array['application']['csv_file_name'], 'w'), fieldnames = field_names_array['application'])
-        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(open(csv_writer_array['agent']['csv_file_name'], 'w'), fieldnames = field_names_array['agent'])
-        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(open(csv_writer_array['assignee']['csv_file_name'], 'w'), fieldnames = field_names_array['assignee'])
-        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(open(csv_writer_array['inventor']['csv_file_name'], 'w'), fieldnames = field_names_array['inventor'])
-        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(open(csv_writer_array['usclass']['csv_file_name'], 'w'), fieldnames = field_names_array['usclass'])
-        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(open(csv_writer_array['intclass']['csv_file_name'], 'w'), fieldnames = field_names_array['intclass'])
-        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(open(csv_writer_array['cpcclass']['csv_file_name'], 'w'), fieldnames = field_names_array['cpcclass'])
-        csv_writer_array['foreignpriority']['csv_writer'] = csv.DictWriter(open(csv_writer_array['foreignpriority']['csv_file_name'], 'w'), fieldnames = field_names_array['foreignpriority'])
+        csv_writer_array['application']['csv_writer'] = csv.DictWriter(csv_writer_array['application']['file'], fieldnames = field_names_array['application'])
+        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'])
+        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'])
+        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'])
+        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'])
+        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'])
+        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'])
+        csv_writer_array['foreignpriority']['csv_writer'] = csv.DictWriter(csv_writer_array['foreignpriority']['file'], fieldnames = field_names_array['foreignpriority'])
 
         # Write header for all application csv files
         csv_writer_array['application']['csv_writer'].writeheader()
@@ -3749,31 +3778,34 @@ def open_csv_files(file_type, file_name, csv_directory):
     #return True
 
 # Function used to close all csv files in array
-def close_csv_files(csv_file_array, args_array):
+def close_csv_files(args_array):
 
     # Import logger
     logger = logging.getLogger("USPTO_Database_Construction")
 
-    print '[Cleaning up .csv files... Time: {0}]'.format(time.strftime('%c'))
-    logger.info('[Closed .csv files... Time: {0}]'.format(time.strftime('%c')))
+    # Print message to stdout and log
+    print '[Cleaning up .csv files... ]'
+    logger.info('[Cleaning up .csv files... ]')
 
     # Loop through each file in array of open csv files
-    for csv_file in csv_file_array:
+    for key, csv_file in args_array['csv_file_array'].items():
         try:
             # Close file being written to
-            csv_file['csv_writer'].close()
-            print 'Closed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
-            logger.info('Closed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
+            csv_file['file'].close()
+            # Print message to stdout and log
+            print 'Closed .csv file: ' + csv_file['csv_file_name'] + ' Time: {0}'.format(time.strftime('%c'))
+            logger.info('Closed .csv file: ' + csv_file['csv_file_name'] + ' Time: {0}'.format(time.strftime('%c')))
             # Remove csv file from the CSV directory if 'csv' not in args_array['command_args']
             if "csv" not in args_array['command_args']:
-                if os.path.exists(csv_file['file_name']):
-                    os.remove(csv_file['file_name'])
-                print 'Removed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
-                logger.info('Removed .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
+                if os.path.exists(csv_file['csv_file_name']):
+                    os.remove(csv_file['csv_file_name'])
+                # Print message to stdout and log 
+                print 'Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
+                logger.info('Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c')))
         except Exception as e:
             # Print exception information to file
-            print 'Error removing .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c'))
-            logger.error('Error removing .csv file: ' + csv_file['file_name'] + ' Time: {0}'.format(time.strftime('%c')))
+            print 'Error removing .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
+            logger.error('Error removing .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c')))
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
@@ -4175,6 +4207,9 @@ def process_XML_grant_content(args_array):
     if "csv" in args_array['command_args'] or ("database" in args_array['command_args'] and args_array['database_insert_mode'] == "bulk"):
         args_array['csv_file_array'] = open_csv_files(args_array['document_type'], args_array['file_name'], args_array['csv_directory'])
 
+
+    close_csv_files(args_array)
+
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
 
@@ -4282,15 +4317,19 @@ def process_XML_grant_content(args_array):
             elif patent_xml_started == True:
                 xml_string += replace_old_html_characters(line)
 
-
-    # Send the information to write_process_log to have log file rewritten to "Processed"
-    write_process_log(args_array)
     # Close the xml file
     xml_file.close()
     # Close all the open csv files
-    close_csv_files(args_array['csv_file_array'], args_array)
+    close_csv_files(args_array)
+
+    # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':
         args_array['database_connection'].load_csv_bulk_data(args_array, logger)
+
+    # Send the information to write_process_log to have log file rewritten to "Processed"
+    write_process_log(args_array)
+
+    # Print message to stdout and log
     print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
     logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
 
@@ -4395,14 +4434,19 @@ def process_XML_application_content(args_array):
 
                 xml_string += replace_old_html_characters(line)
 
-    # Send the information to write_process_log to have log file rewritten to "Processed"
-    write_process_log(args_array)
     # Close the xml file
     xml_file.close()
     # Close all the open csv files
-    close_csv_files(args_array['csv_file_array'], args_array)
+    close_csv_files(args_array)
+
+    # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':
         args_array['database_connection'].load_csv_bulk_data(args_array, logger)
+
+    # Send the information to write_process_log to have log file rewritten to "Processed"
+    write_process_log(args_array)
+
+    # Print message to stdout and log
     print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
     logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
 
@@ -4955,8 +4999,8 @@ def start_thread_processes(links_array, args_array):
 
 
     # Print and log the number of threads that are going to start
-    print "Starting " + str(number_of_threads) + " processes... "
-    logger.info("Starting " + str(number_of_threads) + " processes... ")
+    print "Starting " + str(number_of_threads) + " process(es)... "
+    logger.info("Starting " + str(number_of_threads) + " process(es)... ")
 
     # Loop for number_of_threads and append threads to process
     # for link_pile in thread_arrays:
@@ -4973,8 +5017,8 @@ def start_thread_processes(links_array, args_array):
         p.start()
 
     # Print to stdout and log that all initial threads have been started
-    print "All " + str(number_of_threads) + " initial main processes have been loaded... "
-    logger.info("All " + str(number_of_threads) + " initial main processes have been loaded... ")
+    print "All " + str(number_of_threads) + " initial main process(es) have been loaded... "
+    logger.info("All " + str(number_of_threads) + " initial main process(es) have been loaded... ")
 
     # This .join() function prevents the script from progressing further.
     for p in processes:

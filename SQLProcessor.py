@@ -75,7 +75,7 @@ class SQLProcess:
             self.connect()
 
         # Loop through each csv file and bulk copy into database
-        for csv_file in args_array['csv_file_array']:
+        for key, csv_file in args_array['csv_file_array'].items():
 
             # Print message to stdout and log starting of bulk upload
             print '[Staring to load csv files in bulk to ' + args_array['database_type'] + ']'

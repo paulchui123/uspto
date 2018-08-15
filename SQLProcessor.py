@@ -77,39 +77,61 @@ class SQLProcess:
         # Loop through each csv file and bulk copy into database
         for key, csv_file in args_array['csv_file_array'].items():
 
-            # If postgresql build query
-            if self.database_type == "postgresql":
-                sql = "COPY " + csv_file['table_name'] + " FROM '" + csv_file['csv_file_name'] + "' delimiter ',' csv header"
-            # If MySQL build query
-            elif self.database_type == "mysql":
-                # TODO: consider "SET foreign_key_checks = 0" to ignore
-                # LOCAL is used to set duplicate key to warning instead of error
-                # IGNORE is also used to ignore rows that violate duplicate unique key constraints
-                sql = "LOAD DATA LOCAL INFILE " + csv_file['csv_file_name'] + " INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY ',' ENCLOSED BY '' ESCAPED BY '\\' LINES TERMINATED BY '\n' STARTING BY '' IGNORE 1 LINES"
-            # Execute the query built above
-            try:
-                self._cursor.execute(sql)
-                # Return a successfull insertion flag
-                return True
-            except Exception as e:
-                # If there is an error and using databse postgresql
-                # Then rollback the commit??
+                # If postgresql build query
                 if self.database_type == "postgresql":
-                    self._conn.rollback()
 
-                # Print and log general fail comment
-                print "Database bulk load query failed... " + csv_file['csv_file_name'] + " into table: " + csv_file['table_name']
-                logger.error("Database bulk load query failed..." + csv_file['csv_file_name'] + " into table: " + csv_file['table_name'])
-                print "Query string: " + sql
-                logger.error("Query string: " + sql)
-                # Print traceback
-                traceback.print_exc()
-                # Print exception information to file
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
-                # Return a unsucessful flag
-                return False
+                    try:
+                        sql = "COPY " + csv_file['table_name'] + " FROM STDIN DELIMITER '|' CSV HEADER"
+                        #self._cursor.copy_from(open(csv_file['csv_file_name'], "r"), csv_file['table_name'], sep = ",", null = "")
+                        self._cursor.copy_expert(sql, open(csv_file['csv_file_name'], "r"))
+                        # Return a successfull insertion flag
+                        return True
+
+                    except Exception as e:
+                        # Roll back the transaction
+                        self._conn.rollback()
+                        # Print and log general fail comment
+                        print "Database bulk load query failed... " + csv_file['csv_file_name'] + " into table: " + csv_file['table_name']
+                        logger.error("Database bulk load query failed..." + csv_file['csv_file_name'] + " into table: " + csv_file['table_name'])
+                        print "Query string: " + sql
+                        logger.error("Query string: " + sql)
+                        # Print traceback
+                        traceback.print_exc()
+                        # Print exception information to file
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+                        # Return a unsucessful flag
+                        return False
+
+                # If MySQL build query
+                elif self.database_type == "mysql":
+
+                    try:
+                        # TODO: consider "SET foreign_key_checks = 0" to ignore
+                        # LOCAL is used to set duplicate key to warning instead of error
+                        # IGNORE is also used to ignore rows that violate duplicate unique key constraints
+                        sql = "LOAD DATA LOCAL INFILE " + csv_file['csv_file_name'] + " INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY '|' ENCLOSED BY '' ESCAPED BY '\\' LINES TERMINATED BY '\n' STARTING BY '' IGNORE 1 LINES"
+                        # Execute the query built above
+                        self._cursor.execute(sql)
+                        # Return a successfull insertion flag
+                        return True
+
+                    except Exception as e:
+
+                        # Print and log general fail comment
+                        print "Database bulk load query failed... " + csv_file['csv_file_name'] + " into table: " + csv_file['table_name']
+                        logger.error("Database bulk load query failed..." + csv_file['csv_file_name'] + " into table: " + csv_file['table_name'])
+                        print "Query string: " + sql
+                        logger.error("Query string: " + sql)
+                        # Print traceback
+                        traceback.print_exc()
+                        # Print exception information to file
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+                        # Return a unsucessful flag
+                        return False
 
     # Used to retrieve ID by matching fields of values
     def query(self,sql):

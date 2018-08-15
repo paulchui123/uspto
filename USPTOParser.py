@@ -2779,6 +2779,8 @@ def process_APS_grant_content(args_array):
 
     # Close the xml file
     xml_file.close()
+    # Close all the open csv files
+    close_csv_files(args_array)
 
     # Set a flag file_processed to ensure that the bulk insert succeeds
     file_processed = True
@@ -2787,12 +2789,12 @@ def process_APS_grant_content(args_array):
     if args_array['database_insert_mode'] == 'bulk':
         file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
-    # Send the information to write_process_log to have log file rewritten to "Processed"
     if file_processed:
+        # Send the information to write_process_log to have log file rewritten to "Processed"
         write_process_log(args_array)
-
-    # Close all the open csv files
-    close_csv_files(args_array)
+        if "csv" not in args_array['command_args']:
+            # Close all the open csv files
+            delete_csv_files(args_array)
 
     # Print message to stdout and log
     print '[Processed .bat or .txt File. Total time:{0}  Time: {1}]'.format(time.time()-start_time, time.strftime('%c'))
@@ -3684,18 +3686,18 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['cpcclass']['file'] = open(csv_writer_array['cpcclass']['csv_file_name'], 'w')
 
         # Open all CSV files to write to and append to array
-        csv_writer_array['grant']['csv_writer'] = csv.DictWriter(csv_writer_array['grant']['file'], fieldnames = field_names_array['grant'])
-        csv_writer_array['applicant']['csv_writer'] = csv.DictWriter(csv_writer_array['applicant']['file'], fieldnames = field_names_array['applicant'])
-        csv_writer_array['examiner']['csv_writer'] = csv.DictWriter(csv_writer_array['examiner']['file'], fieldnames = field_names_array['examiner'])
-        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'])
-        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'])
-        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'])
-        csv_writer_array['gracit']['csv_writer'] = csv.DictWriter(csv_writer_array['gracit']['file'], fieldnames = field_names_array['gracit'])
-        csv_writer_array['forpatcit']['csv_writer'] = csv.DictWriter(csv_writer_array['forpatcit']['file'], fieldnames = field_names_array['forpatcit'])
-        csv_writer_array['nonpatcit']['csv_writer'] = csv.DictWriter(csv_writer_array['nonpatcit']['file'], fieldnames = field_names_array['nonpatcit'])
-        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'])
-        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'])
-        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'])
+        csv_writer_array['grant']['csv_writer'] = csv.DictWriter(csv_writer_array['grant']['file'], fieldnames = field_names_array['grant'], delimiter = '|')
+        csv_writer_array['applicant']['csv_writer'] = csv.DictWriter(csv_writer_array['applicant']['file'], fieldnames = field_names_array['applicant'], delimiter = '|')
+        csv_writer_array['examiner']['csv_writer'] = csv.DictWriter(csv_writer_array['examiner']['file'], fieldnames = field_names_array['examiner'], delimiter = '|')
+        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'], delimiter = '|')
+        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'], delimiter = '|')
+        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'], delimiter = '|')
+        csv_writer_array['gracit']['csv_writer'] = csv.DictWriter(csv_writer_array['gracit']['file'], fieldnames = field_names_array['gracit'], delimiter = '|')
+        csv_writer_array['forpatcit']['csv_writer'] = csv.DictWriter(csv_writer_array['forpatcit']['file'], fieldnames = field_names_array['forpatcit'], delimiter = '|')
+        csv_writer_array['nonpatcit']['csv_writer'] = csv.DictWriter(csv_writer_array['nonpatcit']['file'], fieldnames = field_names_array['nonpatcit'], delimiter = '|')
+        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'], delimiter = '|')
+        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'], delimiter = '|')
+        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'], delimiter = '|')
 
         # Write the header to each file
         csv_writer_array['grant']['csv_writer'].writeheader()
@@ -3755,14 +3757,14 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['foreignpriority']['file'] = open(csv_writer_array['foreignpriority']['csv_file_name'], 'w')
 
         # Open all CSV files to write to and append to array
-        csv_writer_array['application']['csv_writer'] = csv.DictWriter(csv_writer_array['application']['file'], fieldnames = field_names_array['application'])
-        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'])
-        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'])
-        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'])
-        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'])
-        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'])
-        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'])
-        csv_writer_array['foreignpriority']['csv_writer'] = csv.DictWriter(csv_writer_array['foreignpriority']['file'], fieldnames = field_names_array['foreignpriority'])
+        csv_writer_array['application']['csv_writer'] = csv.DictWriter(csv_writer_array['application']['file'], fieldnames = field_names_array['application'], delimiter = '|')
+        csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'], delimiter = '|')
+        csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'], delimiter = '|')
+        csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'], delimiter = '|')
+        csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'], delimiter = '|')
+        csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'], delimiter = '|')
+        csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'], delimiter = '|')
+        csv_writer_array['foreignpriority']['csv_writer'] = csv.DictWriter(csv_writer_array['foreignpriority']['file'], fieldnames = field_names_array['foreignpriority'], delimiter = '|')
 
         # Write header for all application csv files
         csv_writer_array['application']['csv_writer'].writeheader()
@@ -3801,12 +3803,6 @@ def close_csv_files(args_array):
             print 'Closed .csv file: ' + csv_file['csv_file_name'] + ' Time: {0}'.format(time.strftime('%c'))
             logger.info('Closed .csv file: ' + csv_file['csv_file_name'] + ' Time: {0}'.format(time.strftime('%c')))
             # Remove csv file from the CSV directory if 'csv' not in args_array['command_args']
-            if "csv" not in args_array['command_args']:
-                if os.path.exists(csv_file['csv_file_name']):
-                    os.remove(csv_file['csv_file_name'])
-                # Print message to stdout and log
-                print 'Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
-                logger.info('Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c')))
         except Exception as e:
             # Print exception information to file
             print 'Error removing .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
@@ -3815,6 +3811,36 @@ def close_csv_files(args_array):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
             traceback.print_exc()
+
+# Function used to close all csv files in array
+def delete_csv_files(args_array):
+
+    # Import logger
+    logger = logging.getLogger("USPTO_Database_Construction")
+
+    # Print message to stdout and log
+    print '[Cleaning up .csv files... ]'
+    logger.info('[Cleaning up .csv files... ]')
+
+    # Loop through each file in array of open csv files
+    for key, csv_file in args_array['csv_file_array'].items():
+        try:
+            # Remove csv file from the CSV directory if 'csv' not in args_array['command_args']
+            if os.path.exists(csv_file['csv_file_name']):
+                os.remove(csv_file['csv_file_name'])
+            # Print message to stdout and log
+            print 'Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
+            logger.info('Removed .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c')))
+        except Exception as e:
+            # Print exception information to file
+            print 'Error removing .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c'))
+            logger.error('Error removing .csv file: {0} Time: {1}'.format(csv_file['csv_file_name'], time.strftime('%c')))
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+            traceback.print_exc()
+
+
 
 # Function used to store grant data in CSV and/or database
 def store_grant_data(processed_data_array, args_array):
@@ -4321,6 +4347,8 @@ def process_XML_grant_content(args_array):
 
     # Close the xml file
     xml_file.close()
+    # Close all the open csv files
+    close_csv_files(args_array)
 
     # Set a flag file_processed to ensure that the bulk insert succeeds
     file_processed = True
@@ -4329,12 +4357,12 @@ def process_XML_grant_content(args_array):
     if args_array['database_insert_mode'] == 'bulk':
         file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
-    # Send the information to write_process_log to have log file rewritten to "Processed"
     if file_processed:
+        # Send the information to write_process_log to have log file rewritten to "Processed"
         write_process_log(args_array)
-
-    # Close all the open csv files
-    close_csv_files(args_array)
+        if "csv" not in args_array['command_args']:
+            # Delete all the open csv files
+            delete_csv_files(args_array)
 
     # Print message to stdout and log
     print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
@@ -4451,12 +4479,12 @@ def process_XML_application_content(args_array):
     if args_array['database_insert_mode'] == 'bulk':
         file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
-    # Send the information to write_process_log to have log file rewritten to "Processed"
     if file_processed:
+        # Send the information to write_process_log to have log file rewritten to "Processed"
         write_process_log(args_array)
-
-    # Close all the open csv files
-    close_csv_files(args_array)
+        if "csv" not in args_array['command_args']:
+            # Close all the open csv files
+            delete_csv_files(args_array)
 
     # Print message to stdout and log
     print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
@@ -4474,6 +4502,11 @@ def replace_new_html_characters(line):
         # Finally use regex to replace anything that looks like an html entity with nothing
         pattern = re.compile(r"\&#x[A-Za-z0-9]{1,}\;")
         line = re.sub(pattern, "", line)
+
+        # Replace all tab characters before putting into tab delimted .csv
+        line = line.replace("|", "")
+        line = line.replace("\n", "")
+        line = line.replace("\t", "")
 
         # Replace blank strings with NULL for database
         if line == "":
@@ -4493,6 +4526,36 @@ def replace_new_html_characters(line):
 
 #Converts html encoding to hex encoding for database insertion
 def replace_old_html_characters(line):
+
+    # Use a regex replacement to replace all html encoded strings
+    try:
+        # Finally use regex to replace anything that looks like an html entity with nothing
+        pattern = re.compile(r"\&[A-Za-z0-9]{1,}\;")
+        line = re.sub(pattern, "", line)
+
+        # Replace all tab characters before putting into tab delimted .csv
+        line = line.replace("|", "")
+        line = line.replace("\n", "")
+        line = line.replace("\t", "")
+
+        # Replace blank strings with NULL for database
+        if line == "":
+            line = None
+
+    except Exception as e:
+        print line
+        traceback.print_exc()
+        # Print exception information to file
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+
+    # Return the line without any html encoded strings.
+    return line
+
+
+#Converts html encoding to hex encoding for database insertion
+def replace_old_html_characters_old_version(line):
 
     # TODO: make more logical replacements of characters
     # (1) replace all left and write quotes with just general quote characters
@@ -4658,6 +4721,9 @@ def replace_old_html_characters(line):
     # Finally use regex to replace anything that looks like an html entity with nothing
     pattern = re.compile(r"\&[A-Za-z0-9]{1,}\;")
     line = re.sub(pattern, "", line)
+
+    # Replace all tab characters before putting into tab delimted .csv
+    line = line.replace("|", "")
 
     # Replace blank strings with NULL for database
     if line == "":

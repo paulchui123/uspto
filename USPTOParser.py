@@ -15,12 +15,12 @@ import sys
 import urllib
 import multiprocessing
 import logging
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 import zipfile
 import traceback
-from HTMLParser import HTMLParser
+#from HTMLParser import HTMLParser
 import csv
-from htmlentitydefs import name2codepoint
+#from htmlentitydefs import name2codepoint
 import string
 import psutil
 
@@ -31,12 +31,12 @@ def extract_data_router(xml_data_string, args_array):
     try:
         if args_array['uspto_xml_format'] == "gAPS":
             return extract_APS_grant(xml_data_string, args_array)
-        elif args_array['uspto_xml_format'] == "aXML1":
-            return extract_XML1_application(xml_data_string, args_array)
         elif args_array['uspto_xml_format'] == "gXML2":
             return extract_XML2_grant(xml_data_string, args_array)
         elif args_array['uspto_xml_format'] == "gXML4":
             return extract_XML4_grant(xml_data_string, args_array)
+        elif args_array['uspto_xml_format'] == "aXML1":
+            return extract_XML1_application(xml_data_string, args_array)
         elif args_array['uspto_xml_format'] == "aXML4":
             return extract_XML4_application(xml_data_string, args_array)
     except Exception as e:
@@ -125,19 +125,19 @@ def return_cpc_class(class_string):
 
 # Function to accept the date and return in MYSQL formated date
 # TODO: fix the date parsing. Problem of possibly one or two characters for month and day
-def return_formatted_date(time_str):
+def return_formatted_date(time_str, args_array, document_id):
 
     logger = logging.getLogger("USPTO_Database_Construction")
 
     # Check if None has been passed in
     if time_str is None:
         return None
-        logger.warning("None Type object was found as date.")
+        logger.warning("None Type object was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
 
     # Check if '0000-01-01' has been passed in
     elif time_str == '0000-01-01':
         return None
-        logger.warning("'0000-01-01' was found as date.")
+        logger.warning("'0000-01-01' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
     else:
         if len(time_str) ==  8:
             if  time_str[4:6] == "00" : month = "01"
@@ -150,7 +150,7 @@ def return_formatted_date(time_str):
             time_str = time_str.replace("\n", "").replace("\r", "")
             if len(time_str) == 9:
                 # Log that a bad date was found and could not be cleaned
-                logger.warning("Malformed date was found on length == 9 : " + time_str)
+                logger.warning("Malformed date was found on length == 9 string: " + time_str + " for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
             if  time_str[4:6] == "00" : month = "01"
             else: month = time_str[4:6]
             if time_str[6:8] == "00" : day = "01"
@@ -158,7 +158,8 @@ def return_formatted_date(time_str):
             return time_str[0:4] + '-' + month + '-' + day
         else:
             # Log that a bad date was found and could not be cleaned
-            logger.warning("Malformed date was found on length != 8 or 9 : " + time_str)
+            logger.warning("Malformed date was found on length != 8 or 9 string: " + time_str + " for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+            return None
 
 # ***** used to fix patent numbers *****
 def return_patent_number(patternStr,inputStr):
@@ -281,7 +282,7 @@ def extract_XML4_grant(raw_data, args_array):
                     logger.error("No Patent Number was found for: " + url_link)
                 try: kind = di.findtext('kind')
                 except: kind = None
-                try: pub_date = return_formatted_date(di.findtext('date'))
+                try: pub_date = return_formatted_date(di.findtext('date'), args_array, document_id)
                 except: pub_date = None
 
         # Find the main application data
@@ -293,7 +294,7 @@ def extract_XML4_grant(raw_data, args_array):
                 except: app_country = None
                 try: app_no = di.findtext('doc-number')
                 except: app_no = None
-                try: app_date = return_formatted_date(di.findtext('date'))
+                try: app_date = return_formatted_date(di.findtext('date'), args_array, document_id)
                 except: app_date = None
 
         # Get the series code
@@ -468,7 +469,7 @@ def extract_XML4_grant(raw_data, args_array):
                             "CitedID" : citation_grant_id,
                             "Kind" : citation_kind,
                             "Name" : citation_name,
-                            "Date" : return_formatted_date(citation_date),
+                            "Date" : return_formatted_date(citation_date, args_array, document_id),
                             "Country" : citation_country,
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
@@ -486,7 +487,7 @@ def extract_XML4_grant(raw_data, args_array):
                             "CitedID" : citation_grant_id,
                             "Kind" : citation_kind,
                             "Name" : citation_name,
-                            "Date" : return_formatted_date(citation_date),
+                            "Date" : return_formatted_date(citation_date, args_array, document_id),
                             "Country" : citation_country,
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
@@ -992,10 +993,10 @@ def extract_XML2_grant(raw_data, args_array):
                     except: citation_document_number = None
                     try: pct_kind = return_element_text(DOC.find('KIND'))
                     except: pct_kind = None
-                    try: citation_date = return_formatted_date(return_element_text(DOC.find('DATE')))
-                    except: citation_date
+                    try: citation_date = return_formatted_date(return_element_text(DOC.find('DATE'), args_array, document_id))
+                    except: citation_date = None
                     try: citation_name = return_element_text(PCIT.find('PARTY-US'))
-                    except: citation_name
+                    except: citation_name = None
 
                     # Parse citation category
                     if(len(B561.getchildren()) > 1):
@@ -1346,8 +1347,8 @@ def process_APS_grant_content(args_array):
     # If xml file not found, then print error message
     if data_file_name == "":
         # Print and log that the xml file was not found
-        print '[APS data file not found.  Filename{0}]'.format(args_array['url_link'])
-        logger.error('xml file not found. Filename: ' + args_array['url_link'])
+        print '[APS .dat data file not found.  Filename{0}]'.format(args_array['url_link'])
+        logger.error('APS .dat file not found. Filename: ' + args_array['url_link'])
 
     # Process zip file contents of .dat or .txt file and .xml files
     data_reader = zip_file.open(data_file_name,'r')
@@ -1547,7 +1548,7 @@ def process_APS_grant_content(args_array):
             except: claims_num = None
         # ISD is Publication Date
         elif line[0:4].strip() == "ISD":
-            try: pub_date = return_formatted_date(replace_old_html_characters(line[3:].strip()))
+            try: pub_date = return_formatted_date(replace_old_html_characters(line[3:].strip()), args_array, document_id)
             except: pub_date = None
         # APN is application number
         elif line[0:4].strip() == "APN":
@@ -1555,7 +1556,7 @@ def process_APS_grant_content(args_array):
             except: app_no = None
         # APD is Application date
         elif line[0:4].strip() == "APD":
-            try: app_date = return_formatted_date(replace_old_html_characters(line[3:].strip()))
+            try: app_date = return_formatted_date(replace_old_html_characters(line[3:].strip()), args_array, document_id)
             except: app_date = None
         # TTL is title
         elif line[0:4].strip() == "TTL":
@@ -1706,7 +1707,7 @@ def process_APS_grant_content(args_array):
                     except: citation_document_number = None
                 # Issue Date of cited patent
                 elif line[0:3] == "ISD":
-                    try: citation_date = return_formatted_date(replace_old_html_characters(line[3:].strip()))
+                    try: citation_date = return_formatted_date(replace_old_html_characters(line[3:].strip()), args_array, document_id)
                     except: citation_date = None
                 # Name of patentee
                 elif line[0:3] == "NAM":
@@ -1842,7 +1843,7 @@ def process_APS_grant_content(args_array):
                                 "GrantID" : document_id,
                                 "Position" : position,
                                 "CitedID" : citation_document_number,
-                                "Date" : return_formatted_date(citation_date),
+                                "Date" : (citation_date, args_array),
                                 "Country" : citation_country,
                                 "FileName" : args_array['file_name']
                             })
@@ -1892,7 +1893,7 @@ def process_APS_grant_content(args_array):
                         "GrantID" : document_id,
                         "Position" : position,
                         "CitedID" : citation_document_number,
-                        "Date" : return_formatted_date(citation_date),
+                        "Date" : return_formatted_date(citation_date, args_array, document_id),
                         "Country" : citation_country,
                         "FileName" : args_array['file_name']
                     })
@@ -2085,6 +2086,17 @@ def process_APS_grant_content(args_array):
                     # TODO: find out how to parse the int class code.
                     try:
                         i_class_string = replace_old_html_characters(line[3:].strip().replace("  ", " ")).split(" ")
+                    except:
+                        # Print exception information to file
+                        traceback.print_exc()
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+                        i_class_main = None
+                        i_subclass = None
+                        logger.error("An International classification error occurred that could not be extracted for grant_id: " + document_id + " in link: " + args_array['url_link'])
+
+                    try:
                         if len(i_class_string) == 1:
                             i_class_main = i_class_string[0]
                             i_subclass = None
@@ -2096,12 +2108,12 @@ def process_APS_grant_content(args_array):
                             else:
                                 i_class_main = i_class_string[0]
                                 i_subclass = i_class_string[1]
-                        elif len(class_string) == 3:
+                        elif len(i_class_string) == 3:
                             n_class_main = i_class_string[0]
                             n_subclass = i_class_string[1] + " " + i_class_string[2]
                             malformed_class = 1
                         else:
-                            logger.warning("A mal-formed international class was found with more than two spaces: " + document_id + " in link: " + args_array['url_link'])
+                            logger.warning("A mal-formed international class was found (" + i_class_string + ") with more than two spaces: " + document_id + " in link: " + args_array['url_link'])
                     except:
                         # Print exception information to file
                         traceback.print_exc()
@@ -2777,9 +2789,9 @@ def process_APS_grant_content(args_array):
                     data_parse_completed = True
                     next_line_loaded_already = True
 
-    # Close the xml file
-    xml_file.close()
-    # Close all the open csv files
+    # Close the open data reader file being read from
+    data_reader.close()
+    # Close all the open .csv files
     close_csv_files(args_array)
 
     # Set a flag file_processed to ensure that the bulk insert succeeds
@@ -2796,9 +2808,9 @@ def process_APS_grant_content(args_array):
             # Close all the open csv files
             delete_csv_files(args_array)
 
-    # Print message to stdout and log
-    print '[Processed .bat or .txt File. Total time:{0}  Time: {1}]'.format(time.time()-start_time, time.strftime('%c'))
-    #print data_list
+        # Print message to stdout and log
+        print '[Processed .bat or .txt File. Total time:{0}  Time: {1}]'.format(time.time()-start_time, time.strftime('%c'))
+
 
 # Function used to extract data from XML4 formatted patent applications
 def extract_XML4_application(raw_data, args_array):
@@ -2843,7 +2855,7 @@ def extract_XML4_application(raw_data, args_array):
             logger.error("No Patent Number was found for: " + url_link)
         try: kind = pub_doc.findtext('kind')
         except: kind = None
-        try: pub_date = return_formatted_date(pub_doc.findtext('date'))
+        try: pub_date = return_formatted_date(pub_doc.findtext('date'), args_array, document_id)
         except: pub_date = None
 
         # Get application reference data
@@ -2855,7 +2867,7 @@ def extract_XML4_application(raw_data, args_array):
         except: app_country = None
         try: app_no = app_doc.findtext('doc-number')
         except: app_no = None
-        try: app_date = return_formatted_date(app_doc.findtext('date'))
+        try: app_date = return_formatted_date(app_doc.findtext('date'), args_array, document_id)
         except: app_date = None
         # Get series code
         try: series_code = r.findtext('us-application-series-code')
@@ -2873,7 +2885,7 @@ def extract_XML4_application(raw_data, args_array):
                 except: pc_country = None
                 try: pc_doc_num = pc.findtext('doc-number')
                 except: pc_doc_num = None
-                try: pc_date = return_formatted_date(pc.findtext('date'))
+                try: pc_date = return_formatted_date(pc.findtext('date'), args_array, document_id)
                 except: pc_date = None
 
                 # Append SQL data into dictionary to be written later
@@ -2911,7 +2923,7 @@ def extract_XML4_application(raw_data, args_array):
                 "Position" : position,
                 "Section" : i_class_sec,
                 "Class" : i_class,
-                "Subclass" : i_subclass,
+                "SubClass" : i_subclass,
                 "MainGroup" : i_class_mgr,
                 "SubGroup" : i_class_sgr,
                 "FileName" : args_array['file_name']
@@ -2996,7 +3008,7 @@ def extract_XML4_application(raw_data, args_array):
                         "Position" : position,
                         "Section" : cpc_section,
                         "Class" : cpc_class,
-                        "Subclass" : cpc_subclass,
+                        "SubClass" : cpc_subclass,
                         "MainGroup" : cpc_mgr,
                         "SubGroup" : cpc_sgr,
                         "FileName" : args_array['file_name']
@@ -3026,7 +3038,7 @@ def extract_XML4_application(raw_data, args_array):
                         "Position" : position,
                         "Section" : cpc_section,
                         "Class" : cpc_class,
-                        "Subclass" : cpc_subclass,
+                        "SubClass" : cpc_subclass,
                         "MainGroup" : cpc_mgr,
                         "SubGroup" : cpc_sgr,
                         "FileName" : args_array['file_name']
@@ -3285,7 +3297,7 @@ def extract_XML1_application(raw_data, args_array):
         logger.error("No Patent Number was found for: " + url_link)
     try: kind = di.findtext('kind-code')
     except: kind = None
-    try: pub_date = return_formatted_date(di.findtext('document-date'))
+    try: pub_date = return_formatted_date(di.findtext('document-date'), args_array, document_id)
     except: pub_date = None
     try: app_type = r.findtext('publication-filing-type')
     except: app_type = None
@@ -3295,7 +3307,7 @@ def extract_XML1_application(raw_data, args_array):
     try:
         app_no = ar.find('application-number').findtext('doc-number')
     except: app_no = None
-    try: app_date = return_formatted_date(ar.findtext('filing-date'))
+    try: app_date = return_formatted_date(ar.findtext('filing-date'), args_array, document_id)
     except: app_date = None
     try: series_code = ar.findtext('application-number-series-code')
     except: series_code = None
@@ -3327,7 +3339,7 @@ def extract_XML1_application(raw_data, args_array):
             "Position" : position,
             "Section" : i_class_sec,
             "Class" : i_class,
-            "Subclass" : i_subclass,
+            "SubClass" : i_subclass,
             "MainGroup" : i_class_mgr,
             "SubGroup" : i_class_sgr,
             "FileName" : args_array['file_name']
@@ -3356,7 +3368,7 @@ def extract_XML1_application(raw_data, args_array):
                 "Position" : position,
                 "Section" : i_class_sec,
                 "Class" : i_class,
-                "Subclass" : i_subclass,
+                "SubClass" : i_subclass,
                 "MainGroup" : i_class_mgr,
                 "SubGroup" : i_class_sgr,
                 "FileName" : args_array['file_name']
@@ -3784,7 +3796,7 @@ def open_csv_files(file_type, file_name, csv_directory):
     return csv_writer_array
     #return True
 
-# Function used to close all csv files in array
+# Function used to close all .csv files in array
 def close_csv_files(args_array):
 
     # Import logger
@@ -3862,156 +3874,168 @@ def store_grant_data(processed_data_array, args_array):
         # Process all the collected grant data for one patent record into csv file
         # Using the already opened csv.csv.DictWriter object stored in args array.
         # Table name must be appended to the dictionary for later processing
-        for data_item in processed_data_array['processed_grant']:
-            # Print start message to stdout and log
-            print '- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c"))
-            #logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c")))
-            # Move the table name to temp variable and remove from table
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            # Try catch is to avoid failing the whole file when
-            # htmlentity characters found or other error occurs
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['grant']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['grant']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array['processed_applicant']:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['applicant']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['applicant']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array['processed_examiner']:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['examiner']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['examiner']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_agent"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['agent']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['agent']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_assignee"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['assignee']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['assignee']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_inventor"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['inventor']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['inventor']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_gracit"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['gracit']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['gracit']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_nonpatcit"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['nonpatcit']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['nonpatcit']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_forpatcit"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['forpatcit']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['forpatcit']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_usclass"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['usclass']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['usclass']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_intclass"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['intclass']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['intclass']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
-        for data_item in processed_data_array["processed_cpcclass"]:
-            table_name = data_item['table_name']
-            del data_item['table_name']
-            try:
-                # Write the dictionary of document data to .csv file
-                args_array['csv_file_array']['cpcclass']['csv_writer'].writerow(data_item)
-                # Append the table onto the array
-                args_array['csv_file_array']['cpcclass']['table_name'] = table_name
-            except Exception as e:
-                print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
-                logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
-                traceback.print_exc()
+        if "processed_grant" in processed_data_array and len(processed_data_array['processed_grant']):
+            for data_item in processed_data_array['processed_grant']:
+                # Print start message to stdout and log
+                print '- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c"))
+                #logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['GrantID'], time.strftime("%c")))
+                # Move the table name to temp variable and remove from table
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                # Try catch is to avoid failing the whole file when
+                # htmlentity characters found or other error occurs
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['grant']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['grant']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_applicant" in processed_data_array and len(processed_data_array['processed_applicant']):
+            for data_item in processed_data_array['processed_applicant']:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['applicant']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['applicant']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_examiner" in processed_data_array and len(processed_data_array['processed_examiner']):
+            for data_item in processed_data_array['processed_examiner']:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['examiner']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['examiner']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_agent" in processed_data_array and len(processed_data_array['processed_agent']):
+            for data_item in processed_data_array["processed_agent"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['agent']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['agent']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_assignee" in processed_data_array and len(processed_data_array['processed_assignee']):
+            for data_item in processed_data_array["processed_assignee"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['assignee']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['assignee']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_inventor" in processed_data_array and len(processed_data_array['processed_inventor']):
+            for data_item in processed_data_array["processed_inventor"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['inventor']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['inventor']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_gracit" in processed_data_array and len(processed_data_array['processed_gracit']):
+            for data_item in processed_data_array["processed_gracit"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['gracit']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['gracit']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_nonpatcit" in processed_data_array and len(processed_data_array['processed_nonpatcit']):
+            for data_item in processed_data_array["processed_nonpatcit"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['nonpatcit']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['nonpatcit']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_forpatcit" in processed_data_array and len(processed_data_array['processed_forpatcit']):
+            for data_item in processed_data_array["processed_forpatcit"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['forpatcit']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['forpatcit']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_usclass" in processed_data_array and len(processed_data_array['processed_usclass']):
+            for data_item in processed_data_array["processed_usclass"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['usclass']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['usclass']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_intclass" in processed_data_array and len(processed_data_array['processed_intclass']):
+            for data_item in processed_data_array["processed_intclass"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['intclass']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['intclass']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_cpcclass" in processed_data_array and len(processed_data_array['processed_cpcclass']):
+            for data_item in processed_data_array["processed_cpcclass"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['cpcclass']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['cpcclass']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['GrantID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
 
 
     # If command arg is set to put data into database
@@ -4065,34 +4089,113 @@ def store_application_data(processed_data_array, args_array):
 
         # Process all the collected grant data for one patent record into csv file
         # Using the already opened csv.csv.DictWriter object stored in args array.
-        for data_item in processed_data_array["processed_application"]:
-            # Print start message to stdout and log
-            print '- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c"))
-            #logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c")))
-            del data_item['table_name']
-            args_array['csv_file_array']['application']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_agent"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['agent']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_assignee"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['assignee']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_inventor"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['inventor']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_usclass"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['nonpatcit']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_intclass"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['usclass']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_cpcclass"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['cpcclass']['csv_writer'].writerow(data_item)
-        for data_item in processed_data_array["processed_foreignpriority"]:
-            del data_item['table_name']
-            args_array['csv_file_array']['foreignpriority']['csv_writer'].writerow(data_item)
-
+        if "processed_application" in processed_data_array and len(processed_data_array['processed_application']):
+            for data_item in processed_data_array["processed_application"]:
+                # Print start message to stdout and log
+                print '- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c"))
+                #logger.info('- Starting to write {0} to .csv file {1} for document: {2}. Start Time: {3}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], time.strftime("%c")))
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['application']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['application']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_agent" in processed_data_array and len(processed_data_array['processed_agent']):
+            for data_item in processed_data_array["processed_agent"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['agent']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['agent']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_assignee" in processed_data_array and len(processed_data_array['processed_assignee']):
+            for data_item in processed_data_array["processed_assignee"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['assignee']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['assignee']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_inventor" in processed_data_array and len(processed_data_array['processed_inventor']):
+            for data_item in processed_data_array["processed_inventor"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['inventor']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['inventor']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_usclass" in processed_data_array and len(processed_data_array['processed_usclass']):
+            for data_item in processed_data_array["processed_usclass"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['usclass']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['usclass']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_intclass" in processed_data_array and len(processed_data_array['processed_intclass']):
+            for data_item in processed_data_array["processed_intclass"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['intclass']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['intclass']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_cpcclass" in processed_data_array and len(processed_data_array['processed_cpcclass']):
+            for data_item in processed_data_array["processed_cpcclass"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['cpcclass']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['cpcclass']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
+        if "processed_foreignpriority" in processed_data_array and len(processed_data_array['processed_foreignpriority']):
+            for data_item in processed_data_array["processed_foreignpriority"]:
+                table_name = data_item['table_name']
+                del data_item['table_name']
+                try:
+                    # Write the dictionary of document data to .csv file
+                    args_array['csv_file_array']['foreignpriority']['csv_writer'].writerow(data_item)
+                    # Append the table onto the array
+                    args_array['csv_file_array']['foreignpriority']['table_name'] = table_name
+                except Exception as e:
+                    print '- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c"))
+                    logger.info('- Error writing {0} to .csv file {1} for document: {2} into table {3}. Start Time: {4}'.format(args_array['document_type'], file_name, data_item['ApplicationID'], table_name, time.strftime("%c")))
+                    traceback.print_exc()
 
     elif "database" in args_array["command_args"] and args_array['database_insert_mode'] == "each":
 
@@ -4343,11 +4446,12 @@ def process_XML_grant_content(args_array):
 
             # This is used to append lines of file when inside single patent grant
             elif patent_xml_started == True:
+                # Check which type of encoding should be used to fix the line string
                 xml_string += replace_old_html_characters(line)
 
-    # Close the xml file
+    # Close the .xml file being read from
     xml_file.close()
-    # Close all the open csv files
+    # Close all the open .csv files being written to
     close_csv_files(args_array)
 
     # Set a flag file_processed to ensure that the bulk insert succeeds
@@ -4433,7 +4537,7 @@ def process_XML_application_content(args_array):
 
             # This is used to append lines of file when inside single patent grant
             elif patent_xml_started == True:
-                xml_string += line
+                xml_string += replace_new_html_characters(line)
 
     elif args_array['uspto_xml_format'] == "aXML1":
 
@@ -4466,11 +4570,12 @@ def process_XML_application_content(args_array):
 
             # This is used to append lines of file when inside single patent grant
             elif patent_xml_started == True:
-
                 xml_string += replace_old_html_characters(line)
 
-    # Close the xml file
+    # Close the .xml file being read from
     xml_file.close()
+    # Close the all the .csv files being written to
+    close_csv_files(args_array)
 
     # Set a flag file_processed to ensure that the bulk insert succeeds
     file_processed = True
@@ -4508,10 +4613,6 @@ def replace_new_html_characters(line):
         line = line.replace("\n", "")
         line = line.replace("\t", "")
 
-        # Replace blank strings with NULL for database
-        if line == "":
-            line = None
-
     except Exception as e:
         print line
         traceback.print_exc()
@@ -4537,10 +4638,6 @@ def replace_old_html_characters(line):
         line = line.replace("|", "")
         line = line.replace("\n", "")
         line = line.replace("\t", "")
-
-        # Replace blank strings with NULL for database
-        if line == "":
-            line = None
 
     except Exception as e:
         print line
@@ -4915,9 +5012,9 @@ def return_classification_array(line):
     class_dictionary = {
         "table_name" : "uspto.CLASSIFICATION",
         "Class" : line[0:3],
-        "Subclass" : line[3:9],
+        "SubClass" : line[3:9],
         "Indent" : line[9:11],
-        "SubclsSqsNum" : line[11:15],
+        "SubClsSqsNum" : line[11:15],
         "NextHigherSub" : line[15:21],
         "Title" : line[21:len(line)+1].strip()[0:140]
     }
@@ -5177,8 +5274,8 @@ def load_balancer_thread(link_queue, args_array):
         # If the load average is very small, start a group of new threads
         if (five_minute_load_average) < 0.75:
             # Print message and log that load balancer is starting another thread
-            print "Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average) + "%"
-            logger.info("Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average) + "%")
+            print "Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%"
+            logger.info("Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%")
             # Start another group of threads and pass in i to stagger the downloads
             for i in range(1):
                 start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
@@ -5189,8 +5286,8 @@ def load_balancer_thread(link_queue, args_array):
         # If load average less than 1 start single thread
         elif (five_minute_load_average) < 1:
             # Print message and log that load balancer is starting another thread
-            print "Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average) + "%"
-            logger.info("Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average) + "%")
+            print "Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%"
+            logger.info("Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%")
             # Start another thread and pass in 0 to start right away
             start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
             start_new_thread.start()
@@ -5200,8 +5297,8 @@ def load_balancer_thread(link_queue, args_array):
 
         else:
             # Print message and log that load balancer is starting another thread
-            print "Reporting CPU load balance: " + str(five_minute_load_average) + "%"
-            logger.info("Reporting CPU load balance: " + str(five_minute_load_average) + "%")
+            print "Reporting CPU load balance: " + str(five_minute_load_average * 100) + "%"
+            logger.info("Reporting CPU load balance: " + str(five_minute_load_average * 100) + "%")
             # Sleep for another 5 minutes while
             time.sleep(300)
 

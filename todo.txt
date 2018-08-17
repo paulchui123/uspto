@@ -1,37 +1,32 @@
+# Contact USPTO about their data ingetrity problems. Suggest munging the data properly
+# and then reissuing even the old data as xml instead of .dat.  The biggest issues are
+# Dates 0000-00-00 and also some other data fields (cpcclass) have data too long for
+# the documentation
 
-# Rebalance the threads on the fly as the stack expires.  
-# 1) recaculate all thread piles
-# 2) EASIER: Only when thread expires, take one from another stack.  (ok because low CPU usage).  Should pop finished from the stack immedietely to ensure not taking completed item. Should pop moved items from the stack also.
+# Test the mysql insert statement consider adding support for other databases (blazingdb??)
 
-# Branch the repo for the USPTO while I work on the database optimization.
+# Ensure and improve the idenfication of malformed data as it passes into the database
+# for all xml data configurations and records including application, grant, and PAIR
+
 # Look at building a front-end for the python UI using tinkr or other front end.
+# Web front-end
+# Build scripts that create statistical tables to be run after the initial script and include an updater in
+# the updater script.
 
-# Are the zip files being discraded to free memory efficiently properly?
 
-# Write a thread process that checks the system CPU and then uses $ top command to check load average for the longest avaiable moving average.  Then, start new threads if the load average drops below 50% until it stays around 75%-80%.
-
-# Run a python script from within the USPTO parser to check a timestamp every 20 minutes and restart the whole thing if the timestamp is expired.
+# Are the zip, and extracted xml, or other tmp files being discraded to free memory efficiently properly?
 
 # Write a function that can create separate threads for the GPU
 https://stackoverflow.com/questions/5957554/python-gpu-programming
 https://www.youtube.com/watch?v=jKV1m8APttU
 https://www.youtube.com/watch?v=dPQnFXD7DxM
 
-# Address the Bottleneck caused by inserting data row by row:  
-# 1) Build CSV files in a data memory object such as list variable in python,  
-# 2) When the data object reaches a size (say 100mb or the contents of one file) write them to csv file and insert into database dependind on flags set 
-# when the program was instantiated.
-
 # TODO: make a config file with: number_of_threads, database config, and other required info.  Read the config file into the program at runtime.
-
-# try to check if database error is "row already exists and don't log or stdout that error message." 
-
 
 # TODO: withdrawn patent file into database
 # TODO: UPC to CPC concordance table
 # TODO: UPC class names and definitions
 # TODO:
-
 
 # TODO: FREF .. APS manual missed ICL as a possible datatype.
 Also OCL is not required.  It's not included all the time.

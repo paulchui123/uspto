@@ -74,8 +74,16 @@ class SQLProcess:
         if self._conn == None:
             self.connect()
 
+        # Log the contents of the args_array['csv_file_array']
+        #logger.warning(str(args_array['csv_file_array'])
+
         # Loop through each csv file and bulk copy into database
         for key, csv_file in args_array['csv_file_array'].items():
+
+            if "table_name" in csv_file:
+                # Print message to stdout and log about which table is being inserted
+                print "Database bulk load query started for: " + key + " from filename: " + csv_file['csv_file_name']
+                logger.info("Database bulk load query started for: " + key + " from filename: " + csv_file['csv_file_name'])
 
                 # If postgresql build query
                 if self.database_type == "postgresql":
@@ -85,7 +93,6 @@ class SQLProcess:
                         #self._cursor.copy_from(open(csv_file['csv_file_name'], "r"), csv_file['table_name'], sep = ",", null = "")
                         self._cursor.copy_expert(sql, open(csv_file['csv_file_name'], "r"))
                         # Return a successfull insertion flag
-                        return True
 
                     except Exception as e:
                         # Roll back the transaction
@@ -115,7 +122,6 @@ class SQLProcess:
                         # Execute the query built above
                         self._cursor.execute(sql)
                         # Return a successfull insertion flag
-                        return True
 
                     except Exception as e:
 
@@ -132,6 +138,9 @@ class SQLProcess:
                         logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
                         # Return a unsucessful flag
                         return False
+
+        # Return a successfull message from the database query insert.
+        return True
 
     # Used to retrieve ID by matching fields of values
     def query(self,sql):
@@ -261,8 +270,7 @@ class SQLProcess:
                     "CPCCLASS_A",
                     "FOREIGNPRIORITY_A",
                     "AGENT_A",
-                    "ASSIGNEE_A",
-                    "APPLICANT_A"
+                    "ASSIGNEE_A"
                 ]
 
             # Loop through each table_name defined by call_type

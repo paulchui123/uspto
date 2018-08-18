@@ -264,13 +264,14 @@ class SQLProcess:
             # Records deleted for patent applications
             elif call_type == "application":
                 table_name_array = [
-                    "APPLICATION_PAIR",
                     "APPLICATION",
                     "INTCLASS_A",
+                    "USCLASS_A",
                     "CPCCLASS_A",
                     "FOREIGNPRIORITY_A",
                     "AGENT_A",
-                    "ASSIGNEE_A"
+                    "ASSIGNEE_A",
+                    "INVENTOR_A"
                 ]
 
             # Loop through each table_name defined by call_type

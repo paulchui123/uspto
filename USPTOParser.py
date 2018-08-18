@@ -15,10 +15,10 @@ import sys
 import urllib
 import multiprocessing
 import logging
-#from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
 import zipfile
 import traceback
-#from HTMLParser import HTMLParser
+from HTMLParser import HTMLParser
 import csv
 #from htmlentitydefs import name2codepoint
 import string
@@ -2906,38 +2906,39 @@ def extract_XML4_application(raw_data, args_array):
         ics = r.find('classifications-ipcr')
         # Init position for int classifications
         position = 1
-        # Get all international classification
-        for icc in ics.findall('classification-ipcr'):
+        if ics is not None:
+            # Get all international classification
+            for icc in ics.findall('classification-ipcr'):
 
-            for x in icc.getchildren():
-                if(check_tag_exists(x,'section')): i_class_sec = x.text
-                if(check_tag_exists(x,'class')): i_class = x.text
-                if(check_tag_exists(x,'subclass')): i_subclass = x.text
-                if(check_tag_exists(x,'main-group')): i_class_mgr = x.text
-                if(check_tag_exists(x,'subgroup')): i_class_sgr = x.text
+                for x in icc.getchildren():
+                    if(check_tag_exists(x,'section')): i_class_sec = x.text
+                    if(check_tag_exists(x,'class')): i_class = x.text
+                    if(check_tag_exists(x,'subclass')): i_subclass = x.text
+                    if(check_tag_exists(x,'main-group')): i_class_mgr = x.text
+                    if(check_tag_exists(x,'subgroup')): i_class_sgr = x.text
 
-            # Append SQL data into dictionary to be written later
-            processed_intclass.append({
-                "table_name" : "uspto.INTCLASS_A",
-                "ApplicationID" : app_no,
-                "Position" : position,
-                "Section" : i_class_sec,
-                "Class" : i_class,
-                "SubClass" : i_subclass,
-                "MainGroup" : i_class_mgr,
-                "SubGroup" : i_class_sgr,
-                "FileName" : args_array['file_name']
-            })
+                # Append SQL data into dictionary to be written later
+                processed_intclass.append({
+                    "table_name" : "uspto.INTCLASS_A",
+                    "ApplicationID" : app_no,
+                    "Position" : position,
+                    "Section" : i_class_sec,
+                    "Class" : i_class,
+                    "SubClass" : i_subclass,
+                    "MainGroup" : i_class_mgr,
+                    "SubGroup" : i_class_sgr,
+                    "FileName" : args_array['file_name']
+                })
 
-            # Increment position
-            position += 1
+                # Increment position
+                position += 1
 
-            #print processed_intclass
+                #print processed_intclass
 
-        # Init position
-        position = 1
         # Get US Classification data
         nc = r.find('classification-national')
+        # Init position
+        position = 1
         if nc is not None:
             try: n_class_country = nc.findtext('country')
             except: n_class_country = None
@@ -2957,6 +2958,9 @@ def extract_XML4_application(raw_data, args_array):
                 "SubClass" : n_subclass,
                 "FileName" : args_array['file_name']
             })
+
+            # Increment position
+            position += 1
 
             # TODO: find an instance of futher classification to parse
             if nc.findall('further-classification') is not None:
@@ -2982,10 +2986,10 @@ def extract_XML4_application(raw_data, args_array):
                     # Increment position
                     position += 1
 
-        # Init position
-        position = 1
         # Get CPC Classification data
         cpc_class_element = r.find('classifications-cpc')
+        # Init position
+        position = 1
         if cpc_class_element is not None:
             main_cpc_class_element = cpc_class_element.find('main-cpc')
             if main_cpc_class_element is not None:
@@ -3070,43 +3074,44 @@ def extract_XML4_application(raw_data, args_array):
         position = 1
         # Get Associated party data
         parties_element = r.find('us-parties')
-        applicant_element = parties_element.find('us-applicants')
-        # Get Applicant data
-        for applicant_item in applicant_element.findall('us-applicant'):
-            if(applicant_item.find('addressbook') != None):
-                try: applicant_orgname = applicant_item.find('addressbook').findtext('orgname')
-                except: applicant_orgname = None
-                try: applicant_role = applicant_item.find('addressbook').findtext('role')
-                except: applicant_role = None
-                try: applicant_city = applicant_item.find('addressbook').find('address').findtext('city')
-                except: applicant_city = None
-                try: applicant_state = applicant_item.find('addressbook').find('address').findtext('state')
-                except: applicant_state = None
-                try: applicant_country = applicant_item.find('addressbook').find('address').findtext('country')
-                except: applicant_country = None
-                try: applicant_first_name = applicant_item.find('addressbook').findtext('first-name')
-                except: applicant_first_name = None
-                try: applicant_last_name = applicant_item.find('addressbook').findtext('last-name')
-                except: applicant_last_name = None
+        if parties_element is not None:
+            applicant_element = parties_element.find('us-applicants')
+            # Get Applicant data
+            for applicant_item in applicant_element.findall('us-applicant'):
+                if(applicant_item.find('addressbook') != None):
+                    try: applicant_orgname = applicant_item.find('addressbook').findtext('orgname')
+                    except: applicant_orgname = None
+                    try: applicant_role = applicant_item.find('addressbook').findtext('role')
+                    except: applicant_role = None
+                    try: applicant_city = applicant_item.find('addressbook').find('address').findtext('city')
+                    except: applicant_city = None
+                    try: applicant_state = applicant_item.find('addressbook').find('address').findtext('state')
+                    except: applicant_state = None
+                    try: applicant_country = applicant_item.find('addressbook').find('address').findtext('country')
+                    except: applicant_country = None
+                    try: applicant_first_name = applicant_item.find('addressbook').findtext('first-name')
+                    except: applicant_first_name = None
+                    try: applicant_last_name = applicant_item.find('addressbook').findtext('last-name')
+                    except: applicant_last_name = None
 
-                # Append SQL data into dictionary to be written later
-                processed_applicant.append({
-                    "table_name" : "uspto.APPLICANT_A",
-                    "ApplicationID" : app_no,
-                    "Position" : position,
-                    "OrgName" : applicant_orgname,
-                    "FirstName" : applicant_first_name,
-                    "LastName" : applicant_last_name,
-                    "City" : applicant_city,
-                    "State" : applicant_state,
-                    "Country" : applicant_country,
-                    "FileName" : args_array['file_name']
-                })
+                    # Append SQL data into dictionary to be written later
+                    processed_applicant.append({
+                        "table_name" : "uspto.APPLICANT_A",
+                        "ApplicationID" : app_no,
+                        "Position" : position,
+                        "OrgName" : applicant_orgname,
+                        "FirstName" : applicant_first_name,
+                        "LastName" : applicant_last_name,
+                        "City" : applicant_city,
+                        "State" : applicant_state,
+                        "Country" : applicant_country,
+                        "FileName" : args_array['file_name']
+                    })
 
-                # Increment position
-                position += 1
+                    # Increment position
+                    position += 1
 
-                #print processed_applicant
+                    #print processed_applicant
 
         # Get the inventor data element
         invs = parties_element.find('inventors')
@@ -3561,35 +3566,41 @@ def extract_XML1_application(raw_data, args_array):
         # increment position
         position += 1
 
+    # Find the agent elements
     agent_element = r.find('correspondence-address')
-
     # init position
     position = 1
+    if agent_element is not None:
+        try: agent_orgname = agent_element.findtext('name-1')
+        except: agent_orgname = None
+        try: agent_orgname += agent_element.findtext('name-2')
+        except: agent_orgname = None
+        try:
+            adresss_element = agent_element.find('address')
+            if address_element is not None:
+                try: agent_city = adresss_element.findtext('city')
+                except: agent_city = None
+                try: agent_state = adresss_element.findtext('state')
+                except: agent_state = None
+                try: agent_country = adresss_element.find('country').findtext('country-code')
+                except: agent_country = None
+        except:
+            agent_city = None
+            agent_state = None
+            agent_country = None
 
-    try: agent_orgname = agent_element.findtext('name-1')
-    except: agent_orgname = None
-    try: agent_orgname += agent_element.findtext('name-2')
-    except: agent_orgname = None
-    adresss_element = agent_element.find('address')
-    try: agent_city = adresss_element.findtext('city')
-    except: agent_city = None
-    try: agent_state = adresss_element.findtext('state')
-    except: agent_state = None
-    try: agent_country = adresss_element.find('country').findtext('country-code')
-    except: agent_country = None
+        # Append SQL data into dictionary to be written later
+        processed_agent.append({
+            "table_name" : "uspto.AGENT_A",
+            "ApplicationID" : app_no,
+            "Position" : position,
+            "OrgName" : agent_orgname,
+            "Country" : agent_country,
+            "FileName" : args_array['file_name']
+        })
 
-    # Append SQL data into dictionary to be written later
-    processed_agent.append({
-        "table_name" : "uspto.AGENT_A",
-        "ApplicationID" : app_no,
-        "Position" : position,
-        "OrgName" : agent_orgname,
-        "Country" : agent_country,
-        "FileName" : args_array['file_name']
-    })
-
-    # increment position
-    position += 1
+        # increment position
+        position += 1
 
     # Find the abstract of the application
     try: abstract = return_element_text(document_root.find('subdoc-abstract')).replace("\n", " ").strip()
@@ -3749,14 +3760,14 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['foreignpriority'] = {}
 
         # Define all the .csv filenames fullpath and append to array
-        csv_writer_array['application']['csv_file_name'] = csv_directory + '/CSV_A/application_' + csv_file_name
-        csv_writer_array['agent']['csv_file_name'] = csv_directory + '/CSV_A/agent_' + csv_file_name
-        csv_writer_array['assignee']['csv_file_name'] = csv_directory + '/CSV_A/assignee_' + csv_file_name
-        csv_writer_array['inventor']['csv_file_name'] = csv_directory + '/CSV_A/inventor_' + csv_file_name
-        csv_writer_array['usclass']['csv_file_name'] = csv_directory + '/CSV_A/usclass_' + csv_file_name
-        csv_writer_array['intclass']['csv_file_name'] = csv_directory + '/CSV_A/intclass_' + csv_file_name
-        csv_writer_array['cpcclass']['csv_file_name'] = csv_directory + '/CSV_A/cpcclass_' + csv_file_name
-        csv_writer_array['foreignpriority']['csv_file_name'] = csv_directory + '/CSV_A/foreignpriority_' + csv_file_name
+        csv_writer_array['application']['csv_file_name'] = csv_directory + 'CSV_A/application_' + csv_file_name
+        csv_writer_array['agent']['csv_file_name'] = csv_directory + 'CSV_A/agent_' + csv_file_name
+        csv_writer_array['assignee']['csv_file_name'] = csv_directory + 'CSV_A/assignee_' + csv_file_name
+        csv_writer_array['inventor']['csv_file_name'] = csv_directory + 'CSV_A/inventor_' + csv_file_name
+        csv_writer_array['usclass']['csv_file_name'] = csv_directory + 'CSV_A/usclass_' + csv_file_name
+        csv_writer_array['intclass']['csv_file_name'] = csv_directory + 'CSV_A/intclass_' + csv_file_name
+        csv_writer_array['cpcclass']['csv_file_name'] = csv_directory + 'CSV_A/cpcclass_' + csv_file_name
+        csv_writer_array['foreignpriority']['csv_file_name'] = csv_directory + 'CSV_A/foreignpriority_' + csv_file_name
 
         # Define all the dicionaries to hold the csv data
         csv_writer_array['application']['file'] = open(csv_writer_array['application']['csv_file_name'], 'w')
@@ -4087,8 +4098,8 @@ def store_application_data(processed_data_array, args_array):
 
 
 
-        # Process all the collected grant data for one patent record into csv file
-        # Using the already opened csv.csv.DictWriter object stored in args array.
+        # Process all the collected application data for one patent record into .csv file
+        # Using the already opened csv.DictWriter object stored in args array.
         if "processed_application" in processed_data_array and len(processed_data_array['processed_application']):
             for data_item in processed_data_array["processed_application"]:
                 # Print start message to stdout and log
@@ -4864,6 +4875,14 @@ def get_all_links(args_array):
     # Log finished building all zip filepaths
     logger.info('Finished grabbing patent application bibliographic links: ' + time.strftime("%c"))
 
+    #print 'Started grabbing patent application pair bibliographic links... ' + time.strftime("%c")
+    # Get all patent application pair data
+    #application_pair_linklist = links_parser("PAP", url_source_USPTO)
+    #print 'Finished grabbing patent application pair bibliographic links... ' + time.strftime("%c")
+    # Log finished building all zip filepaths
+    #logger.info('Finished grabbing patent application pair bibliographic links: ' + time.strftime("%c"))
+
+
     # Return the array of arrays of required links
     return {"grants" : grant_linklist, "applications" : application_linklist, "classifications" : classification_linklist}
 
@@ -4891,6 +4910,11 @@ def links_parser(link_type, url):
         # Patent Application
         elif link_type == "PA":
             if "https://bulkdata.uspto.gov/data/patent/application/redbook/bibliographic/" in link['href']:
+                link_array.append(link['href'])
+
+        # Patent Application Pair
+        elif link_type == "PAP":
+            if "" in link['href']:
                 link_array.append(link['href'])
 
     # Go through each found link on the main USPTO page and get the zip files as links and return that array.
@@ -5741,6 +5765,7 @@ if __name__=="__main__":
     log_lock_file = working_directory + "/LOG/.logfile.lock"
     grant_process_log_file = working_directory + "/LOG/grant_links.log"
     application_process_log_file = working_directory + "/LOG/application_links.log"
+    application_pair_process_log_file = working_directory + "/LOG/application_pair_links.log"
     pair_process_log_file = working_directory + "/LOG/pair_links.log"
     classification_process_log_file = working_directory + "/LOG/class_links.log"
     classification_text_filename = working_directory + "/CLS/ctaf1204.txt"
@@ -5784,6 +5809,7 @@ if __name__=="__main__":
         "classification_text_filename" : classification_text_filename,
         "grant_process_log_file" : grant_process_log_file,
         "application_process_log_file" : application_process_log_file,
+        "application_pair_process_log_file" : application_pair_process_log_file,
         "pair_process_log_file" : pair_process_log_file,
         "temp_directory" : app_temp_dirpath,
         "csv_directory" : app_csv_dirpath

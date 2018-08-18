@@ -138,13 +138,26 @@ def return_formatted_date(time_str, args_array, document_id):
     elif time_str == '0000-01-01':
         return None
         logger.warning("'0000-01-01' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+
+    # Check all other conditions based on string length
     else:
+
+        # If the string length is correct
         if len(time_str) ==  8:
-            if  time_str[4:6] == "00" : month = "01"
+            # If the month value is out of range
+            if time_str[4:6] == "00" : month = "01"
+            elif int(time_str[4:6]) > 12 or int(time_str[4:6]) < 1: month = "01"
             else: month = time_str[4:6]
+
+            # If the day value is out of range
             if time_str[6:8] == "00" : day = "01"
+            elif int(time_str[6:8]) > 31 or int(time_str[6:8]) < 1 : day = "01"
             else: day = time_str[6:8]
+
+            # Finally return the fixed time string
             return time_str[0:4] + '-' + month + '-' + day
+
+        # If the string length is too long
         elif len(time_str) == 9:
             #print "Date length == 9"
             time_str = time_str.replace("\n", "").replace("\r", "")
@@ -2860,18 +2873,19 @@ def extract_XML4_application(raw_data, args_array):
 
         # Get application reference data
         ar = r.find('application-reference')
-        try: app_type = ar.attrib['appl-type']
-        except: app_type = None
-        app_doc = ar.find('document-id')
-        try: app_country = app_doc.findtext('country')
-        except: app_country = None
-        try: app_no = app_doc.findtext('doc-number')
-        except: app_no = None
-        try: app_date = return_formatted_date(app_doc.findtext('date'), args_array, document_id)
-        except: app_date = None
-        # Get series code
-        try: series_code = r.findtext('us-application-series-code')
-        except: series_code = None
+        if ar is not None:
+            try: app_type = ar.attrib['appl-type']
+            except: app_type = None
+            app_doc = ar.find('document-id')
+            try: app_country = app_doc.findtext('country')
+            except: app_country = None
+            try: app_no = app_doc.findtext('doc-number')
+            except: app_no = None
+            try: app_date = return_formatted_date(app_doc.findtext('date'), args_array, document_id)
+            except: app_date = None
+            # Get series code
+            try: series_code = r.findtext('us-application-series-code')
+            except: series_code = None
 
         # Get priority Claims
         pcs = r.find('priority-claims')
@@ -3064,11 +3078,14 @@ def extract_XML4_application(raw_data, args_array):
 
         # Get number of figure, drawings
         nof = r.find('figures')
-        try: number_of_drawings = nof.findtext('number-of-drawing-sheets')
-        except: number_of_drawings = None
-        try: number_of_figures = nof.findtext('number-of-figures')
-        except: number_of_figures = None
-
+        if nof is not None:
+            try: number_of_drawings = nof.findtext('number-of-drawing-sheets')
+            except: number_of_drawings = None
+            try: number_of_figures = nof.findtext('number-of-figures')
+            except: number_of_figures = None
+        else:
+            number_of_drawings = None
+            number_of_figures = None
 
         # Increment position
         position = 1
@@ -3113,100 +3130,101 @@ def extract_XML4_application(raw_data, args_array):
 
                     #print processed_applicant
 
-        # Get the inventor data element
-        invs = parties_element.find('inventors')
-        # Init position
-        position = 1
-        # Get all inventors
-        for inv in invs.findall("inventor"):
-            if(inv.find('addressbook') != None):
-                try: inventor_first_name = inv.find('addressbook').findtext('first-name')
-                except: inventor_first_name = None
-                try: inventor_last_name = inv.find('addressbook').findtext('last-name')
-                except: inventor_last_name = None
-                try: inventor_city = inv.find('addressbook').find('address').findtext('city')
-                except: inventor_city = None
-                try: inventor_state = inv.find('addressbook').find('address').findtext('state')
-                except: inventor_state = None
-                try: inventor_country = inv.find('addressbook').find('address').findtext('country')
-                except: inventor_country = None
-                try: inventor_nationality = inv.find('nationality').findtext('country')
-                except: inventor_nationality = None
-                try: inventor_residence = inv.find('residence').findtext('country')
-                except: inventor_residence = None
+            # Get the inventor data element
+            invs = parties_element.find('inventors')
+            # Init position
+            position = 1
+            if invs is not None:
+                # Get all inventors
+                for inv in invs.findall("inventor"):
+                    if(inv.find('addressbook') != None):
+                        try: inventor_first_name = inv.find('addressbook').findtext('first-name')
+                        except: inventor_first_name = None
+                        try: inventor_last_name = inv.find('addressbook').findtext('last-name')
+                        except: inventor_last_name = None
+                        try: inventor_city = inv.find('addressbook').find('address').findtext('city')
+                        except: inventor_city = None
+                        try: inventor_state = inv.find('addressbook').find('address').findtext('state')
+                        except: inventor_state = None
+                        try: inventor_country = inv.find('addressbook').find('address').findtext('country')
+                        except: inventor_country = None
+                        try: inventor_nationality = inv.find('nationality').findtext('country')
+                        except: inventor_nationality = None
+                        try: inventor_residence = inv.find('residence').findtext('country')
+                        except: inventor_residence = None
 
-                # Append SQL data into dictionary to be written later
-                processed_inventor.append({
-                    "table_name" : "uspto.INVENTOR_A",
-                    "ApplicationID" : app_no,
-                    "Position" : position,
-                    "FirstName" : inventor_first_name,
-                    "LastName" : inventor_last_name,
-                    "City" : inventor_city,
-                    "State" : inventor_state,
-                    "Country" : inventor_country,
-                    "Nationality" : inventor_nationality,
-                    "Residence" : inventor_residence,
-                    "FileName" : args_array['file_name']
-                })
+                        # Append SQL data into dictionary to be written later
+                        processed_inventor.append({
+                            "table_name" : "uspto.INVENTOR_A",
+                            "ApplicationID" : app_no,
+                            "Position" : position,
+                            "FirstName" : inventor_first_name,
+                            "LastName" : inventor_last_name,
+                            "City" : inventor_city,
+                            "State" : inventor_state,
+                            "Country" : inventor_country,
+                            "Nationality" : inventor_nationality,
+                            "Residence" : inventor_residence,
+                            "FileName" : args_array['file_name']
+                        })
 
-                # Increment position
-                position += 1
+                        # Increment position
+                        position += 1
 
-                #print processed_inventor
+                        #print processed_inventor
 
-        # Init position
-        position = 1
-        # Get agent data
-        #TODO Find if available in application ??? Where
-        agents_element = parties_element.find('agents')
-        if agents_element is not None:
-            for agent_item in agents_element.findall('agent'):
-                try: asn_sequence = agent_item.attrib['sequence']
-                except: asn_sequence = None
-                if(agent_item.find('addressbook') != None):
-                    try: atn_orgname = agent_item.find('addressbook').findtext('orgname')
-                    except: atn_orgname = None
-                    try: atn_last_name = agent_item.find('addressbook').findtext('last-name')
-                    except: atn_last_name = None
-                    try: atn_first_name = agent_item.find('addressbook').findtext('first-name')
-                    except: atn_first_name = None
-                    try: atn_country = agent_item.find('addressbook').find('address').findtext('country')
-                    except: atn_country = None
+            # Init position
+            position = 1
+            # Get agent data
+            #TODO Find if available in application ??? Where
+            agents_element = parties_element.find('agents')
+            if agents_element is not None:
+                for agent_item in agents_element.findall('agent'):
+                    try: asn_sequence = agent_item.attrib['sequence']
+                    except: asn_sequence = None
+                    if(agent_item.find('addressbook') != None):
+                        try: atn_orgname = agent_item.find('addressbook').findtext('orgname')
+                        except: atn_orgname = None
+                        try: atn_last_name = agent_item.find('addressbook').findtext('last-name')
+                        except: atn_last_name = None
+                        try: atn_first_name = agent_item.find('addressbook').findtext('first-name')
+                        except: atn_first_name = None
+                        try: atn_country = agent_item.find('addressbook').find('address').findtext('country')
+                        except: atn_country = None
 
-                    # Append SQL data into dictionary to be written later
-                    processed_agent.append({
-                        "table_name" : "uspto.AGENT_A",
-                        "ApplicationID" : app_no,
-                        "Position" : position,
-                        "OrgName" : atn_orgname,
-                        "LastName" : atn_last_name,
-                        "FirstName" : atn_first_name,
-                        "Country" : atn_country,
-                        "FileName" : args_array['file_name']
-                    })
+                        # Append SQL data into dictionary to be written later
+                        processed_agent.append({
+                            "table_name" : "uspto.AGENT_A",
+                            "ApplicationID" : app_no,
+                            "Position" : position,
+                            "OrgName" : atn_orgname,
+                            "LastName" : atn_last_name,
+                            "FirstName" : atn_first_name,
+                            "Country" : atn_country,
+                            "FileName" : args_array['file_name']
+                        })
 
-                    # Increment position
-                    position += 1
+                        # Increment position
+                        position += 1
 
-                    #print processed_agent
+                        #print processed_agent
 
         # Get assignee data
+        assignee_element = r.find('assignees')
         # Init position
         position += 1
-        assignee_element = r.find('assignees')
         if assignee_element is not None:
             for assignee_item in assignee_element.findall('assignee'):
-                if(applicant_item.find('addressbook') != None):
-                    try: assignee_orgname = applicant_item.find('addressbook').findtext('orgname')
+                if(assignee_item.find('addressbook') != None):
+                    try: assignee_orgname = assignee_item.find('addressbook').findtext('orgname')
                     except: assignee_orgname = None
-                    try: assignee_role = applicant_item.find('addressbook').findtext('role')
+                    try: assignee_role = assignee_item.find('addressbook').findtext('role')
                     except: assignee_role = None
-                    try: assignee_city = applicant_item.find('addressbook').find('address').findtext('city')
+                    try: assignee_city = assignee_item.find('addressbook').find('address').findtext('city')
                     except: assignee_city = None
-                    try: assignee_state = applicant_item.find('addressbook').find('address').findtext('state')
+                    try: assignee_state = assignee_item.find('addressbook').find('address').findtext('state')
                     except: assignee_state = None
-                    try: assignee_country = applicant_item.find('addressbook').find('address').findtext('country')
+                    try: assignee_country = assignee_item.find('addressbook').find('address').findtext('country')
                     except: assignee_country = None
 
                     # Append SQL data into dictionary to be written later
@@ -3231,7 +3249,8 @@ def extract_XML4_application(raw_data, args_array):
     # Find the abstract
     try:
         abstract_element = patent_root.find('abstract')
-        abstract = return_element_text(abstract_element)
+        if abstract_element is not None:
+            abstract = return_element_text(abstract_element)
     except: abstract = None
     #print abstract
 
@@ -3294,69 +3313,42 @@ def extract_XML1_application(raw_data, args_array):
 
     # Get and fix the document_id data
     di = r.find('document-id')
-    try:
-        # This document ID is NOT application number
-        document_id = di.findtext('doc-number')
-    except:
-        document_id = None
-        logger.error("No Patent Number was found for: " + url_link)
-    try: kind = di.findtext('kind-code')
-    except: kind = None
-    try: pub_date = return_formatted_date(di.findtext('document-date'), args_array, document_id)
-    except: pub_date = None
-    try: app_type = r.findtext('publication-filing-type')
-    except: app_type = None
+    if di is not None:
+        try:
+            # This document ID is NOT application number
+            document_id = di.findtext('doc-number')
+        except:
+            document_id = None
+            logger.error("No Patent Number was found for: " + url_link)
+        try: kind = di.findtext('kind-code')
+        except: kind = None
+        try: pub_date = return_formatted_date(di.findtext('document-date'), args_array, document_id)
+        except: pub_date = None
+        try: app_type = r.findtext('publication-filing-type')
+        except: app_type = None
 
     # Get application filing data
     ar = r.find('domestic-filing-data')
-    try:
-        app_no = ar.find('application-number').findtext('doc-number')
-    except: app_no = None
-    try: app_date = return_formatted_date(ar.findtext('filing-date'), args_array, document_id)
-    except: app_date = None
-    try: series_code = ar.findtext('application-number-series-code')
-    except: series_code = None
+    if ar is not None:
+        try:
+            app_no = ar.find('application-number').findtext('doc-number')
+        except: app_no = None
+        try: app_date = return_formatted_date(ar.findtext('filing-date'), args_array, document_id)
+        except: app_date = None
+        try: series_code = ar.findtext('application-number-series-code')
+        except: series_code = None
 
     technical_information_element = r.find('technical-information')
-    # Get international classification data
-    ic = technical_information_element.find('classification-ipc')
-    if ic is not None:
-
+    if technical_information_element is not None:
+        # Get international classification data
+        ic = technical_information_element.find('classification-ipc')
         # Init position
         position = 1
+        if ic is not None:
 
-        icm = ic.find('classification-ipc-primary')
-        #TODO: regex the class found into class, subclass and other
-        #TODO: find out what maingrou and subgroup are found in this file format
-        try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(icm.findtext('ipc'))
-        except:
-            i_class_sec = None
-            i_class = None
-            i_subclass = None
-            i_class_mgr = None
-            i_class_sgr = None
-            logger.warning("Malformed international class found in application ID: " + document_id +  " in file: " + url_link)
-
-        # Append SQL data into dictionary to be written later
-        processed_intclass.append({
-            "table_name" : "uspto.INTCLASS_A",
-            "ApplicationID" : app_no,
-            "Position" : position,
-            "Section" : i_class_sec,
-            "Class" : i_class,
-            "SubClass" : i_subclass,
-            "MainGroup" : i_class_mgr,
-            "SubGroup" : i_class_sgr,
-            "FileName" : args_array['file_name']
-        })
-
-        # Increment Position
-        position += 1
-
-        #print processed_intclass
-
-        ics = ic.findall('classification-ipc-secondary')
-        if ics is not None:
+            icm = ic.find('classification-ipc-primary')
+            #TODO: regex the class found into class, subclass and other
+            #TODO: find out what maingrou and subgroup are found in this file format
             try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(icm.findtext('ipc'))
             except:
                 i_class_sec = None
@@ -3379,16 +3371,45 @@ def extract_XML1_application(raw_data, args_array):
                 "FileName" : args_array['file_name']
             })
 
-            # Increment position
+            # Increment Position
             position += 1
 
             #print processed_intclass
 
+            ics = ic.findall('classification-ipc-secondary')
+            if ics is not None:
+                try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(icm.findtext('ipc'))
+                except:
+                    i_class_sec = None
+                    i_class = None
+                    i_subclass = None
+                    i_class_mgr = None
+                    i_class_sgr = None
+                    logger.warning("Malformed international class found in application ID: " + document_id +  " in file: " + url_link)
+
+                # Append SQL data into dictionary to be written later
+                processed_intclass.append({
+                    "table_name" : "uspto.INTCLASS_A",
+                    "ApplicationID" : app_no,
+                    "Position" : position,
+                    "Section" : i_class_sec,
+                    "Class" : i_class,
+                    "SubClass" : i_subclass,
+                    "MainGroup" : i_class_mgr,
+                    "SubGroup" : i_class_sgr,
+                    "FileName" : args_array['file_name']
+                })
+
+                # Increment position
+                position += 1
+
+                #print processed_intclass
+
     # Get US classification data
     nc = technical_information_element.find('classification-us')
+    # init position
+    position = 1
     if nc is not None:
-        # init position
-        position = 1
 
         uspc = nc.find('classification-us-primary').find('uspc')
         try: n_class_main = uspc.findtext('class')
@@ -3411,7 +3432,7 @@ def extract_XML1_application(raw_data, args_array):
 
         #print processed_usclass
 
-        us_classification_secondary_element =  nc.find('classification-us-secondary')
+        us_classification_secondary_element = nc.find('classification-us-secondary')
         if us_classification_secondary_element is not None:
             uspc = us_classification_secondary_element.find('uspc')
             try: n_class_main = uspc.findtext('class')
@@ -3453,22 +3474,23 @@ def extract_XML1_application(raw_data, args_array):
             except: inventor_last_name = None
 
             res = inventor.find('residence')
-            residence_us = res.find('residence-us')
-            if residence_us is not None:
-                try: inventor_city = residence_us.findtext('city')
-                except: inventor_city = None
-                try: inventor_state = residence_us.findtext('state')
-                except: inventor_state = None
-                try: inventor_country = residence_us.findtext('country-code')
-                except: inventor_country = None
-            residence_non_us = res.find('residence-non-us')
-            if residence_non_us is not None:
-                try: inventor_city = residence_non_us.findtext('city')
-                except: inventor_city = None
-                try: inventor_state = residence_non_us.findtext('state')
-                except: inventor_state = None
-                try: inventor_country = residence_non_us.findtext('country-code')
-                except: inventor_country = None
+            if res is not None:
+                residence_us = res.find('residence-us')
+                if residence_us is not None:
+                    try: inventor_city = residence_us.findtext('city')
+                    except: inventor_city = None
+                    try: inventor_state = residence_us.findtext('state')
+                    except: inventor_state = None
+                    try: inventor_country = residence_us.findtext('country-code')
+                    except: inventor_country = None
+                residence_non_us = res.find('residence-non-us')
+                if residence_non_us is not None:
+                    try: inventor_city = residence_non_us.findtext('city')
+                    except: inventor_city = None
+                    try: inventor_state = residence_non_us.findtext('state')
+                    except: inventor_state = None
+                    try: inventor_country = residence_non_us.findtext('country-code')
+                    except: inventor_country = None
 
             # Append SQL data into dictionary to be written later
             processed_inventor.append({
@@ -3490,49 +3512,52 @@ def extract_XML1_application(raw_data, args_array):
 
         # For all secordary inventors
         for inventor in iv.findall('inventor'):
-            n = inventor.find('name')
-            try: inventor_first_name = n.findtext('given-name')
-            except: inventor_first_name = None
-            try: inventor_last_name = n.findtext('family-name')
-            except: inventor_last_name = None
+            if inventor is not None:
+                n = inventor.find('name')
+                if n is not None:
+                    try: inventor_first_name = n.findtext('given-name')
+                    except: inventor_first_name = None
+                    try: inventor_last_name = n.findtext('family-name')
+                    except: inventor_last_name = None
 
-            res = inventor.find('residence')
-            residence_us = res.find('residence-us')
-            if residence_us is not None:
-                try: inventor_city = residence_us.findtext('city')
-                except: inventor_city = None
-                try: inventor_state = residence_us.findtext('state')
-                except: inventor_state = None
-                try: inventor_country = residence_us.findtext('country-code')
-                except: inventor_country = None
-            residence_non_us = res.find('residence-non-us')
-            if residence_non_us is not None:
-                try: inventor_city = residence_non_us.findtext('city')
-                except: inventor_city = None
-                try: inventor_state = residence_non_us.findtext('state')
-                except: inventor_state = None
-                try: inventor_country = residence_non_us.findtext('country-code')
-                except: inventor_country = None
+                res = inventor.find('residence')
+                if res is not None:
+                    residence_us = res.find('residence-us')
+                    if residence_us is not None:
+                        try: inventor_city = residence_us.findtext('city')
+                        except: inventor_city = None
+                        try: inventor_state = residence_us.findtext('state')
+                        except: inventor_state = None
+                        try: inventor_country = residence_us.findtext('country-code')
+                        except: inventor_country = None
+                    residence_non_us = res.find('residence-non-us')
+                    if residence_non_us is not None:
+                        try: inventor_city = residence_non_us.findtext('city')
+                        except: inventor_city = None
+                        try: inventor_state = residence_non_us.findtext('state')
+                        except: inventor_state = None
+                        try: inventor_country = residence_non_us.findtext('country-code')
+                        except: inventor_country = None
 
-            # Append SQL data into dictionary to be written later
-            processed_inventor.append({
-                "table_name" : "uspto.INVENTOR_A",
-                "ApplicationID" : app_no,
-                "Position" : position,
-                "FirstName" : inventor_first_name,
-                "LastName" : inventor_last_name,
-                "City" : inventor_city,
-                "State" : inventor_state,
-                "Country" : inventor_country,
-                "FileName" : args_array['file_name']
-            })
+                    # Append SQL data into dictionary to be written later
+                    processed_inventor.append({
+                        "table_name" : "uspto.INVENTOR_A",
+                        "ApplicationID" : app_no,
+                        "Position" : position,
+                        "FirstName" : inventor_first_name,
+                        "LastName" : inventor_last_name,
+                        "City" : inventor_city,
+                        "State" : inventor_state,
+                        "Country" : inventor_country,
+                        "FileName" : args_array['file_name']
+                    })
 
-            # Increment position
-            position += 1
+                    # Increment position
+                    position += 1
 
-            #print processed_inventor
+                    #print processed_inventor
 
-    assignee_element  = r.find('assignee')
+    assignee_element = r.find('assignee')
     if assignee_element is not None:
         # init position
         position = 1

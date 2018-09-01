@@ -271,7 +271,8 @@ class SQLProcess:
                     "FOREIGNPRIORITY_A",
                     "AGENT_A",
                     "ASSIGNEE_A",
-                    "INVENTOR_A"
+                    "INVENTOR_A",
+                    "APPLICANT_A"
                 ]
 
             # Loop through each table_name defined by call_type

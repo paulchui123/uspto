@@ -133,11 +133,15 @@ def return_formatted_date(time_str, args_array, document_id):
     if time_str is None:
         return None
         logger.warning("None Type object was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
-
     # Check if '0000-01-01' has been passed in
     elif time_str == '0000-01-01':
         return None
         logger.warning("'0000-01-01' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+    # Check if '0000-00-00' has been passed in
+    elif time_str == '0000-00-00':
+        return None
+        logger.warning("'0000-00-00' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+
 
     # Check all other conditions based on string length
     else:
@@ -343,13 +347,13 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_intclass.append({
                     "table_name" : "uspto.INTCLASS_G",
-                    "GrantID" : document_id,
+                    "GrantID" : document_id[:20],
                     "Position" : position,
-                    "Section" : i_class_sec,
-                    "Class" : i_class_cls,
-                    "SubClass" : i_class_sub,
-                    "MainGroup" : i_class_mgr,
-                    "SubGroup" : i_class_sgr,
+                    "Section" : i_class_sec[:15],
+                    "Class" : i_class_cls[:15],
+                    "SubClass" : i_class_sub[:15],
+                    "MainGroup" : i_class_mgr[:15],
+                    "SubGroup" : i_class_sgr[:15],
                     "FileName" : args_array['file_name']
                 })
 
@@ -386,13 +390,13 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_cpcclass.append({
                     "table_name" : "uspto.CPCCLASS_G",
-                    "GrantID" : document_id,
+                    "GrantID" : document_id[:20],
                     "Position" : position,
-                    "Section" : cpc_class_sec,
-                    "Class" : cpc_class,
-                    "SubClass" : cpc_subclass,
-                    "MainGroup" : cpc_class_mgr,
-                    "SubGroup" : cpc_class_sgr,
+                    "Section" : cpc_class_sec[:15],
+                    "Class" : cpc_class[:15],
+                    "SubClass" : cpc_subclass[:15],
+                    "MainGroup" : cpc_class_mgr[:15],
+                    "SubGroup" : cpc_class_sgr[:15],
                     "FileName" : args_array['file_name']
                 })
 
@@ -411,10 +415,10 @@ def extract_XML4_grant(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_usclass.append({
                 "table_name" : "uspto.USCLASS_G",
-                "GrantID" : document_id,
+                "GrantID" : document_id[:20],
                 "Position" : position,
-                "Class" : n_class_main,
-                "SubClass" : n_subclass,
+                "Class" : n_class_main[:5],
+                "SubClass" : n_subclass[:15],
                 "FileName" : args_array['file_name']
             })
 
@@ -432,10 +436,10 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_usclass.append({
                     "table_name" : "uspto.USCLASS_G",
-                    "GrantID" : document_id,
+                    "GrantID" : document_id[:20],
                     "Position" : position,
-                    "Class" : n_class_main,
-                    "SubClass" : n_subclass,
+                    "Class" : n_class_main[:5],
+                    "SubClass" : n_subclass[:15],
                     "FileName" : args_array['file_name']
                 })
 
@@ -462,7 +466,7 @@ def extract_XML4_grant(raw_data, args_array):
                         except: citation_kind = None
                         try: citation_name = x.find('document-id').findtext('name')
                         except: citation_name = None
-                        try: citation_date = x.find('document-id').findtext('date')
+                        try: citation_date = return_formatted_date(x.find('document-id').findtext('date') args_array, document_id)
                         except: citation_date = None
                         try:
                             if rfc.findtext('category') == "cited by examiner":
@@ -477,13 +481,13 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_gracit.append({
                             "table_name" : "uspto.GRACIT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : citation_position,
-                            "CitedID" : citation_grant_id,
-                            "Kind" : citation_kind,
-                            "Name" : citation_name,
-                            "Date" : return_formatted_date(citation_date, args_array, document_id),
-                            "Country" : citation_country,
+                            "CitedID" : citation_grant_id[:20],
+                            "Kind" : citation_kind[:10],
+                            "Name" : citation_name[:100],
+                            "Date" : citation_date,
+                            "Country" : citation_country[:100],
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -495,13 +499,13 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_forpatcit.append({
                             "table_name" : "uspto.FORPATCIT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : citation_position,
-                            "CitedID" : citation_grant_id,
-                            "Kind" : citation_kind,
-                            "Name" : citation_name,
-                            "Date" : return_formatted_date(citation_date, args_array, document_id),
-                            "Country" : citation_country,
+                            "CitedID" : citation_grant_id[:25],
+                            "Kind" : citation_kind[:10],
+                            "Name" : citation_name[:100],
+                            "Date" : citation_date[:100],
+                            "Country" : citation_country[:100],
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -533,7 +537,7 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_nonpatcit.append({
                             "table_name" : "uspto.NONPATCIT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : citation_position,
                             "Citation" : non_patent_citation_text,
                             "Category" : citation_category,
@@ -580,14 +584,14 @@ def extract_XML4_grant(raw_data, args_array):
 
                         processed_applicant.append({
                             "table_name" : "uspto.APPLICANT_G",
-                            "GrantID" : document_id,
-                            "OrgName" : applicant_orgname,
+                            "GrantID" : document_id[:20],
+                            "OrgName" : applicant_orgname[:300],
                             "Position" : applicant_sequence,
-                            "FirstName" : applicant_first_name,
-                            "LastName" : applicant_last_name,
-                            "City" : applicant_city,
-                            "State" : applicant_state,
-                            "Country" : applicant_country,
+                            "FirstName" : applicant_first_name[:100],
+                            "LastName" : applicant_last_name[:100],
+                            "City" : applicant_city[:100],
+                            "State" : applicant_state[:100],
+                            "Country" : applicant_country[:100],
                             "FileName" : args_array['file_name']
                         })
 
@@ -617,14 +621,14 @@ def extract_XML4_grant(raw_data, args_array):
 
                         processed_inventor.append({
                             "table_name" : "uspto.INVENTOR_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : inventor_sequence,
-                            "FirstName" : inventor_first_name,
-                            "LastName" : inventor_last_name,
-                            "City" : inventor_city,
-                            "State" : inventor_state,
-                            "Country" : inventor_country,
-                            "Residence" : inventor_residence,
+                            "FirstName" : inventor_first_name[:100],
+                            "LastName" : inventor_last_name[:100],
+                            "City" : inventor_city[:100],
+                            "State" : inventor_state[:100],
+                            "Country" : inventor_country[:100],
+                            "Residence" : inventor_residence[:300],
                             "FileName" : args_array['file_name']
                         })
 
@@ -649,12 +653,12 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_agent.append({
                             "table_name" : "uspto.AGENT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : agent_sequence,
-                            "OrgName" : agent_orgname,
-                            "LastName" : agent_last_name,
-                            "FirstName" : agent_first_name,
-                            "Country" : agent_country,
+                            "OrgName" : agent_orgname[:300],
+                            "LastName" : agent_last_name[:100],
+                            "FirstName" : agent_first_name[:100],
+                            "Country" : agent_country[:100],
                             "FileName" : args_array['file_name']
                         })
 
@@ -669,7 +673,7 @@ def extract_XML4_grant(raw_data, args_array):
                     except: asn_orgname = None
                     try: asn_role = x.find('addressbook').findtext('role')
                     except: asn_role = None
-                    try: asn_city = x.find('addressbook').find('address').findtext('city')
+                    try: asn_city = x.find('addressbook').find('address').findtext('city')[:99]
                     except: asn_city = None
                     try: asn_state = x.find('addressbook').find('address').findtext('state')
                     except: asn_state = None
@@ -679,13 +683,13 @@ def extract_XML4_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "OrgName" : asn_orgname,
-                        "Role" : asn_role,
-                        "City" : asn_city,
-                        "State" : asn_state,
-                        "Country" : asn_country,
+                        "OrgName" : asn_orgname[:500],
+                        "Role" : asn_role[:45],
+                        "City" : asn_city[:100],
+                        "State" : asn_state[:100],
+                        "Country" : asn_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -693,6 +697,7 @@ def extract_XML4_grant(raw_data, args_array):
 
         # Find all examiner data
         for exm in r.findall('examiners'):
+            position = 1
             for x in exm.findall('primary-examiner'):
                 try: exm_last_name = x.findtext('last-name')
                 except: exm_last_name = None
@@ -704,13 +709,15 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_examiner.append({
                     "table_name" : "uspto.EXAMINER_G",
-                    "GrantID" : document_id,
-                    "Position" : 1,
-                    "LastName" : exm_last_name,
-                    "FirstName" : exm_first_name,
-                    "Department" : exm_department,
+                    "GrantID" : document_id[:20],
+                    "Position" : position,
+                    "LastName" : exm_last_name[:50],
+                    "FirstName" : exm_first_name[:50],
+                    "Department" : exm_department[:100],
                     "FileName" : args_array['file_name']
                 })
+
+                position += 1
 
             for x in exm.findall('assistant-examiner'):
                 try: exm_last_name = x.findtext('last-name')
@@ -723,13 +730,15 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_examiner.append({
                     "table_name" : "uspto.EXAMINER_G",
-                    "GrantID" : document_id,
-                    "Position" : 2,
-                    "LastName" : exm_last_name,
-                    "FirstName" : exm_first_name,
-                    "Department" : exm_department,
+                    "GrantID" : document_id[:20],
+                    "Position" : position,
+                    "LastName" : exm_last_name[:50],
+                    "FirstName" : exm_first_name[:50],
+                    "Department" : exm_department[:100],
                     "FileName" : args_array['file_name']
                 })
+
+                position += 1
 
     # TODO: see if it's claims or description and store accordingly
     try: claims = patent_root.findtext('description')
@@ -748,19 +757,19 @@ def extract_XML4_grant(raw_data, args_array):
     try:
         processed_grant.append({
             "table_name" : "uspto.GRANT",
-            "GrantID" : document_id,
-            "Title" : title,
+            "GrantID" : document_id[:20],
+            "Title" : title[:500],
             "IssueDate" : pub_date,
-            "Kind" : kind,
-            "USSeriesCode" : series_code,
+            "Kind" : kind[:2],
+            "USSeriesCode" : series_code[:2],
             "Abstract" : abstract,
             "ClaimsNum" : claims_num,
             "DrawingsNum" : number_of_drawings,
             "FiguresNum" : number_of_figures,
-            "ApplicationID" : app_no,
+            "ApplicationID" : app_no[:20],
             "Claims" : claims,
             "FileDate" : app_date,
-            "AppType" : app_type,
+            "AppType" : app_type[:45],
             "GrantLength" : terms_of_grant,
             "FileName" : args_array['file_name']
         })
@@ -841,7 +850,7 @@ def extract_XML2_grant(raw_data, args_array):
                 logger.error("No Patent Number was found for: " + url_link)
             try: kind = return_element_text(B100.find('B130'))
             except: kind = None
-            try: pub_date = return_element_text(B100.find('B140')) # PATENT ISSUE DATE
+            try: pub_date = return_formatted_date(return_element_text(B100.find('B140')), args_array, document_id) # PATENT ISSUE DATE
             except: pub_date = None
             try: pub_country = return_element_text(B100.find('B190')) # PATENT APPLICANT COUNTRY??
             except: pub_country = None
@@ -853,7 +862,7 @@ def extract_XML2_grant(raw_data, args_array):
             app_country = None
             try: app_no = return_element_text(B200.find('B210')) # APPLICATION NUMBER
             except: app_no = None
-            try: app_date = return_element_text(B200.find('B220')) # APPLICATION DATE
+            try: app_date = return_formatted_date(return_element_text(B200.find('B220')), args_array, document_id) # APPLICATION DATE
             except: app_date = None
             try: series_code = return_element_text(B200.find('B211US'))
             except: series_code = None
@@ -872,10 +881,10 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "Class" : n_class_main,
-                        "SubClass" : n_subclass,
+                        "Class" : n_class_main[:5],
+                        "SubClass" : n_subclass[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -887,10 +896,10 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "Class" : n_class_main,
-                        "SubClass" : n_subclass,
+                        "Class" : n_class_main[:5],
+                        "SubClass" : n_subclass[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -926,13 +935,13 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "Section" : i_class_sec,
-                        "Class" : i_class,
-                        "SubClass" : i_subclass,
-                        "MainGroup" : i_class_mgr,
-                        "SubGroup" : i_class_sgr,
+                        "Section" : i_class_sec[:15],
+                        "Class" : i_class[:15],
+                        "SubClass" : i_subclass[:15],
+                        "MainGroup" : i_class_mgr[:15],
+                        "SubGroup" : i_class_sgr[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -962,13 +971,13 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "Section" : i_class_sec,
-                        "Class" : i_class,
-                        "SubClass" : i_subclass,
-                        "MainGroup" : i_class_mgr,
-                        "SubGroup" : i_class_sgr,
+                        "Section" : i_class_sec[:15],
+                        "Class" : i_class[:15],
+                        "SubClass" : i_subclass[:15],
+                        "MainGroup" : i_class_mgr[:15],
+                        "SubGroup" : i_class_sgr[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -1032,13 +1041,13 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_gracit.append({
                             "table_name" : "uspto.GRACIT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : position,
-                            "CitedID" : citation_document_number,
-                            "Kind" : pct_kind,
-                            "Name" : citation_name,
+                            "CitedID" : citation_document_number[:15],
+                            "Kind" : pct_kind[:10],
+                            "Name" : citation_name[:100],
                             "Date" : citation_date,
-                            "Country" : citation_country,
+                            "Country" : citation_country[:100],
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -1050,13 +1059,13 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_forpatcit.append({
                             "table_name" : "uspto.FORPATCIT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : position,
-                            "CitedID" : citation_document_number,
-                            "Kind" : pct_kind,
-                            "Name" : citation_name,
+                            "CitedID" : citation_document_number[:25],
+                            "Kind" : pct_kind[:10],
+                            "Name" : citation_name[:100],
                             "Date" : citation_date,
-                            "Country" : citation_country,
+                            "Country" : citation_country[:100],
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -1088,7 +1097,7 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_nonpatcit.append({
                         "table_name" : "uspto.NONPATCIT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
                         "Citation" : non_patent_citation_text,
                         "Category" : ncitation_category,
@@ -1142,15 +1151,15 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "FirstName" : inventor_first_name,
-                        "LastName" : inventor_last_name,
-                        "City" : inventor_city,
-                        "State" : inventor_state,
-                        "Country" : inventor_country,
-                        "Nationality" : inventor_nationality,
-                        "Residence" : inventor_residence,
+                        "FirstName" : inventor_first_name[:100],
+                        "LastName" : inventor_last_name[:100],
+                        "City" : inventor_city[:100],
+                        "State" : inventor_state[:100],
+                        "Country" : inventor_country[:100],
+                        "Nationality" : inventor_nationality[:100],
+                        "Residence" : inventor_residence[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -1176,13 +1185,13 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "OrgName" : asn_orgname,
-                        "Role" : asn_role,
-                        "City" : asn_city,
-                        "State" :  asn_state,
-                        "Country" : asn_country,
+                        "OrgName" : asn_orgname[:500],
+                        "Role" : asn_role[:45],
+                        "City" : asn_city[:100],
+                        "State" :  asn_state[:100],
+                        "Country" : asn_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -1206,12 +1215,12 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_agent.append({
                             "table_name" : "uspto.AGENT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : position,
-                            "OrgName" : agent_orgname,
-                            "LastName" : agent_last_name,
-                            "FirstName" : agent_first_name,
-                            "Country" : agent_country,
+                            "OrgName" : agent_orgname[:300],
+                            "LastName" : agent_last_name[:100],
+                            "FirstName" : agent_first_name[:100],
+                            "Country" : agent_country[:100],
                             "FileName" : args_array['file_name']
                         })
 
@@ -1232,11 +1241,11 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_examiner.append({
                             "table_name" : "uspto.EXAMINER_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : position,
-                            "LastName" :  examiner_last_name,
-                            "FirstName" : examiner_fist_name,
-                            "Department" : examiner_department,
+                            "LastName" :  examiner_last_name[:50],
+                            "FirstName" : examiner_fist_name[:50],
+                            "Department" : examiner_department[:100],
                             "FileName" : args_array['file_name']
                         })
 
@@ -1254,11 +1263,11 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_examiner.append({
                             "table_name" : "uspto.EXAMINER_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : position,
-                            "LastName" :  examiner_last_name,
-                            "FirstName" : examiner_fist_name,
-                            "Department" : examiner_department,
+                            "LastName" :  examiner_last_name[:50],
+                            "FirstName" : examiner_fist_name[:50],
+                            "Department" : examiner_department[:100],
                             "FileName" : args_array['file_name']
                         })
 
@@ -1284,20 +1293,20 @@ def extract_XML2_grant(raw_data, args_array):
         # Append SQL data into dictionary to be written later
         processed_grant.append({
             "table_name" : "uspto.GRANT",
-            "GrantID" : document_id,
-            "Title" : title,
+            "GrantID" : document_id[:20],
+            "Title" : title[:500],
             "IssueDate" : pub_date,
-            "Kind" : kind,
+            "Kind" : kind[:2],
             "GrantLength" : grant_length,
-            "USSeriesCode" : series_code,
+            "USSeriesCode" : series_code[:2],
             "Abstract" : abstract,
             "ClaimsNum" : claims_num,
             "DrawingsNum" : number_of_drawings,
             "FiguresNum" : number_of_figures,
-            "ApplicationID" : app_no,
+            "ApplicationID" : app_no[:20],
             "Claims" : claims,
             "FileDate" : app_date,
-            "AppType" : app_type,
+            "AppType" : app_type[:45],
             "FileName" : args_array['file_name']
         })
 
@@ -1411,18 +1420,18 @@ def process_APS_grant_content(args_array):
             # Append to the patent grand data
             processed_grant.append({
                 "table_name" : "uspto.GRANT",
-                "GrantID" : document_id,
-                "Title" :  title,
+                "GrantID" : document_id[:20],
+                "Title" :  title[:500],
                 "IssueDate" : pub_date,
                 "FileDate" : app_date,
-                "Kind" : kind,
-                "AppType": app_type,
-                "USSeriesCode" : series_code,
+                "Kind" : kind[:2],
+                "AppType": app_type[:45],
+                "USSeriesCode" : series_code[:2],
                 "Abstract" : abstract,
                 "ClaimsNum" : claims_num,
                 "DrawingsNum" : number_of_drawings,
                 "FiguresNum" : number_of_figures,
-                "ApplicationID" : app_no,
+                "ApplicationID" : app_no[:20],
                 "GrantLength" : grant_length,
                 "FileName" : args_array['file_name']
             })
@@ -1464,18 +1473,18 @@ def process_APS_grant_content(args_array):
                 # Append to the patent grand data
                 processed_grant.append({
                     "table_name" : "uspto.GRANT",
-                    "GrantID" : document_id,
-                    "Title" :  title,
+                    "GrantID" : document_id[:20],
+                    "Title" :  title[:500],
                     "IssueDate" : pub_date,
                     "FileDate" : app_date,
-                    "Kind" : kind,
-                    "AppType": app_type,
-                    "USSeriesCode" : series_code,
+                    "Kind" : kind[:2],
+                    "AppType": app_type[:45],
+                    "USSeriesCode" : series_code[:2],
                     "Abstract" : abstract,
                     "ClaimsNum" : claims_num,
                     "DrawingsNum" : number_of_drawings,
                     "FiguresNum" : number_of_figures,
-                    "ApplicationID" : app_no,
+                    "ApplicationID" : app_no[:20],
                     "GrantLength" : grant_length,
                     "FileName" : args_array['file_name']
                 })
@@ -1616,10 +1625,10 @@ def process_APS_grant_content(args_array):
             # Append SQL data into dictionary to be written later
             processed_examiner.append({
                 "table_name" : "uspto.EXAMINER_G",
-                "GrantID" : document_id,
+                "GrantID" : document_id[:20],
                 "Position" : 2,
-                "LastName" : examiner_last_name,
-                "FirstName" : examiner_first_name,
+                "LastName" : examiner_last_name[:50],
+                "FirstName" : examiner_first_name[:50],
                 "Department" : None,
                 "FileName" : args_array['file_name']
             })
@@ -1645,10 +1654,10 @@ def process_APS_grant_content(args_array):
             # Append SQL data into dictionary to be written later
             processed_examiner.append({
                 "table_name" : "uspto.EXAMINER_G",
-                "GrantID" : document_id,
+                "GrantID" : document_id[:2],
                 "Position" : 1,
-                "LastName" : examiner_last_name,
-                "FirstName" : examiner_first_name,
+                "LastName" : examiner_last_name[:50],
+                "FirstName" : examiner_first_name[:50],
                 "Department" : None,
                 "FileName" : args_array['file_name']
             })
@@ -1687,10 +1696,10 @@ def process_APS_grant_content(args_array):
                             # Append SQL data into dictionary to be written later
                             processed_gracit.append({
                                 "table_name" : "uspto.GRACIT_G",
-                                "GrantID" : document_id,
+                                "GrantID" : document_id[:20],
                                 "Position" : position,
-                                "CitedID" : citation_document_number,
-                                "Name" : citation_name,
+                                "CitedID" : citation_document_number[:20],
+                                "Name" : citation_name[:100],
                                 "Date" : citation_date,
                                 "Country" : "US",
                                 "FileName" : args_array['file_name']
@@ -1764,7 +1773,7 @@ def process_APS_grant_content(args_array):
                         # Append SQL data into dictionary to be written later
                         processed_nonpatcit.append({
                             "table_name" : "uspto.NONPATCIT_G",
-                            "GrantID" : document_id,
+                            "GrantID" : document_id[:20],
                             "Position" : position,
                             "Citation" : temp_data_string,
                             "Category" : None,
@@ -1807,7 +1816,7 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_nonpatcit.append({
                         "table_name" : "uspto.NONPATCIT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
                         "Citation" : temp_data_string,
                         "Category" : None,
@@ -1853,11 +1862,11 @@ def process_APS_grant_content(args_array):
                             # Append SQL data into dictionary to be written later
                             processed_forpatcit.append({
                                 "table_name" : "uspto.FORPATCIT_G",
-                                "GrantID" : document_id,
+                                "GrantID" : document_id[:20],
                                 "Position" : position,
-                                "CitedID" : citation_document_number,
+                                "CitedID" : citation_document_number[:25],
                                 "Date" : (citation_date, args_array),
-                                "Country" : citation_country,
+                                "Country" : citation_country[:100],
                                 "FileName" : args_array['file_name']
                             })
 
@@ -1885,7 +1894,7 @@ def process_APS_grant_content(args_array):
                     except: citation_document_number = None
                 elif line[0:3] == "ISD":
                     citation_date = None
-                    try: citation_date = replace_old_html_characters(line[3:].strip())
+                    try: citation_date = return_formatted_date(replace_old_html_characters(line[3:].strip()), args_array, document_id)
                     except: citation_date = None
                 elif line[0:3] == "CNT":
                     citation_country = None
@@ -1903,11 +1912,11 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_forpatcit.append({
                         "table_name" : "uspto.FORPATCIT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "CitedID" : citation_document_number,
-                        "Date" : return_formatted_date(citation_date, args_array, document_id),
-                        "Country" : citation_country,
+                        "CitedID" : citation_document_number[:25],
+                        "Date" : citation_date,
+                        "Country" : citation_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2001,10 +2010,10 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position_uclass,
-                        "Class" : n_class_main,
-                        "SubClass" : n_subclass,
+                        "Class" : n_class_main[:5],
+                        "SubClass" : n_subclass[:15],
                         "Malformed" : malformed_class,
                         "FileName" : args_array['file_name']
                     })
@@ -2073,10 +2082,10 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position_uclass,
-                        "Class" : n_class_main,
-                        "SubClass" : n_subclass,
+                        "Class" : n_class_main[:5],
+                        "SubClass" : n_subclass[:15],
                         "Malformed" : malformed_class,
                         "FileName" : args_array['file_name']
                     })
@@ -2142,12 +2151,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position_intclass,
-                        "Class" : i_class_main,
-                        "SubClass" : i_subclass,
-                        "MainGroup" : i_class_mgr,
-                        "SubGroup" : i_class_sgr,
+                        "Class" : i_class_main[:15],
+                        "SubClass" : i_subclass[:15],
+                        "MainGroup" : i_class_mgr[:15],
+                        "SubGroup" : i_class_sgr[:15],
                         "Malformed" : malformed_class,
                         "FileName" : args_array['file_name']
                     })
@@ -2328,15 +2337,15 @@ def process_APS_grant_content(args_array):
                         try:
                             processed_inventor.append({
                                 "table_name" : "uspto.INVENTOR_G",
-                                "GrantID" : document_id,
+                                "GrantID" : document_id[:20],
                                 "Position" : position,
-                                "FirstName" : inventor_first_name,
-                                "LastName" : inventor_last_name,
-                                "City" : inventor_city,
-                                "State" : inventor_state,
-                                "Country" : inventor_country,
-                                "Nationality" : inventor_nationality,
-                                "Residence" : inventor_residence,
+                                "FirstName" : inventor_first_name[:100],
+                                "LastName" : inventor_last_name[:100],
+                                "City" : inventor_city[:100],
+                                "State" : inventor_state[:100],
+                                "Country" : inventor_country[:100],
+                                "Nationality" : inventor_nationality[:100],
+                                "Residence" : inventor_residence[:300],
                                 "FileName" : args_array['file_name']
                             })
 
@@ -2443,15 +2452,15 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "FirstName" : inventor_first_name,
-                        "LastName" : inventor_last_name,
-                        "City" : inventor_city,
-                        "State" : inventor_state,
-                        "Country" : inventor_country,
-                        "Nationality" : inventor_nationality,
-                        "Residence" : inventor_residence,
+                        "FirstName" : inventor_first_name[:100],
+                        "LastName" : inventor_last_name[:100],
+                        "City" : inventor_city[:100],
+                        "State" : inventor_state[:100],
+                        "Country" : inventor_country[:100],
+                        "Nationality" : inventor_nationality[:100],
+                        "Residence" : inventor_residence[:300],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2508,13 +2517,13 @@ def process_APS_grant_content(args_array):
                             # Append SQL data into dictionary to be written later
                             processed_assignee.append({
                                 "table_name" : "uspto.ASSIGNEE_G",
-                                "GrantID" : document_id,
+                                "GrantID" : document_id[:20],
                                 "Position" : position,
-                                "OrgName" : asn_orgname,
-                                "Role" : asn_role,
-                                "City" : asn_city,
-                                "State" : asn_state,
-                                "Country" : asn_country,
+                                "OrgName" : asn_orgname[:500],
+                                "Role" : asn_role[:45],
+                                "City" : asn_city[:100],
+                                "State" : asn_state[:100],
+                                "Country" : asn_country[:100],
                                 "FileName" : args_array['file_name']
                             })
 
@@ -2603,13 +2612,13 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "OrgName" : asn_orgname,
-                        "Role" : asn_role,
-                        "City" : asn_city,
-                        "State" : asn_state,
-                        "Country" : asn_country,
+                        "OrgName" : asn_orgname[:500],
+                        "Role" : asn_role[:45],
+                        "City" : asn_city[:100],
+                        "State" : asn_state[:100],
+                        "Country" : asn_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2671,12 +2680,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:100],
                         "Position" : position,
-                        "OrgName" : agent_orgname,
-                        "LastName" : agent_last_name,
-                        "FirstName" : agent_first_name,
-                        "Country" : agent_country,
+                        "OrgName" : agent_orgname[:300],
+                        "LastName" : agent_last_name[:100],
+                        "FirstName" : agent_first_name[:100],
+                        "Country" : agent_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2706,12 +2715,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "OrgName" : agent_orgname,
-                        "LastName" : agent_last_name,
-                        "FirstName" : agent_first_name,
-                        "Country" : agent_country,
+                        "OrgName" : agent_orgname[:300],
+                        "LastName" : agent_last_name[:100],
+                        "FirstName" : agent_first_name[:100],
+                        "Country" : agent_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2741,12 +2750,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:45],
                         "Position" : position,
-                        "OrgName" : agent_orgname,
-                        "LastName" : agent_last_name,
-                        "FirstName" : agent_first_name,
-                        "Country" : agent_country,
+                        "OrgName" : agent_orgname[:300],
+                        "LastName" : agent_last_name[:100],
+                        "FirstName" : agent_first_name[:100],
+                        "Country" : agent_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2776,12 +2785,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id,
+                        "GrantID" : document_id[:20],
                         "Position" : position,
-                        "OrgName" : agent_orgname,
-                        "LastName" : agent_last_name,
-                        "FirstName" : agent_first_name,
-                        "Country" : agent_country,
+                        "OrgName" : agent_orgname[:300],
+                        "LastName" : agent_last_name[:100],
+                        "FirstName" : agent_first_name[:100],
+                        "Country" : agent_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -2905,11 +2914,11 @@ def extract_XML4_application(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_priority_claims.append({
                     "table_name" : "uspto.FOREIGNPRIORITY_A",
-                    "ApplicationID" : app_no,
+                    "ApplicationID" : app_no[:20],
                     "Position" : pc_sequence,
-                    "Kind" : pc_kind,
-                    "Country" : pc_country,
-                    "DocumentID" : pc_doc_num,
+                    "Kind" : pc_kind[:45],
+                    "Country" : pc_country[:100],
+                    "DocumentID" : pc_doc_num[:100],
                     "PriorityDate" : pc_date,
                     "FileName" : args_array['file_name']
                 })
@@ -2934,13 +2943,13 @@ def extract_XML4_application(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_intclass.append({
                     "table_name" : "uspto.INTCLASS_A",
-                    "ApplicationID" : app_no,
+                    "ApplicationID" : app_no[:20],
                     "Position" : position,
-                    "Section" : i_class_sec,
-                    "Class" : i_class,
-                    "SubClass" : i_subclass,
-                    "MainGroup" : i_class_mgr,
-                    "SubGroup" : i_class_sgr,
+                    "Section" : i_class_sec[:15],
+                    "Class" : i_class[:15],
+                    "SubClass" : i_subclass[:15],
+                    "MainGroup" : i_class_mgr[:15],
+                    "SubGroup" : i_class_sgr[:15],
                     "FileName" : args_array['file_name']
                 })
 
@@ -2966,10 +2975,10 @@ def extract_XML4_application(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_usclass.append({
                 "table_name" : "uspto.USCLASS_A",
-                "ApplicationID" : app_no,
+                "ApplicationID" : app_no[:20],
                 "Position" : position,
-                "Class" : n_class_main,
-                "SubClass" : n_subclass,
+                "Class" : n_class_main[:5],
+                "SubClass" : n_subclass[:15],
                 "FileName" : args_array['file_name']
             })
 
@@ -2990,10 +2999,10 @@ def extract_XML4_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_A",
-                        "ApplicationID" : app_no,
+                        "ApplicationID" : app_no[:20],
                         "Position" : position,
-                        "Class" : n_class_main,
-                        "SubClass" : n_subclass,
+                        "Class" : n_class_main[:5],
+                        "SubClass" : n_subclass[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -3022,13 +3031,13 @@ def extract_XML4_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_cpcclass.append({
                         "table_name" : "uspto.CPCCLASS_A",
-                        "ApplicationID" : app_no,
+                        "ApplicationID" : app_no[:20],
                         "Position" : position,
-                        "Section" : cpc_section,
-                        "Class" : cpc_class,
-                        "SubClass" : cpc_subclass,
-                        "MainGroup" : cpc_mgr,
-                        "SubGroup" : cpc_sgr,
+                        "Section" : cpc_section[:15],
+                        "Class" : cpc_class[:15],
+                        "SubClass" : cpc_subclass[:15],
+                        "MainGroup" : cpc_mgr[:15],
+                        "SubGroup" : cpc_sgr[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -3052,13 +3061,13 @@ def extract_XML4_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_cpcclass.append({
                         "table_name" : "uspto.CPCCLASS_A",
-                        "ApplicationID" : app_no,
+                        "ApplicationID" : app_no[:20],
                         "Position" : position,
-                        "Section" : cpc_section,
-                        "Class" : cpc_class,
-                        "SubClass" : cpc_subclass,
-                        "MainGroup" : cpc_mgr,
-                        "SubGroup" : cpc_sgr,
+                        "Section" : cpc_section[:15],
+                        "Class" : cpc_class[:15],
+                        "SubClass" : cpc_subclass[:15],
+                        "MainGroup" : cpc_mgr[:15],
+                        "SubGroup" : cpc_sgr[:15],
                         "FileName" : args_array['file_name']
                     })
 
@@ -3114,14 +3123,14 @@ def extract_XML4_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_applicant.append({
                         "table_name" : "uspto.APPLICANT_A",
-                        "ApplicationID" : app_no,
+                        "ApplicationID" : app_no[:20],
                         "Position" : position,
-                        "OrgName" : applicant_orgname,
-                        "FirstName" : applicant_first_name,
-                        "LastName" : applicant_last_name,
-                        "City" : applicant_city,
-                        "State" : applicant_state,
-                        "Country" : applicant_country,
+                        "OrgName" : applicant_orgname[:300],
+                        "FirstName" : applicant_first_name[:100],
+                        "LastName" : applicant_last_name[:100],
+                        "City" : applicant_city[:100],
+                        "State" : applicant_state[:100],
+                        "Country" : applicant_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -3156,15 +3165,15 @@ def extract_XML4_application(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_inventor.append({
                             "table_name" : "uspto.INVENTOR_A",
-                            "ApplicationID" : app_no,
+                            "ApplicationID" : app_no[:20],
                             "Position" : position,
-                            "FirstName" : inventor_first_name,
-                            "LastName" : inventor_last_name,
-                            "City" : inventor_city,
-                            "State" : inventor_state,
-                            "Country" : inventor_country,
-                            "Nationality" : inventor_nationality,
-                            "Residence" : inventor_residence,
+                            "FirstName" : inventor_first_name[:100],
+                            "LastName" : inventor_last_name[:100],
+                            "City" : inventor_city[:100],
+                            "State" : inventor_state[:100],
+                            "Country" : inventor_country[:100],
+                            "Nationality" : inventor_nationality[:100],
+                            "Residence" : inventor_residence[:300],
                             "FileName" : args_array['file_name']
                         })
 
@@ -3195,12 +3204,12 @@ def extract_XML4_application(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_agent.append({
                             "table_name" : "uspto.AGENT_A",
-                            "ApplicationID" : app_no,
+                            "ApplicationID" : app_no[:20],
                             "Position" : position,
-                            "OrgName" : atn_orgname,
-                            "LastName" : atn_last_name,
-                            "FirstName" : atn_first_name,
-                            "Country" : atn_country,
+                            "OrgName" : atn_orgname[:300],
+                            "LastName" : atn_last_name[:100],
+                            "FirstName" : atn_first_name[:100],
+                            "Country" : atn_country[:100],
                             "FileName" : args_array['file_name']
                         })
 
@@ -3230,13 +3239,13 @@ def extract_XML4_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_A",
-                        "ApplicationID" : app_no,
+                        "ApplicationID" : app_no[:20],
                         "Position" : position,
-                        "OrgName" : assignee_orgname,
-                        "Role" : assignee_role,
-                        "City" : assignee_city,
-                        "State" : assignee_state,
-                        "Country" : assignee_country,
+                        "OrgName" : assignee_orgname[:300],
+                        "Role" : assignee_role[:45],
+                        "City" : assignee_city[:100],
+                        "State" : assignee_state[:100],
+                        "Country" : assignee_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -3257,14 +3266,14 @@ def extract_XML4_application(raw_data, args_array):
     # Append SQL data into dictionary to be written later
     processed_application.append({
             "table_name": "uspto.APPLICATION",
-            "ApplicationID" : app_no,
-            "PublicationID" : document_id,
-            "AppType" : app_type,
-            "Title" :  title,
+            "ApplicationID" : app_no[:20],
+            "PublicationID" : document_id[:20],
+            "AppType" : app_type[:45],
+            "Title" :  title[:500],
             "FileDate" : app_date,
             "PublishDate" : pub_date,
-            "Kind" : kind,
-            "USSeriesCode" : series_code,
+            "Kind" : kind[:2],
+            "USSeriesCode" : series_code[:2],
             "Abstract" : abstract,
             "ClaimsNum" : claims_num,
             "DrawingsNum" : number_of_drawings,
@@ -3304,7 +3313,7 @@ def extract_XML1_application(raw_data, args_array):
     start_time = time.time()
 
     # Print start message to stdout
-    print '- Starting to extract xml in USPTO application format ' + uspto_xml_format + " Start time: " + time.strftime("%c")
+    #print '- Starting to extract xml in USPTO application format ' + uspto_xml_format + " Start time: " + time.strftime("%c")
 
     #print raw_data
     # Pass the xml into Element tree object
@@ -3339,13 +3348,14 @@ def extract_XML1_application(raw_data, args_array):
         except: series_code = None
 
     technical_information_element = r.find('technical-information')
+    # Init position
+    position = 1
     if technical_information_element is not None:
         # Get international classification data
         ic = technical_information_element.find('classification-ipc')
-        # Init position
-        position = 1
         if ic is not None:
 
+            # Process the primary international class
             icm = ic.find('classification-ipc-primary')
             #TODO: regex the class found into class, subclass and other
             #TODO: find out what maingrou and subgroup are found in this file format
@@ -3361,13 +3371,13 @@ def extract_XML1_application(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_intclass.append({
                 "table_name" : "uspto.INTCLASS_A",
-                "ApplicationID" : app_no,
+                "ApplicationID" : app_no[:20],
                 "Position" : position,
-                "Section" : i_class_sec,
-                "Class" : i_class,
-                "SubClass" : i_subclass,
-                "MainGroup" : i_class_mgr,
-                "SubGroup" : i_class_sgr,
+                "Section" : i_class_sec[:15],
+                "Class" : i_class[:15],
+                "SubClass" : i_subclass[:15],
+                "MainGroup" : i_class_mgr[:15],
+                "SubGroup" : i_class_sgr[:15],
                 "FileName" : args_array['file_name']
             })
 
@@ -3376,34 +3386,36 @@ def extract_XML1_application(raw_data, args_array):
 
             #print processed_intclass
 
+            # Process any secondary international classes
             ics = ic.findall('classification-ipc-secondary')
             if ics is not None:
-                try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(icm.findtext('ipc'))
-                except:
-                    i_class_sec = None
-                    i_class = None
-                    i_subclass = None
-                    i_class_mgr = None
-                    i_class_sgr = None
-                    logger.warning("Malformed international class found in application ID: " + document_id +  " in file: " + url_link)
+                for ics_item in ics:
+                    try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(ics_item.findtext('ipc'))
+                    except:
+                        i_class_sec = None
+                        i_class = None
+                        i_subclass = None
+                        i_class_mgr = None
+                        i_class_sgr = None
+                        logger.warning("Malformed international class found in application ID: " + document_id +  " in file: " + url_link)
 
-                # Append SQL data into dictionary to be written later
-                processed_intclass.append({
-                    "table_name" : "uspto.INTCLASS_A",
-                    "ApplicationID" : app_no,
-                    "Position" : position,
-                    "Section" : i_class_sec,
-                    "Class" : i_class,
-                    "SubClass" : i_subclass,
-                    "MainGroup" : i_class_mgr,
-                    "SubGroup" : i_class_sgr,
-                    "FileName" : args_array['file_name']
-                })
+                    # Append SQL data into dictionary to be written later
+                    processed_intclass.append({
+                        "table_name" : "uspto.INTCLASS_A",
+                        "ApplicationID" : app_no[:20],
+                        "Position" : position,
+                        "Section" : i_class_sec[:15],
+                        "Class" : i_class[:15],
+                        "SubClass" : i_subclass[:15],
+                        "MainGroup" : i_class_mgr[:15],
+                        "SubGroup" : i_class_sgr[:15],
+                        "FileName" : args_array['file_name']
+                    })
 
-                # Increment position
-                position += 1
+                    # Increment position
+                    position += 1
 
-                #print processed_intclass
+                    #print processed_intclass
 
     # Get US classification data
     nc = technical_information_element.find('classification-us')
@@ -3420,10 +3432,10 @@ def extract_XML1_application(raw_data, args_array):
         # Append SQL data into dictionary to be written later
         processed_usclass.append({
             "table_name" : "uspto.USCLASS_A",
-            "ApplicationID" : app_no,
+            "ApplicationID" : app_no[:20],
             "Position" : position,
-            "Class" : n_class_main,
-            "SubClass" : n_subclass,
+            "Class" : n_class_main[:5],
+            "SubClass" : n_subclass[:15],
             "FileName" : args_array['file_name']
         })
 
@@ -3443,10 +3455,10 @@ def extract_XML1_application(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_usclass.append({
                 "table_name" : "uspto.USCLASS_A",
-                "ApplicationID" : app_no,
+                "ApplicationID" : app_no[:20],
                 "Position" : position,
-                "Class" : n_class_main,
-                "SubClass" : n_subclass,
+                "Class" : n_class_main[:5],
+                "SubClass" : n_subclass[:15],
                 "FileName" : args_array['file_name']
             })
 
@@ -3495,13 +3507,13 @@ def extract_XML1_application(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_inventor.append({
                 "table_name" : "uspto.INVENTOR_A",
-                "ApplicationID" : app_no,
+                "ApplicationID" : app_no[:20],
                 "Position" : position,
-                "FirstName" : inventor_first_name,
-                "LastName" : inventor_last_name,
-                "City" : inventor_city,
-                "State" : inventor_state,
-                "Country" : inventor_country,
+                "FirstName" : inventor_first_name[:100],
+                "LastName" : inventor_last_name[:100],
+                "City" : inventor_city[:100],
+                "State" : inventor_state[:100],
+                "Country" : inventor_country[:100],
                 "FileName" : args_array['file_name']
             })
 
@@ -3542,13 +3554,13 @@ def extract_XML1_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_A",
-                        "ApplicationID" : app_no,
+                        "ApplicationID" : app_no[:20],
                         "Position" : position,
-                        "FirstName" : inventor_first_name,
-                        "LastName" : inventor_last_name,
-                        "City" : inventor_city,
-                        "State" : inventor_state,
-                        "Country" : inventor_country,
+                        "FirstName" : inventor_first_name[:100],
+                        "LastName" : inventor_last_name[:100],
+                        "City" : inventor_city[:100],
+                        "State" : inventor_state[:100],
+                        "Country" : inventor_country[:100],
                         "FileName" : args_array['file_name']
                     })
 
@@ -3578,13 +3590,13 @@ def extract_XML1_application(raw_data, args_array):
         # Append SQL data into dictionary to be written later
         processed_assignee.append({
             "table_name" : "uspto.ASSIGNEE_A",
-            "ApplicationID" : app_no,
+            "ApplicationID" : app_no[:20],
             "Position" : position,
-            "OrgName" : asn_orgname,
-            "Role" : asn_role,
-            "City" : asn_city,
-            "State" : asn_state,
-            "Country" : asn_country,
+            "OrgName" : asn_orgname[:300],
+            "Role" : asn_role[:100],
+            "City" : asn_city[:100],
+            "State" : asn_state[:100],
+            "Country" : asn_country[:100],
             "FileName" : args_array['file_name']
         })
 
@@ -3617,10 +3629,10 @@ def extract_XML1_application(raw_data, args_array):
         # Append SQL data into dictionary to be written later
         processed_agent.append({
             "table_name" : "uspto.AGENT_A",
-            "ApplicationID" : app_no,
+            "ApplicationID" : app_no[:20],
             "Position" : position,
-            "OrgName" : agent_orgname,
-            "Country" : agent_country,
+            "OrgName" : agent_orgname[:300],
+            "Country" : agent_country[:100],
             "FileName" : args_array['file_name']
         })
 
@@ -3634,14 +3646,14 @@ def extract_XML1_application(raw_data, args_array):
     # Append SQL data into dictionary to be written later
     processed_application.append({
             "table_name" : "uspto.APPLICATION",
-            "ApplicationID" : app_no,
-            "PublicationID" : document_id,
-            "AppType" : app_type,
-            "Title" :  title,
+            "ApplicationID" : app_no[:20],
+            "PublicationID" : document_id[:20],
+            "AppType" : app_type[:45],
+            "Title" :  title[:500],
             "FileDate" : app_date,
             "PublishDate" : pub_date,
-            "Kind" : kind,
-            "USSeriesCode" : series_code,
+            "Kind" : kind[:2],
+            "USSeriesCode" : series_code[:2],
             "Abstract" : abstract,
             "FileName" : args_array['file_name']
         })
@@ -3769,6 +3781,7 @@ def open_csv_files(file_type, file_name, csv_directory):
         field_names_array['agent'] = ['ApplicationID', 'Position', 'OrgName', 'LastName', 'FirstName', 'Country', 'FileName']
         field_names_array['assignee'] = ['ApplicationID', 'Position', 'OrgName', 'Role', 'City', 'State', 'Country', 'FileName']
         field_names_array['inventor'] = ['ApplicationID', 'Position', 'FirstName', 'LastName', 'City', 'State', 'Country', 'Nationality', 'Residence', 'FileName']
+        field_names_array['applicant'] = ['ApplicationID', 'Position', 'OrgName', 'FirstName', 'LastName', 'City', 'State', 'Country', 'FileName']
         field_names_array['usclass'] = ['ApplicationID','Position', 'Class', 'SubClass', 'Malformed', 'FileName']
         field_names_array['intclass'] = ['ApplicationID', 'Position', 'Section', 'Class', 'SubClass', 'MainGroup', 'SubGroup', 'Malformed', 'FileName']
         field_names_array['cpcclass'] = ['ApplicationID', 'Position', 'Section', 'Class', 'SubClass', 'MainGroup', 'SubGroup', 'Malformed', 'FileName']
@@ -3779,6 +3792,7 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['agent'] = {}
         csv_writer_array['assignee'] = {}
         csv_writer_array['inventor'] = {}
+        csv_writer_array['applicant'] = {}
         csv_writer_array['usclass'] = {}
         csv_writer_array['intclass'] = {}
         csv_writer_array['cpcclass'] = {}
@@ -3789,6 +3803,7 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['agent']['csv_file_name'] = csv_directory + 'CSV_A/agent_' + csv_file_name
         csv_writer_array['assignee']['csv_file_name'] = csv_directory + 'CSV_A/assignee_' + csv_file_name
         csv_writer_array['inventor']['csv_file_name'] = csv_directory + 'CSV_A/inventor_' + csv_file_name
+        csv_writer_array['applicant']['csv_file_name'] = csv_directory + 'CSV_A/applicant_' + csv_file_name
         csv_writer_array['usclass']['csv_file_name'] = csv_directory + 'CSV_A/usclass_' + csv_file_name
         csv_writer_array['intclass']['csv_file_name'] = csv_directory + 'CSV_A/intclass_' + csv_file_name
         csv_writer_array['cpcclass']['csv_file_name'] = csv_directory + 'CSV_A/cpcclass_' + csv_file_name
@@ -3799,6 +3814,7 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['agent']['file'] = open(csv_writer_array['agent']['csv_file_name'], 'w')
         csv_writer_array['assignee']['file'] = open(csv_writer_array['assignee']['csv_file_name'], 'w')
         csv_writer_array['inventor']['file'] = open(csv_writer_array['inventor']['csv_file_name'], 'w')
+        csv_writer_array['applicant']['file'] = open(csv_writer_array['applicant']['csv_file_name'], 'w')
         csv_writer_array['usclass']['file'] = open(csv_writer_array['usclass']['csv_file_name'], 'w')
         csv_writer_array['intclass']['file'] = open(csv_writer_array['intclass']['csv_file_name'], 'w')
         csv_writer_array['cpcclass']['file'] = open(csv_writer_array['cpcclass']['csv_file_name'], 'w')
@@ -3809,6 +3825,7 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['agent']['csv_writer'] = csv.DictWriter(csv_writer_array['agent']['file'], fieldnames = field_names_array['agent'], delimiter = '|')
         csv_writer_array['assignee']['csv_writer'] = csv.DictWriter(csv_writer_array['assignee']['file'], fieldnames = field_names_array['assignee'], delimiter = '|')
         csv_writer_array['inventor']['csv_writer'] = csv.DictWriter(csv_writer_array['inventor']['file'], fieldnames = field_names_array['inventor'], delimiter = '|')
+        csv_writer_array['applicant']['csv_writer'] = csv.DictWriter(csv_writer_array['applicant']['file'], fieldnames = field_names_array['applicant'], delimiter = '|')
         csv_writer_array['usclass']['csv_writer'] = csv.DictWriter(csv_writer_array['usclass']['file'], fieldnames = field_names_array['usclass'], delimiter = '|')
         csv_writer_array['intclass']['csv_writer'] = csv.DictWriter(csv_writer_array['intclass']['file'], fieldnames = field_names_array['intclass'], delimiter = '|')
         csv_writer_array['cpcclass']['csv_writer'] = csv.DictWriter(csv_writer_array['cpcclass']['file'], fieldnames = field_names_array['cpcclass'], delimiter = '|')
@@ -3819,6 +3836,7 @@ def open_csv_files(file_type, file_name, csv_directory):
         csv_writer_array['agent']['csv_writer'].writeheader()
         csv_writer_array['assignee']['csv_writer'].writeheader()
         csv_writer_array['inventor']['csv_writer'].writeheader()
+        csv_writer_array['applicant']['csv_writer'].writeheader()
         csv_writer_array['usclass']['csv_writer'].writeheader()
         csv_writer_array['intclass']['csv_writer'].writeheader()
         csv_writer_array['cpcclass']['csv_writer'].writeheader()
@@ -4504,9 +4522,16 @@ def process_XML_grant_content(args_array):
             # Delete all the open csv files
             delete_csv_files(args_array)
 
-    # Print message to stdout and log
-    print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
-    logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+        # Print message to stdout and log
+        print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
+        logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+
+    else:
+        # Print message to stdout and log
+        print '[Failed to bulk load {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
+        logger.info('[Failed to bulk load {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+
+        # TODO: Use the line by line method of the .csv file to load data.
 
 
 # Function opens the zip file for XML based patent application files and parses, inserts to database
@@ -4620,6 +4645,7 @@ def process_XML_application_content(args_array):
     if args_array['database_insert_mode'] == 'bulk':
         file_processed = args_array['database_connection'].load_csv_bulk_data(args_array, logger)
 
+    # If the file was successfully processed into the database
     if file_processed:
         # Send the information to write_process_log to have log file rewritten to "Processed"
         write_process_log(args_array)
@@ -4627,9 +4653,16 @@ def process_XML_application_content(args_array):
             # Close all the open csv files
             delete_csv_files(args_array)
 
-    # Print message to stdout and log
-    print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
-    logger.info('Loaded {0} data for {1} into database. Time:{2} Finished Time: {3}'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+        # Print message to stdout and log
+        print '[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
+        logger.info('[Loaded {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+
+    else:
+        # Print message to stdout and log
+        print '[Failed to bulk load {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c"))
+        logger.info('[Failed to bulk load {0} data for {1} into database. Time:{2} Finished Time: {3} ]'.format(args_array['document_type'], args_array['url_link'], time.time() - start_time, time.strftime("%c")))
+
+        # TODO: Use the line by line method of the .csv file to load data.
 
 # Convert strings to utf-8 for csv file insertion
 def utf_8_encoder(line):

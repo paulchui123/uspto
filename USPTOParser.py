@@ -131,23 +131,30 @@ def return_formatted_date(time_str, args_array, document_id):
 
     # Check if None has been passed in
     if time_str is None:
-        return None
         logger.warning("None Type object was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+        return None
     # Check if '0000-01-01' has been passed in
     elif time_str == '0000-01-01':
-        return None
         logger.warning("'0000-01-01' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+        return None
     # Check if '0000-00-00' has been passed in
     elif time_str == '0000-00-00':
-        return None
         logger.warning("'0000-00-00' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
-
+        return None
 
     # Check all other conditions based on string length
     else:
 
         # If the string length is correct
         if len(time_str) ==  8:
+
+            # If the year value is out of range
+            if time_str[0:4] == "0000":
+                logger.warning("'0000' was found as year for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
+                return None
+
+            time_str[0:4]
+
             # If the month value is out of range
             if time_str[4:6] == "00" : month = "01"
             elif int(time_str[4:6]) > 12 or int(time_str[4:6]) < 1: month = "01"
@@ -168,11 +175,14 @@ def return_formatted_date(time_str, args_array, document_id):
             if len(time_str) == 9:
                 # Log that a bad date was found and could not be cleaned
                 logger.warning("Malformed date was found on length == 9 string: " + time_str + " for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
-            if  time_str[4:6] == "00" : month = "01"
-            else: month = time_str[4:6]
-            if time_str[6:8] == "00" : day = "01"
-            else: day = time_str[6:8]
-            return time_str[0:4] + '-' + month + '-' + day
+            if  time_str[0:4] == "0000":
+                 return None
+            else:
+                if  time_str[4:6] == "00" : month = "01"
+                else: month = time_str[4:6]
+                if time_str[6:8] == "00" : day = "01"
+                else: day = time_str[6:8]
+                return time_str[0:4] + '-' + month + '-' + day
         else:
             # Log that a bad date was found and could not be cleaned
             logger.warning("Malformed date was found on length != 8 or 9 string: " + time_str + " for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
@@ -293,29 +303,29 @@ def extract_XML4_grant(raw_data, args_array):
                 except: pub_country = None
                 try:
                     document_id = di.findtext('doc-number')
-                    document_id = fix_patent_number(document_id)
+                    document_id = fix_patent_number(document_id)[:20]
                 except:
                     document_id = None
                     logger.error("No Patent Number was found for: " + url_link)
-                try: kind = di.findtext('kind')
+                try: kind = di.findtext('kind')[:2]
                 except: kind = None
                 try: pub_date = return_formatted_date(di.findtext('date'), args_array, document_id)
                 except: pub_date = None
 
         # Find the main application data
         for ar in r.findall('application-reference'):
-            try: app_type = ar.attrib['appl-type']
+            try: app_type = ar.attrib['appl-type'][:45]
             except: app_type = None
             for di in ar.findall('document-id'):
                 try: app_country = di.findtext('country')
                 except: app_country = None
-                try: app_no = di.findtext('doc-number')
+                try: app_no = di.findtext('doc-number')[:20]
                 except: app_no = None
                 try: app_date = return_formatted_date(di.findtext('date'), args_array, document_id)
                 except: app_date = None
 
         # Get the series code
-        try: series_code = r.findtext('us-application-series-code')
+        try: series_code = r.findtext('us-application-series-code')[:2]
         except: series_code = None
 
         # Get the length of grant
@@ -329,31 +339,31 @@ def extract_XML4_grant(raw_data, args_array):
             for icc in ic.findall('classification-ipcr'):
                 for x in icc.getchildren():
                     if(check_tag_exists(x,'section')) :
-                        try: i_class_sec = x.text
+                        try: i_class_sec = x.text[:15]
                         except: i_class_sec = None
                     if(check_tag_exists(x,'class')) :
-                        try: i_class_cls = x.text
+                        try: i_class_cls = x.text[:15]
                         except:  i_class_cls = None
                     if(check_tag_exists(x,'subclass')) :
-                        try: i_class_sub = x.text
+                        try: i_class_sub = x.text[:15]
                         except: i_class_sub = None
                     if(check_tag_exists(x,'main-group')) :
-                        try: i_class_mgr = x.text
+                        try: i_class_mgr = x.text[:15]
                         except: i_class_mgr = None
                     if(check_tag_exists(x,'subgroup')) :
-                        try: i_class_sgr = x.text
+                        try: i_class_sgr = x.text[:15]
                         except: i_class_sgr = None
 
                 # Append SQL data into dictionary to be written later
                 processed_intclass.append({
                     "table_name" : "uspto.INTCLASS_G",
-                    "GrantID" : document_id[:20],
+                    "GrantID" : document_id,
                     "Position" : position,
-                    "Section" : i_class_sec[:15],
-                    "Class" : i_class_cls[:15],
-                    "SubClass" : i_class_sub[:15],
-                    "MainGroup" : i_class_mgr[:15],
-                    "SubGroup" : i_class_sgr[:15],
+                    "Section" : i_class_sec,
+                    "Class" : i_class_cls,
+                    "SubClass" : i_class_sub,
+                    "MainGroup" : i_class_mgr,
+                    "SubGroup" : i_class_sgr,
                     "FileName" : args_array['file_name']
                 })
 
@@ -376,6 +386,8 @@ def extract_XML4_grant(raw_data, args_array):
                     cpc_class = cpc_class_string[1:3]
                     cpc_subclass = cpc_class_string[3]
                     cpc_class_mgr, cpc_class_sgr = cpc_group_string.rsplit("/", 1)
+                    cpc_class_mgr = cpc_class_mgr[:15]
+                    cpc_class_sgr = cpc_class_sgr[:15]
                     #print cpc_class_sec + " " + cpc_class + " " + cpc_subclass + " " + cpc_class_mgr + " " + cpc_class_sgr
                 except:
                     #traceback.print_exc()
@@ -390,13 +402,13 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_cpcclass.append({
                     "table_name" : "uspto.CPCCLASS_G",
-                    "GrantID" : document_id[:20],
+                    "GrantID" : document_id,
                     "Position" : position,
-                    "Section" : cpc_class_sec[:15],
-                    "Class" : cpc_class[:15],
-                    "SubClass" : cpc_subclass[:15],
-                    "MainGroup" : cpc_class_mgr[:15],
-                    "SubGroup" : cpc_class_sgr[:15],
+                    "Section" : cpc_class_sec,
+                    "Class" : cpc_class,
+                    "SubClass" : cpc_subclass,
+                    "MainGroup" : cpc_class_mgr,
+                    "SubGroup" : cpc_class_sgr,
                     "FileName" : args_array['file_name']
                 })
 
@@ -408,6 +420,8 @@ def extract_XML4_grant(raw_data, args_array):
             try:
                 n_class_info = nc.findtext('main-classification')
                 n_class_main, n_subclass = return_class(n_class_info)
+                n_class_main = n_class_main[:5]
+                n_subclass = n_subclass[:15]
             except:
                 n_class_main = None
                 n_subclass = None
@@ -415,10 +429,10 @@ def extract_XML4_grant(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_usclass.append({
                 "table_name" : "uspto.USCLASS_G",
-                "GrantID" : document_id[:20],
+                "GrantID" : document_id,
                 "Position" : position,
-                "Class" : n_class_main[:5],
-                "SubClass" : n_subclass[:15],
+                "Class" : n_class_main,
+                "SubClass" : n_subclass,
                 "FileName" : args_array['file_name']
             })
 
@@ -428,7 +442,10 @@ def extract_XML4_grant(raw_data, args_array):
             for n in n_class_fur_root:
                 try: n_class_info = n.text
                 except: n_class_info = None
-                try: n_class_main, n_subclass = return_class(n_class_info)
+                try:
+                    n_class_main, n_subclass = return_class(n_class_info)
+                    n_class_main = n_class_main[:5]
+                    n_subclass = n_subclass[:15]
                 except:
                     n_class_main = None
                     n_subclass = None
@@ -436,17 +453,17 @@ def extract_XML4_grant(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_usclass.append({
                     "table_name" : "uspto.USCLASS_G",
-                    "GrantID" : document_id[:20],
+                    "GrantID" : document_id,
                     "Position" : position,
-                    "Class" : n_class_main[:5],
-                    "SubClass" : n_subclass[:15],
+                    "Class" : n_class_main,
+                    "SubClass" : n_subclass,
                     "FileName" : args_array['file_name']
                 })
 
                 position += 1
 
         # Find the title of the patent
-        try: title = r.findtext('invention-title')
+        try: title = r.findtext('invention-title')[:500]
         except: title = None
 
         # Find all references cited in the grant
@@ -458,15 +475,15 @@ def extract_XML4_grant(raw_data, args_array):
                     try: citation_position = strip_leading_zeros(rfc.find('patcit').attrib['num'])
                     except: citation_position = position
                     for x in rfc.findall('patcit'):
-                        try: citation_country = x.find('document-id').findtext('country')
+                        try: citation_country = x.find('document-id').findtext('country')[:100]
                         except: citation_country = None
-                        try: citation_grant_id = x.find('document-id').findtext('doc-number')
+                        try: citation_grant_id = x.find('document-id').findtext('doc-number')[:20]
                         except: citation_grant_id = None
-                        try: citation_kind = x.find('document-id').findtext('kind')
+                        try: citation_kind = x.find('document-id').findtext('kind')[:10]
                         except: citation_kind = None
-                        try: citation_name = x.find('document-id').findtext('name')
+                        try: citation_name = x.find('document-id').findtext('name')[:100]
                         except: citation_name = None
-                        try: citation_date = return_formatted_date(x.find('document-id').findtext('date') args_array, document_id)
+                        try: citation_date = return_formatted_date(x.find('document-id').findtext('date'), args_array, document_id)
                         except: citation_date = None
                         try:
                             if rfc.findtext('category') == "cited by examiner":
@@ -481,13 +498,13 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_gracit.append({
                             "table_name" : "uspto.GRACIT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : citation_position,
-                            "CitedID" : citation_grant_id[:20],
-                            "Kind" : citation_kind[:10],
-                            "Name" : citation_name[:100],
+                            "CitedID" : citation_grant_id,
+                            "Kind" : citation_kind,
+                            "Name" : citation_name,
                             "Date" : citation_date,
-                            "Country" : citation_country[:100],
+                            "Country" : citation_country,
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -499,13 +516,13 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_forpatcit.append({
                             "table_name" : "uspto.FORPATCIT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : citation_position,
-                            "CitedID" : citation_grant_id[:25],
-                            "Kind" : citation_kind[:10],
-                            "Name" : citation_name[:100],
-                            "Date" : citation_date[:100],
-                            "Country" : citation_country[:100],
+                            "CitedID" : citation_grant_id,
+                            "Kind" : citation_kind,
+                            "Name" : citation_name,
+                            "Date" : citation_date,
+                            "Country" : citation_country,
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -537,7 +554,7 @@ def extract_XML4_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_nonpatcit.append({
                             "table_name" : "uspto.NONPATCIT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : citation_position,
                             "Citation" : non_patent_citation_text,
                             "Category" : citation_category,
@@ -567,31 +584,31 @@ def extract_XML4_grant(raw_data, args_array):
                     try: applicant_sequence = strip_leading_zeros(apt.attrib['sequence'])
                     except: applicant_sequence = position
                     if(apt.find('addressbook') != None):
-                        try: applicant_orgname = apt.find('addressbook').findtext('orgname')
+                        try: applicant_orgname = apt.find('addressbook').findtext('orgname')[:300]
                         except: applicant_orgname = None
-                        try: applicant_first_name = apt.find('addressbook').findtext('first-name')
+                        try: applicant_first_name = apt.find('addressbook').findtext('first-name')[:100]
                         except: applicant_first_name = None
-                        try: applicant_last_name = apt.find('addressbook').findtext('last-name')
+                        try: applicant_last_name = apt.find('addressbook').findtext('last-name')[:100]
                         except: applicant_last_name = None
-                        try: applicant_city = apt.find('addressbook').find('address').findtext('city')
+                        try: applicant_city = apt.find('addressbook').find('address').findtext('city')[:100]
                         except: applicant_city = None
-                        try: applicant_state = apt.find('addressbook').find('address').findtext('state')
+                        try: applicant_state = apt.find('addressbook').find('address').findtext('state')[:100]
                         except: applicant_state = None
-                        try: applicant_country = apt.find('addressbook').find('address').findtext('country')
+                        try: applicant_country = apt.find('addressbook').find('address').findtext('country')[:100]
                         except: applicant_country = None
 
                         # Append SQL data into dictionary to be written later
 
                         processed_applicant.append({
                             "table_name" : "uspto.APPLICANT_G",
-                            "GrantID" : document_id[:20],
-                            "OrgName" : applicant_orgname[:300],
+                            "GrantID" : document_id,
+                            "OrgName" : applicant_orgname,
                             "Position" : applicant_sequence,
-                            "FirstName" : applicant_first_name[:100],
-                            "LastName" : applicant_last_name[:100],
-                            "City" : applicant_city[:100],
-                            "State" : applicant_state[:100],
-                            "Country" : applicant_country[:100],
+                            "FirstName" : applicant_first_name,
+                            "LastName" : applicant_last_name,
+                            "City" : applicant_city,
+                            "State" : applicant_state,
+                            "Country" : applicant_country,
                             "FileName" : args_array['file_name']
                         })
 
@@ -604,31 +621,31 @@ def extract_XML4_grant(raw_data, args_array):
                     try: inventor_sequence = strip_leading_zeros(apt.attrib['sequence'])
                     except: inventor_sequence = position
                     if(apt.find('addressbook') != None):
-                        try: inventor_first_name = apt.find('addressbook').findtext('first-name')
+                        try: inventor_first_name = apt.find('addressbook').findtext('first-name')[:100]
                         except: inventor_first_name = None
-                        try: inventor_last_name = apt.find('addressbook').findtext('last-name')
+                        try: inventor_last_name = apt.find('addressbook').findtext('last-name')[:100]
                         except: inventor_last_name = None
-                        try: inventor_city = apt.find('addressbook').find('address').findtext('city')
+                        try: inventor_city = apt.find('addressbook').find('address').findtext('city')[:100]
                         except: inventor_city = None
-                        try: inventor_state = apt.find('addressbook').find('address').findtext('state')
+                        try: inventor_state = apt.find('addressbook').find('address').findtext('state')[:100]
                         except: inventor_state = None
-                        try: inventor_country = apt.find('addressbook').find('address').findtext('country')
+                        try: inventor_country = apt.find('addressbook').find('address').findtext('country')[:100]
                         except: inventor_country = None
-                        try: inventor_residence = apt.find('addressbook').find('address').findtext('country')
+                        try: inventor_residence = apt.find('addressbook').find('address').findtext('country')[:300]
                         except: inventor_residence = None
 
                         # Append SQL data into dictionary to be written later
 
                         processed_inventor.append({
                             "table_name" : "uspto.INVENTOR_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : inventor_sequence,
-                            "FirstName" : inventor_first_name[:100],
-                            "LastName" : inventor_last_name[:100],
-                            "City" : inventor_city[:100],
-                            "State" : inventor_state[:100],
-                            "Country" : inventor_country[:100],
-                            "Residence" : inventor_residence[:300],
+                            "FirstName" : inventor_first_name,
+                            "LastName" : inventor_last_name,
+                            "City" : inventor_city,
+                            "State" : inventor_state,
+                            "Country" : inventor_country,
+                            "Residence" : inventor_residence,
                             "FileName" : args_array['file_name']
                         })
 
@@ -641,24 +658,24 @@ def extract_XML4_grant(raw_data, args_array):
                     try: agent_sequence = strip_leading_zeros(agn.attrib['sequence'])
                     except: agent_sequence = position
                     if(agn.find('addressbook') != None):
-                        try: agent_orgname = agn.find('addressbook').findtext('orgname')
+                        try: agent_orgname = agn.find('addressbook').findtext('orgname')[:300]
                         except: agent_orgname = None
-                        try: agent_last_name = agn.find('addressbook').findtext('last-name')
+                        try: agent_last_name = agn.find('addressbook').findtext('last-name')[:100]
                         except: agent_last_name = None
-                        try: agent_first_name = agn.find('addressbook').findtext('first-name')
+                        try: agent_first_name = agn.find('addressbook').findtext('first-name')[:100]
                         except: agent_first_name = None
-                        try: agent_country = agn.find('addressbook').find('address').findtext('country')
+                        try: agent_country = agn.find('addressbook').find('address').findtext('country')[:100]
                         except: agent_country = None
 
                         # Append SQL data into dictionary to be written later
                         processed_agent.append({
                             "table_name" : "uspto.AGENT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : agent_sequence,
-                            "OrgName" : agent_orgname[:300],
-                            "LastName" : agent_last_name[:100],
-                            "FirstName" : agent_first_name[:100],
-                            "Country" : agent_country[:100],
+                            "OrgName" : agent_orgname,
+                            "LastName" : agent_last_name,
+                            "FirstName" : agent_first_name,
+                            "Country" : agent_country,
                             "FileName" : args_array['file_name']
                         })
 
@@ -669,27 +686,27 @@ def extract_XML4_grant(raw_data, args_array):
             position = 1
             for x in asn.findall('assignee'):
                 if(x.find('addressbook') != None):
-                    try: asn_orgname = x.find('addressbook').findtext('orgname')
+                    try: asn_orgname = x.find('addressbook').findtext('orgname')[:500]
                     except: asn_orgname = None
-                    try: asn_role = x.find('addressbook').findtext('role')
+                    try: asn_role = x.find('addressbook').findtext('role')[:45]
                     except: asn_role = None
-                    try: asn_city = x.find('addressbook').find('address').findtext('city')[:99]
+                    try: asn_city = x.find('addressbook').find('address').findtext('city')[:100]
                     except: asn_city = None
-                    try: asn_state = x.find('addressbook').find('address').findtext('state')
+                    try: asn_state = x.find('addressbook').find('address').findtext('state')[:100]
                     except: asn_state = None
-                    try: asn_country = x.find('addressbook').find('address').findtext('country')
+                    try: asn_country = x.find('addressbook').find('address').findtext('country')[:100]
                     except: asn_country = None
 
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : asn_orgname[:500],
-                        "Role" : asn_role[:45],
-                        "City" : asn_city[:100],
-                        "State" : asn_state[:100],
-                        "Country" : asn_country[:100],
+                        "OrgName" : asn_orgname,
+                        "Role" : asn_role,
+                        "City" : asn_city,
+                        "State" : asn_state,
+                        "Country" : asn_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -699,42 +716,42 @@ def extract_XML4_grant(raw_data, args_array):
         for exm in r.findall('examiners'):
             position = 1
             for x in exm.findall('primary-examiner'):
-                try: exm_last_name = x.findtext('last-name')
+                try: exm_last_name = x.findtext('last-name')[:50]
                 except: exm_last_name = None
-                try: exm_first_name = x.findtext('first-name')
+                try: exm_first_name = x.findtext('first-name')[:50]
                 except: exm_first_name = None
-                try: exm_department = x.findtext('department')
+                try: exm_department = x.findtext('department')[:100]
                 except: exm_department = None
 
                 # Append SQL data into dictionary to be written later
                 processed_examiner.append({
                     "table_name" : "uspto.EXAMINER_G",
-                    "GrantID" : document_id[:20],
+                    "GrantID" : document_id,
                     "Position" : position,
-                    "LastName" : exm_last_name[:50],
-                    "FirstName" : exm_first_name[:50],
-                    "Department" : exm_department[:100],
+                    "LastName" : exm_last_name,
+                    "FirstName" : exm_first_name,
+                    "Department" : exm_department,
                     "FileName" : args_array['file_name']
                 })
 
                 position += 1
 
             for x in exm.findall('assistant-examiner'):
-                try: exm_last_name = x.findtext('last-name')
+                try: exm_last_name = x.findtext('last-name')[:50]
                 except: exm_last_name = None
-                try: exm_first_name = x.findtext('first-name')
+                try: exm_first_name = x.findtext('first-name')[:50]
                 except: exm_first_name = None
-                try: exm_department = x.findtext('department')
+                try: exm_department = x.findtext('department')[:100]
                 except: exm_department = None
 
                 # Append SQL data into dictionary to be written later
                 processed_examiner.append({
                     "table_name" : "uspto.EXAMINER_G",
-                    "GrantID" : document_id[:20],
+                    "GrantID" : document_id,
                     "Position" : position,
-                    "LastName" : exm_last_name[:50],
-                    "FirstName" : exm_first_name[:50],
-                    "Department" : exm_department[:100],
+                    "LastName" : exm_last_name,
+                    "FirstName" : exm_first_name,
+                    "Department" : exm_department,
                     "FileName" : args_array['file_name']
                 })
 
@@ -757,19 +774,19 @@ def extract_XML4_grant(raw_data, args_array):
     try:
         processed_grant.append({
             "table_name" : "uspto.GRANT",
-            "GrantID" : document_id[:20],
-            "Title" : title[:500],
+            "GrantID" : document_id,
+            "Title" : title,
             "IssueDate" : pub_date,
-            "Kind" : kind[:2],
-            "USSeriesCode" : series_code[:2],
+            "Kind" : kind,
+            "USSeriesCode" : series_code,
             "Abstract" : abstract,
             "ClaimsNum" : claims_num,
             "DrawingsNum" : number_of_drawings,
             "FiguresNum" : number_of_figures,
-            "ApplicationID" : app_no[:20],
+            "ApplicationID" : app_no,
             "Claims" : claims,
             "FileDate" : app_date,
-            "AppType" : app_type[:45],
+            "AppType" : app_type,
             "GrantLength" : terms_of_grant,
             "FileName" : args_array['file_name']
         })
@@ -837,18 +854,19 @@ def extract_XML2_grant(raw_data, args_array):
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
+
     # Start the parsing process for XML
-    for r in patent_root.findall('SDOBI'): #us-bibliographic-data-grant'):
+    for r in patent_root.findall('SDOBI'):
 
         # Collect document data
         for B100 in r.findall('B100'): #GRANT
             try:
-                document_id = return_element_text(B100.find('B110')) # PATENT GRAND NUMBER
-                document_id = fix_patent_number(document_id)
+                document_id = return_element_text(B100.find('B110'))
+                document_id = fix_patent_number(document_id)[:20]
             except:
                 document_id = None
                 logger.error("No Patent Number was found for: " + url_link)
-            try: kind = return_element_text(B100.find('B130'))
+            try: kind = return_element_text(B100.find('B130'))[:2]
             except: kind = None
             try: pub_date = return_formatted_date(return_element_text(B100.find('B140')), args_array, document_id) # PATENT ISSUE DATE
             except: pub_date = None
@@ -860,11 +878,11 @@ def extract_XML2_grant(raw_data, args_array):
             # TODO: find these datas in XML2 applications
             app_type = None
             app_country = None
-            try: app_no = return_element_text(B200.find('B210')) # APPLICATION NUMBER
+            try: app_no = return_element_text(B200.find('B210'))[:20]
             except: app_no = None
             try: app_date = return_formatted_date(return_element_text(B200.find('B220')), args_array, document_id) # APPLICATION DATE
             except: app_date = None
-            try: series_code = return_element_text(B200.find('B211US'))
+            try: series_code = return_element_text(B200.find('B211US'))[:2]
             except: series_code = None
 
         # Collect the grant length
@@ -877,14 +895,16 @@ def extract_XML2_grant(raw_data, args_array):
                 for B521 in B520.findall('B521'): # USCLASS MAIN
                     n_class_info = return_element_text(B521)
                     n_class_main, n_subclass = return_class(n_class_info)
+                    n_class_main = n_class_main[:5]
+                    n_subclass = n_subclass[:15]
 
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "Class" : n_class_main[:5],
-                        "SubClass" : n_subclass[:15],
+                        "Class" : n_class_main,
+                        "SubClass" : n_subclass,
                         "FileName" : args_array['file_name']
                     })
 
@@ -892,14 +912,16 @@ def extract_XML2_grant(raw_data, args_array):
                 for B522 in B520.findall('B522'): # USCLASS FURTHER
                     n_class_info = return_element_text(B522)
                     n_class_main, n_subclass = return_class(n_class_info)
+                    n_class_main = n_class_main[:5]
+                    n_subclass = n_subclass[:15]
 
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "Class" : n_class_main[:5],
-                        "SubClass" : n_subclass[:15],
+                        "Class" : n_class_main,
+                        "SubClass" : n_subclass,
                         "FileName" : args_array['file_name']
                     })
 
@@ -922,8 +944,10 @@ def extract_XML2_grant(raw_data, args_array):
                     # TODO: check international classification and rewrite this parsing piece.
                     if(len(int_class.split())>1):
                         i_class, i_subclass = int_class.split()
+                        i_class = i_class[:15]
+                        i_subclass = i_subclass[:15]
                     else:
-                        i_class = int_class
+                        i_class = int_class[:15]
                         i_subclass = None
                     i_class_mgr = None
                     i_class_sgr = None
@@ -935,19 +959,20 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "Section" : i_class_sec[:15],
-                        "Class" : i_class[:15],
-                        "SubClass" : i_subclass[:15],
-                        "MainGroup" : i_class_mgr[:15],
-                        "SubGroup" : i_class_sgr[:15],
+                        "Section" : i_class_sec,
+                        "Class" : i_class,
+                        "SubClass" : i_subclass,
+                        "MainGroup" : i_class_mgr,
+                        "SubGroup" : i_class_sgr,
                         "FileName" : args_array['file_name']
                     })
 
                     position += 1
 
-                for B512 in B510.findall('B511'): #INTERNATIONAL CLASS FURTHER
+                #INTERNATIONAL CLASS FURTHER
+                for B512 in B510.findall('B511'):
                     i_class_version_date = None
                     i_class_action_date = None
                     i_class_gnr = None
@@ -956,10 +981,10 @@ def extract_XML2_grant(raw_data, args_array):
                     int_class = return_element_text(B512)
                     # TODO: splitting int class does not include possible multiple subclasses
                     if(len(int_class.split())>1):
-                        i_class = int_class.split()[0]
-                        i_subclass = int_class.split()[1]
+                        i_class = int_class.split()[0][:15]
+                        i_subclass = int_class.split()[1][:15]
                     else:
-                        i_class = int_class
+                        i_class = int_class[:15]
                         i_subclass = None
                     i_class_mgr = None
                     i_class_sgr = None
@@ -971,13 +996,13 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "Section" : i_class_sec[:15],
-                        "Class" : i_class[:15],
-                        "SubClass" : i_subclass[:15],
-                        "MainGroup" : i_class_mgr[:15],
-                        "SubGroup" : i_class_sgr[:15],
+                        "Section" : i_class_sec,
+                        "Class" : i_class,
+                        "SubClass" : i_subclass,
+                        "MainGroup" : i_class_mgr,
+                        "SubGroup" : i_class_sgr,
                         "FileName" : args_array['file_name']
                     })
 
@@ -985,7 +1010,7 @@ def extract_XML2_grant(raw_data, args_array):
 
             # Collect Tite
             for B540 in B500.findall('B540'):
-                try: title = return_element_text(B540) #TITLE
+                try: title = return_element_text(B540)[:500]
                 except: title = None
 
             # Collect Citations
@@ -1011,13 +1036,13 @@ def extract_XML2_grant(raw_data, args_array):
                     citation_country = "US"
 
                     DOC = PCIT.find('DOC')
-                    try: citation_document_number = return_element_text(DOC.find('DNUM'))
+                    try: citation_document_number = return_element_text(DOC.find('DNUM'))[:15]
                     except: citation_document_number = None
-                    try: pct_kind = return_element_text(DOC.find('KIND'))
+                    try: pct_kind = return_element_text(DOC.find('KIND'))[:10]
                     except: pct_kind = None
                     try: citation_date = return_formatted_date(return_element_text(DOC.find('DATE'), args_array, document_id))
                     except: citation_date = None
-                    try: citation_name = return_element_text(PCIT.find('PARTY-US'))
+                    try: citation_name = return_element_text(PCIT.find('PARTY-US'))[:100]
                     except: citation_name = None
 
                     # Parse citation category
@@ -1041,13 +1066,13 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_gracit.append({
                             "table_name" : "uspto.GRACIT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : position,
-                            "CitedID" : citation_document_number[:15],
-                            "Kind" : pct_kind[:10],
-                            "Name" : citation_name[:100],
+                            "CitedID" : citation_document_number,
+                            "Kind" : pct_kind,
+                            "Name" : citation_name,
                             "Date" : citation_date,
-                            "Country" : citation_country[:100],
+                            "Country" : citation_country,
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -1059,13 +1084,13 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_forpatcit.append({
                             "table_name" : "uspto.FORPATCIT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : position,
-                            "CitedID" : citation_document_number[:25],
-                            "Kind" : pct_kind[:10],
-                            "Name" : citation_name[:100],
+                            "CitedID" : citation_document_number,
+                            "Kind" : pct_kind,
+                            "Name" : citation_name,
                             "Date" : citation_date,
-                            "Country" : citation_country[:100],
+                            "Country" : citation_country,
                             "Category" : citation_category,
                             "FileName" : args_array['file_name']
                         })
@@ -1097,7 +1122,7 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_nonpatcit.append({
                         "table_name" : "uspto.NONPATCIT_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
                         "Citation" : non_patent_citation_text,
                         "Category" : ncitation_category,
@@ -1135,13 +1160,13 @@ def extract_XML2_grant(raw_data, args_array):
                 for B721 in B720.findall('B721'):
                     for i in B721.findall('PARTY-US'):
                         itSequence = position
-                        try: inventor_first_name = return_element_text(i.find('NAM').find('FNM'))
+                        try: inventor_first_name = return_element_text(i.find('NAM').find('FNM'))[:100]
                         except: inventor_first_name = None
-                        try: inventor_last_name = return_element_text(i.find('NAM').find('SNM'))
+                        try: inventor_last_name = return_element_text(i.find('NAM').find('SNM'))[:100]
                         except: inventor_last_name = None
-                        try: inventor_city = return_element_text(i.find('ADR').find('CITY'))
+                        try: inventor_city = return_element_text(i.find('ADR').find('CITY'))[:100]
                         except: inventor_city = None
-                        try: inventor_state = return_element_text(i.find('ADR').find('STATE'))
+                        try: inventor_state = return_element_text(i.find('ADR').find('STATE'))[:100]
                         except: inventor_state = None
                         # TODO: find out if country can be other than US
                         inventor_country = "US"
@@ -1151,15 +1176,15 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "FirstName" : inventor_first_name[:100],
-                        "LastName" : inventor_last_name[:100],
-                        "City" : inventor_city[:100],
-                        "State" : inventor_state[:100],
-                        "Country" : inventor_country[:100],
-                        "Nationality" : inventor_nationality[:100],
-                        "Residence" : inventor_residence[:100],
+                        "FirstName" : inventor_first_name,
+                        "LastName" : inventor_last_name,
+                        "City" : inventor_city,
+                        "State" : inventor_state,
+                        "Country" : inventor_country,
+                        "Nationality" : inventor_nationality,
+                        "Residence" : inventor_residence,
                         "FileName" : args_array['file_name']
                     })
 
@@ -1169,15 +1194,15 @@ def extract_XML2_grant(raw_data, args_array):
             # TODO: check if finding child of child is working
             # Reset position for assignees
             position = 1
-            for B730 in B700.findall('B730'): #ASSIGNEE
+            for B730 in B700.findall('B730'):
                 for B731 in B730.findall('B731'):
                     for x in B731.findall('PARTY-US'):
-                        try: asn_orgname = return_element_text(x.find('NAM').find("ONM"))
+                        try: asn_orgname = return_element_text(x.find('NAM').find("ONM"))[:500]
                         except: asn_orgname = None
                         asn_role = None
-                        try: asn_city = return_element_text(x.find("ADR").find('CITY'))
+                        try: asn_city = return_element_text(x.find("ADR").find('CITY'))[:100]
                         except: asn_city = None
-                        try: asn_state = return_element_text(x.find("ADR").find('STATE'))
+                        try: asn_state = return_element_text(x.find("ADR").find('STATE'))[:100]
                         except: asn_state = None
                         # TODO: find out if country is always US because it's never included.  Check all other references also
                         asn_country = "US"
@@ -1185,13 +1210,13 @@ def extract_XML2_grant(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : asn_orgname[:500],
-                        "Role" : asn_role[:45],
-                        "City" : asn_city[:100],
-                        "State" :  asn_state[:100],
-                        "Country" : asn_country[:100],
+                        "OrgName" : asn_orgname,
+                        "Role" : asn_role,
+                        "City" : asn_city,
+                        "State" :  asn_state,
+                        "Country" : asn_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -1204,36 +1229,37 @@ def extract_XML2_grant(raw_data, args_array):
                 position = 1
                 for B741 in B740.findall('B741'):
                     for x in B741.findall('PARTY-US'):
-                        try: agent_orgname = return_element_text(x.find('NAM').find("ONM"))
+                        try: agent_orgname = return_element_text(x.find('NAM').find("ONM"))[:300]
                         except: agent_orgname = None
-                        try: agent_last_name = return_element_text(i.find('NAM').find('FNM'))
+                        try: agent_last_name = return_element_text(i.find('NAM').find('FNM'))[:100]
                         except: agent_last_name = None
-                        try: agent_first_name = return_element_text(i.find('NAM').find('SNM'))
+                        try: agent_first_name = return_element_text(i.find('NAM').find('SNM'))[:100]
                         except: agent_first_name = None
                         agent_country = "US"
 
                         # Append SQL data into dictionary to be written later
                         processed_agent.append({
                             "table_name" : "uspto.AGENT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : position,
-                            "OrgName" : agent_orgname[:300],
-                            "LastName" : agent_last_name[:100],
-                            "FirstName" : agent_first_name[:100],
-                            "Country" : agent_country[:100],
+                            "OrgName" : agent_orgname,
+                            "LastName" : agent_last_name,
+                            "FirstName" : agent_first_name,
+                            "Country" : agent_country,
                             "FileName" : args_array['file_name']
                         })
 
                         position += 1
 
             # Collect examiner data
-            for B745 in B700.findall('B745'): #PERSON ACTING UPON THE DOC
+            for B745 in B700.findall('B745'):
                 position = 1
-                for B746 in B745.findall('B746'): #PRIMARY EXAMINER
+                # Primary Examiner
+                for B746 in B745.findall('B746'):
                     for x in B746.findall('PARTY-US'):
-                        try: examiner_last_name = return_element_text(x.find('NAM').find('SNM'))
+                        try: examiner_last_name = return_element_text(x.find('NAM').find('SNM'))[:50]
                         except: examiner_last_name = None
-                        try: examiner_fist_name = return_element_text(x.find('NAM').find('FNM'))
+                        try: examiner_fist_name = return_element_text(x.find('NAM').find('FNM'))[:50]
                         except:  examiner_fist_name = None
                         #TODO: find out if 748US is the department
                         examiner_department = None
@@ -1241,21 +1267,22 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_examiner.append({
                             "table_name" : "uspto.EXAMINER_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : position,
-                            "LastName" :  examiner_last_name[:50],
-                            "FirstName" : examiner_fist_name[:50],
-                            "Department" : examiner_department[:100],
+                            "LastName" :  examiner_last_name,
+                            "FirstName" : examiner_fist_name,
+                            "Department" : examiner_department,
                             "FileName" : args_array['file_name']
                         })
 
                         position += 1
 
-                for B747 in B745.findall('B747'): #ASSISTANT EXAMINER
+                # Assistant Examiner
+                for B747 in B745.findall('B747'):
                     for x in B747.findall('PARTY-US'):
-                        try: examiner_last_name = return_element_text(x.find('NAM').find('SNM'))
+                        try: examiner_last_name = return_element_text(x.find('NAM').find('SNM'))[:50]
                         except: examiner_last_name = None
-                        try: examiner_fist_name = return_element_text(x.find('NAM').find('FNM'))
+                        try: examiner_fist_name = return_element_text(x.find('NAM').find('FNM'))[:50]
                         except: examiner_fist_name = None
                         #TODO: find out if 748US is the department
                         examiner_department = None
@@ -1263,11 +1290,11 @@ def extract_XML2_grant(raw_data, args_array):
                         # Append SQL data into dictionary to be written later
                         processed_examiner.append({
                             "table_name" : "uspto.EXAMINER_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : position,
-                            "LastName" :  examiner_last_name[:50],
-                            "FirstName" : examiner_fist_name[:50],
-                            "Department" : examiner_department[:100],
+                            "LastName" :  examiner_last_name,
+                            "FirstName" : examiner_fist_name,
+                            "Department" : examiner_department,
                             "FileName" : args_array['file_name']
                         })
 
@@ -1293,20 +1320,20 @@ def extract_XML2_grant(raw_data, args_array):
         # Append SQL data into dictionary to be written later
         processed_grant.append({
             "table_name" : "uspto.GRANT",
-            "GrantID" : document_id[:20],
-            "Title" : title[:500],
+            "GrantID" : document_id,
+            "Title" : title,
             "IssueDate" : pub_date,
-            "Kind" : kind[:2],
+            "Kind" : kind,
             "GrantLength" : grant_length,
-            "USSeriesCode" : series_code[:2],
+            "USSeriesCode" : series_code,
             "Abstract" : abstract,
             "ClaimsNum" : claims_num,
             "DrawingsNum" : number_of_drawings,
             "FiguresNum" : number_of_figures,
-            "ApplicationID" : app_no[:20],
+            "ApplicationID" : app_no,
             "Claims" : claims,
             "FileDate" : app_date,
-            "AppType" : app_type[:45],
+            "AppType" : app_type,
             "FileName" : args_array['file_name']
         })
 
@@ -1420,18 +1447,18 @@ def process_APS_grant_content(args_array):
             # Append to the patent grand data
             processed_grant.append({
                 "table_name" : "uspto.GRANT",
-                "GrantID" : document_id[:20],
-                "Title" :  title[:500],
+                "GrantID" : document_id,
+                "Title" :  title,
                 "IssueDate" : pub_date,
                 "FileDate" : app_date,
-                "Kind" : kind[:2],
-                "AppType": app_type[:45],
-                "USSeriesCode" : series_code[:2],
+                "Kind" : kind,
+                "AppType": app_type,
+                "USSeriesCode" : series_code,
                 "Abstract" : abstract,
                 "ClaimsNum" : claims_num,
                 "DrawingsNum" : number_of_drawings,
                 "FiguresNum" : number_of_figures,
-                "ApplicationID" : app_no[:20],
+                "ApplicationID" : app_no,
                 "GrantLength" : grant_length,
                 "FileName" : args_array['file_name']
             })
@@ -1473,18 +1500,18 @@ def process_APS_grant_content(args_array):
                 # Append to the patent grand data
                 processed_grant.append({
                     "table_name" : "uspto.GRANT",
-                    "GrantID" : document_id[:20],
-                    "Title" :  title[:500],
+                    "GrantID" : document_id,
+                    "Title" :  title,
                     "IssueDate" : pub_date,
                     "FileDate" : app_date,
-                    "Kind" : kind[:2],
-                    "AppType": app_type[:45],
-                    "USSeriesCode" : series_code[:2],
+                    "Kind" : kind,
+                    "AppType": app_type,
+                    "USSeriesCode" : series_code,
                     "Abstract" : abstract,
                     "ClaimsNum" : claims_num,
                     "DrawingsNum" : number_of_drawings,
                     "FiguresNum" : number_of_figures,
-                    "ApplicationID" : app_no[:20],
+                    "ApplicationID" : app_no,
                     "GrantLength" : grant_length,
                     "FileName" : args_array['file_name']
                 })
@@ -1554,7 +1581,7 @@ def process_APS_grant_content(args_array):
             document_id = None
             try:
                 # TODO: need to filter patent numbers in function ???
-                document_id = fix_patent_number(replace_old_html_characters(line[3:].strip()))
+                document_id = fix_patent_number(replace_old_html_characters(line[3:].strip()))[:20]
             except:
                 # TODO: exception should be logged since patent number is required.
                 document_id = None
@@ -1562,7 +1589,7 @@ def process_APS_grant_content(args_array):
 
         # Series Code
         elif line[0:4].strip() == "SRC":
-            try: series_code = replace_old_html_characters(line[3:].strip())
+            try: series_code = replace_old_html_characters(line[3:].strip())[:2]
             except: series_code = None
         # Number of Claims
         elif line[0:4].strip() == "NCL":
@@ -1574,7 +1601,7 @@ def process_APS_grant_content(args_array):
             except: pub_date = None
         # APN is application number
         elif line[0:4].strip() == "APN":
-            try: app_no = fix_patent_number(replace_old_html_characters(line[3:].strip()))
+            try: app_no = fix_patent_number(replace_old_html_characters(line[3:].strip()))[:20]
             except: app_no = None
         # APD is Application date
         elif line[0:4].strip() == "APD":
@@ -1583,7 +1610,7 @@ def process_APS_grant_content(args_array):
         # TTL is title
         elif line[0:4].strip() == "TTL":
             # Grab the text from the line of TTL
-            try: title = replace_old_html_characters(line[3:].strip())
+            try: title = replace_old_html_characters(line[3:].strip())[:500]
             except: title = None
 
             # If TTL found, can be multi-line.  Load next line and check if should be appended or not
@@ -1593,7 +1620,7 @@ def process_APS_grant_content(args_array):
             # Check if line has empty header
             if not line[0:3].strip():
                 # Append the TTL to the title variable above if empty header
-                title += replace_old_html_characters(line[3:].strip())
+                title += replace_old_html_characters(line[3:].strip())[:500]
             # Check if the loaded next line is another type of data
             elif line[0:4].strip() == "ISD":
                 # Set that the next line has been loaded already so it can be found
@@ -1616,8 +1643,8 @@ def process_APS_grant_content(args_array):
         elif line[0:4].strip() == "EXA":
             try:
                 assistant_examiner = replace_old_html_characters(line[3:].strip()).split(";")
-                examiner_last_name = assistant_examiner[0]
-                examiner_first_name = assistant_examiner[1]
+                examiner_last_name = assistant_examiner[0][:50]
+                examiner_first_name = assistant_examiner[1][:50]
             except:
                 examiner_first_name = None
                 examiner_last_name = None
@@ -1625,10 +1652,10 @@ def process_APS_grant_content(args_array):
             # Append SQL data into dictionary to be written later
             processed_examiner.append({
                 "table_name" : "uspto.EXAMINER_G",
-                "GrantID" : document_id[:20],
+                "GrantID" : document_id,
                 "Position" : 2,
-                "LastName" : examiner_last_name[:50],
-                "FirstName" : examiner_first_name[:50],
+                "LastName" : examiner_last_name,
+                "FirstName" : examiner_first_name,
                 "Department" : None,
                 "FileName" : args_array['file_name']
             })
@@ -1645,8 +1672,8 @@ def process_APS_grant_content(args_array):
             examiner_last_name = None
             try:
                 primary_examiner = replace_old_html_characters(line[3:].strip()).split(";")
-                examiner_last_name = primary_examiner[0]
-                examiner_first_name = primary_examiner[1]
+                examiner_last_name = primary_examiner[0][:50]
+                examiner_first_name = primary_examiner[1][:50]
             except:
                 examiner_last_name = None
                 examiner_first_name = None
@@ -1654,10 +1681,10 @@ def process_APS_grant_content(args_array):
             # Append SQL data into dictionary to be written later
             processed_examiner.append({
                 "table_name" : "uspto.EXAMINER_G",
-                "GrantID" : document_id[:2],
+                "GrantID" : document_id,
                 "Position" : 1,
-                "LastName" : examiner_last_name[:50],
-                "FirstName" : examiner_first_name[:50],
+                "LastName" : examiner_last_name,
+                "FirstName" : examiner_first_name,
                 "Department" : None,
                 "FileName" : args_array['file_name']
             })
@@ -1696,10 +1723,10 @@ def process_APS_grant_content(args_array):
                             # Append SQL data into dictionary to be written later
                             processed_gracit.append({
                                 "table_name" : "uspto.GRACIT_G",
-                                "GrantID" : document_id[:20],
+                                "GrantID" : document_id,
                                 "Position" : position,
-                                "CitedID" : citation_document_number[:20],
-                                "Name" : citation_name[:100],
+                                "CitedID" : citation_document_number,
+                                "Name" : citation_name,
                                 "Date" : citation_date,
                                 "Country" : "US",
                                 "FileName" : args_array['file_name']
@@ -1725,7 +1752,7 @@ def process_APS_grant_content(args_array):
 
                 # CitedID
                 elif line[0:3] == "PNO":
-                    try: citation_document_number = fix_patent_number(replace_old_html_characters(line[3:].strip().replace("*", "").replace(" ", "")))
+                    try: citation_document_number = fix_patent_number(replace_old_html_characters(line[3:].strip().replace("*", "").replace(" ", "")))[:20]
                     except: citation_document_number = None
                 # Issue Date of cited patent
                 elif line[0:3] == "ISD":
@@ -1734,7 +1761,7 @@ def process_APS_grant_content(args_array):
                 # Name of patentee
                 elif line[0:3] == "NAM":
                     try:
-                        citation_name = replace_old_html_characters(line[3:].strip())
+                        citation_name = replace_old_html_characters(line[3:].strip())[:100]
                         item_ready_to_insert = True
                     except:
                         citation_name = None
@@ -1773,7 +1800,7 @@ def process_APS_grant_content(args_array):
                         # Append SQL data into dictionary to be written later
                         processed_nonpatcit.append({
                             "table_name" : "uspto.NONPATCIT_G",
-                            "GrantID" : document_id[:20],
+                            "GrantID" : document_id,
                             "Position" : position,
                             "Citation" : temp_data_string,
                             "Category" : None,
@@ -1816,7 +1843,7 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_nonpatcit.append({
                         "table_name" : "uspto.NONPATCIT_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
                         "Citation" : temp_data_string,
                         "Category" : None,
@@ -1862,11 +1889,11 @@ def process_APS_grant_content(args_array):
                             # Append SQL data into dictionary to be written later
                             processed_forpatcit.append({
                                 "table_name" : "uspto.FORPATCIT_G",
-                                "GrantID" : document_id[:20],
+                                "GrantID" : document_id,
                                 "Position" : position,
-                                "CitedID" : citation_document_number[:25],
-                                "Date" : (citation_date, args_array),
-                                "Country" : citation_country[:100],
+                                "CitedID" : citation_document_number,
+                                "Date" : citation_date,
+                                "Country" : citation_country,
                                 "FileName" : args_array['file_name']
                             })
 
@@ -1890,7 +1917,7 @@ def process_APS_grant_content(args_array):
 
                 elif line[0:3] == "PNO":
                     citation_document_number = None
-                    try: citation_document_number = replace_old_html_characters(line[3:].strip())
+                    try: citation_document_number = replace_old_html_characters(line[3:].strip())[:25]
                     except: citation_document_number = None
                 elif line[0:3] == "ISD":
                     citation_date = None
@@ -1900,7 +1927,7 @@ def process_APS_grant_content(args_array):
                     citation_country = None
                     # Country is the last item included in APS so item is ready to be inserted after this is found
                     try:
-                        citation_country = replace_old_html_characters(line[3:].strip())
+                        citation_country = replace_old_html_characters(line[3:].strip())[:100]
                         item_ready_to_insert = True
                     except:
                         citation_country = None
@@ -1912,11 +1939,11 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_forpatcit.append({
                         "table_name" : "uspto.FORPATCIT_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "CitedID" : citation_document_number[:25],
+                        "CitedID" : citation_document_number,
                         "Date" : citation_date,
-                        "Country" : citation_country[:100],
+                        "Country" : citation_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -1975,8 +2002,8 @@ def process_APS_grant_content(args_array):
                                 class_string = fix_old_APS_class(str(class_string[0]))
 
                                 # Set the returned array to insert data vaiables
-                                n_class_main = class_string[0]
-                                n_subclass = class_string[1]
+                                n_class_main = class_string[0][:5]
+                                n_subclass = class_string[1][:15]
 
                                 # if the class is malformed than set variable to = 1
                                 if "MAL" in class_string:
@@ -1984,15 +2011,17 @@ def process_APS_grant_content(args_array):
 
                         elif len(class_string) == 2:
                             if len(class_string[0]) > 3:
-                                n_class_main = class_string[0][0:3]
+                                n_class_main = class_string[0][:3]
                                 n_subclass = class_string[0][3:len(class_string)] + class_string[1]
+                                n_subclass = n_subclass[:15]
                             else:
-                                n_class_main = class_string[0]
-                                n_subclass = class_string[1]
+                                n_class_main = class_string[0][:5]
+                                n_subclass = class_string[1][:15]
 
                         elif len(class_string) == 3:
-                            n_class_main = class_string[0]
+                            n_class_main = class_string[0][:5]
                             n_subclass = class_string[1] + " " + class_string[2]
+                            n_subclass = n_subclass[:15]
                             malformed_class = 1
                         else:
                             logger.warning("A mal-formed US OCL class was found with more than one space: " + document_id + " in link: " + args_array['url_link'])
@@ -2010,10 +2039,10 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position_uclass,
-                        "Class" : n_class_main[:5],
-                        "SubClass" : n_subclass[:15],
+                        "Class" : n_class_main,
+                        "SubClass" : n_subclass,
                         "Malformed" : malformed_class,
                         "FileName" : args_array['file_name']
                     })
@@ -2044,8 +2073,8 @@ def process_APS_grant_content(args_array):
                                 class_string = fix_old_APS_class(str(class_string[0]))
 
                                 # Set the returned array to insert data vaiables
-                                n_class_main = class_string[0]
-                                n_subclass = class_string[1]
+                                n_class_main = class_string[0][:5]
+                                n_subclass = class_string[1][:15]
 
                                 # if the class is malformed than set variable to = 1
                                 if "MAL" in class_string:
@@ -2053,14 +2082,16 @@ def process_APS_grant_content(args_array):
 
                         elif len(class_string) == 2:
                             if len(class_string[0]) > 3:
-                                n_class_main = class_string[0][0:3]
+                                n_class_main = class_string[0][:3]
                                 n_subclass = class_string[0][3:len(class_string)] + class_string[1]
+                                n_subclass = n_subclass[:15]
                             else:
-                                n_class_main = class_string[0]
+                                n_class_main = class_string[0][:5]
                                 n_subclass = class_string[1]
                         elif len(class_string) == 3:
                             n_class_main = class_string[0]
                             n_subclass = class_string[1] + " " + class_string[2]
+                            n_subclass = n_subclass[:15]
                             malformed_class = 1
                         else:
                             logger.warning("A mal-formed US XCL class was found with more than two spaces: " + document_id + " in link: " + args_array['url_link'])
@@ -2082,10 +2113,10 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position_uclass,
-                        "Class" : n_class_main[:5],
-                        "SubClass" : n_subclass[:15],
+                        "Class" : n_class_main,
+                        "SubClass" : n_subclass,
                         "Malformed" : malformed_class,
                         "FileName" : args_array['file_name']
                     })
@@ -2120,22 +2151,24 @@ def process_APS_grant_content(args_array):
 
                     try:
                         if len(i_class_string) == 1:
-                            i_class_main = i_class_string[0]
+                            i_class_main = i_class_string[0][:15]
                             i_subclass = None
                             malformed_class = 1
                         elif len(i_class_string) == 2:
                             if len(i_class_string[0]) > 3:
-                                i_class_main = i_class_string[0]
+                                i_class_main = i_class_string[0][:15]
                                 i_subclass = i_class_string[0][3:len(i_class_string)] + i_class_string[1]
+                                i_subclass = i_subclass[:15]
                             else:
-                                i_class_main = i_class_string[0]
-                                i_subclass = i_class_string[1]
+                                i_class_main = i_class_string[0][:15]
+                                i_subclass = i_class_string[1][:15]
                         elif len(i_class_string) == 3:
-                            n_class_main = i_class_string[0]
+                            n_class_main = i_class_string[0][:15]
                             n_subclass = i_class_string[1] + " " + i_class_string[2]
+                            n_subclass = n_subclass[:15]
                             malformed_class = 1
                         else:
-                            logger.warning("A mal-formed international class was found (" + i_class_string + ") with more than two spaces: " + document_id + " in link: " + args_array['url_link'])
+                            logger.warning("A mal-formed international class was found (" + ' '.join(i_class_string) + ") with more than two spaces: " + document_id + " in link: " + args_array['url_link'])
                     except:
                         # Print exception information to file
                         traceback.print_exc()
@@ -2151,12 +2184,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position_intclass,
-                        "Class" : i_class_main[:15],
-                        "SubClass" : i_subclass[:15],
-                        "MainGroup" : i_class_mgr[:15],
-                        "SubGroup" : i_class_sgr[:15],
+                        "Class" : i_class_main,
+                        "SubClass" : i_subclass,
+                        "MainGroup" : i_class_mgr,
+                        "SubGroup" : i_class_sgr,
                         "Malformed" : malformed_class,
                         "FileName" : args_array['file_name']
                     })
@@ -2337,15 +2370,15 @@ def process_APS_grant_content(args_array):
                         try:
                             processed_inventor.append({
                                 "table_name" : "uspto.INVENTOR_G",
-                                "GrantID" : document_id[:20],
+                                "GrantID" : document_id,
                                 "Position" : position,
-                                "FirstName" : inventor_first_name[:100],
-                                "LastName" : inventor_last_name[:100],
-                                "City" : inventor_city[:100],
-                                "State" : inventor_state[:100],
-                                "Country" : inventor_country[:100],
-                                "Nationality" : inventor_nationality[:100],
-                                "Residence" : inventor_residence[:300],
+                                "FirstName" : inventor_first_name,
+                                "LastName" : inventor_last_name,
+                                "City" : inventor_city,
+                                "State" : inventor_state,
+                                "Country" : inventor_country,
+                                "Nationality" : inventor_nationality,
+                                "Residence" : inventor_residence,
                                 "FileName" : args_array['file_name']
                             })
 
@@ -2378,14 +2411,14 @@ def process_APS_grant_content(args_array):
                     try:
                         name_string = replace_old_html_characters(line[3:].strip()).split(";")
                         if len(name_string) == 1:
-                            inventor_last_name = name_string[0].strip()
+                            inventor_last_name = name_string[0].strip()[:100]
                             inventor_first_name = None
                         elif len(name_string) == 2:
-                            inventor_first_name = name_string[0].strip()
-                            inventor_last_name = name_string[1].strip()
+                            inventor_first_name = name_string[0].strip()[:100]
+                            inventor_last_name = name_string[1].strip()[:100]
                         else:
-                            inventor_first_name = name_string[0].strip()
-                            inventor_last_name = name_string[1].strip()
+                            inventor_first_name = name_string[0].strip()[:100]
+                            inventor_last_name = name_string[1].strip()[:100]
 
                     except:
                         traceback.print_exc()
@@ -2402,7 +2435,7 @@ def process_APS_grant_content(args_array):
                     multi_line_flag = 'STR'
                     # Get the citation text from the line
                     try:
-                        inventor_residence = replace_old_html_characters(line[3:].strip())
+                        inventor_residence = replace_old_html_characters(line[3:].strip())[:100]
                     except:
                         inventor_residence = None
                         logger.error("A inventor street data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2411,7 +2444,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "CTY":
                     # Get the citation text from the line
                     try:
-                        inventor_city = replace_old_html_characters(line[3:].strip())
+                        inventor_city = replace_old_html_characters(line[3:].strip())[:100]
                     except:
                         inventor_city = None
                         logger.error("A inventor city data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2420,7 +2453,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "STA":
                     # Get the citation text from the line
                     try:
-                        inventor_state = replace_old_html_characters(line[3:].strip())
+                        inventor_state = replace_old_html_characters(line[3:].strip())[:100]
                     except:
                         inventor_state = None
                         logger.error("A inventor state data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2429,7 +2462,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "CNT":
                     # Get the citation text from the line
                     try:
-                        inventor_country = replace_old_html_characters(line[3:].strip())
+                        inventor_country = replace_old_html_characters(line[3:].strip())[:100]
                         # Reset the item ready to insert
                         item_ready_to_insert = True
                     except:
@@ -2442,7 +2475,7 @@ def process_APS_grant_content(args_array):
                     # Get the citation text from the line
                     try:
                         if multi_line_flag == "STR":
-                            inventor_residence += " " +  replace_old_html_characters(line[3:].strip())
+                            inventor_residence += " " +  replace_old_html_characters(line[3:].strip())[:300]
                     except:
                         logger.error("An inventor data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
 
@@ -2452,15 +2485,15 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "FirstName" : inventor_first_name[:100],
-                        "LastName" : inventor_last_name[:100],
-                        "City" : inventor_city[:100],
-                        "State" : inventor_state[:100],
-                        "Country" : inventor_country[:100],
-                        "Nationality" : inventor_nationality[:100],
-                        "Residence" : inventor_residence[:300],
+                        "FirstName" : inventor_first_name,
+                        "LastName" : inventor_last_name,
+                        "City" : inventor_city,
+                        "State" : inventor_state,
+                        "Country" : inventor_country,
+                        "Nationality" : inventor_nationality,
+                        "Residence" : inventor_residence,
                         "FileName" : args_array['file_name']
                     })
 
@@ -2517,13 +2550,13 @@ def process_APS_grant_content(args_array):
                             # Append SQL data into dictionary to be written later
                             processed_assignee.append({
                                 "table_name" : "uspto.ASSIGNEE_G",
-                                "GrantID" : document_id[:20],
+                                "GrantID" : document_id,
                                 "Position" : position,
-                                "OrgName" : asn_orgname[:500],
-                                "Role" : asn_role[:45],
-                                "City" : asn_city[:100],
-                                "State" : asn_state[:100],
-                                "Country" : asn_country[:100],
+                                "OrgName" : asn_orgname,
+                                "Role" : asn_role,
+                                "City" : asn_city,
+                                "State" : asn_state,
+                                "Country" : asn_country,
                                 "FileName" : args_array['file_name']
                             })
 
@@ -2552,7 +2585,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "NAM":
                     # Get the citation text from the line
                     try:
-                        asn_orgname = replace_old_html_characters(line[3:].strip())
+                        asn_orgname = replace_old_html_characters(line[3:].strip())[:500]
                         multi_line_flag = "NAM"
                     except:
                         asn_orgname = None
@@ -2562,7 +2595,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "CTY":
                     # Get the citation text from the line
                     try:
-                        asn_city = replace_old_html_characters(line[3:].strip())
+                        asn_city = replace_old_html_characters(line[3:].strip())[:100]
                     except:
                         asn_city = None
                         logger.error("A assignee data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2571,7 +2604,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "STA":
                     # Get the citation text from the line
                     try:
-                        asn_state = replace_old_html_characters(line[3:].strip())
+                        asn_state = replace_old_html_characters(line[3:].strip())[:100]
                     except:
                         asn_state = None
                         logger.error("A assignee data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2580,7 +2613,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "COD":
                     # Get the citation text from the line
                     try:
-                        asn_role = replace_old_html_characters(line[3:].strip())
+                        asn_role = replace_old_html_characters(line[3:].strip())[:45]
                     except:
                         asn_role = None
                         logger.error("A assignee data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2589,7 +2622,7 @@ def process_APS_grant_content(args_array):
                 elif line[0:3] == "CNT":
                     # Get the citation text from the line
                     try:
-                        asn_country = replace_old_html_characters(line[3:].strip())
+                        asn_country = replace_old_html_characters(line[3:].strip())[:100]
                         # Reset the item ready to insert
                         item_ready_to_insert = True
                     except:
@@ -2602,7 +2635,7 @@ def process_APS_grant_content(args_array):
                     # Get the citation text from the line
                     try:
                         if multi_line_flag == "NAM":
-                            asn_orgname += " " +  replace_old_html_characters(line[3:].strip())
+                            asn_orgname += " " +  replace_old_html_characters(line[3:].strip())[:500]
                     except:
                         logger.error("An assignee data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
 
@@ -2612,13 +2645,13 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : asn_orgname[:500],
-                        "Role" : asn_role[:45],
-                        "City" : asn_city[:100],
-                        "State" : asn_state[:100],
-                        "Country" : asn_country[:100],
+                        "OrgName" : asn_orgname,
+                        "Role" : asn_role,
+                        "City" : asn_city,
+                        "State" : asn_state,
+                        "Country" : asn_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -2660,7 +2693,7 @@ def process_APS_grant_content(args_array):
                 if line[0:3] == "FRM":
                     # Get the firm name from the line
                     try:
-                        agent_orgname = replace_old_html_characters(line[3:].strip())
+                        agent_orgname = replace_old_html_characters(line[3:].strip())[:300]
                     except:
                         agent_orgname = None
                         logger.error("An agent data error occurred for grant_id: " + document_id + " in link: " + args_array['url_link'])
@@ -2670,8 +2703,8 @@ def process_APS_grant_content(args_array):
                     # Get the citation text from the line
                     try:
                         agent_name = replace_old_html_characters(line[3:].strip()).split(";")
-                        agent_first_name = agent_name[1].strip()
-                        agent_last_name = agent_name[0].strip()
+                        agent_first_name = agent_name[1].strip()[:100]
+                        agent_last_name = agent_name[0].strip()[:100]
                     except:
                         agent_first_name = None
                         agent_last_name = None
@@ -2680,12 +2713,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id[:100],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : agent_orgname[:300],
-                        "LastName" : agent_last_name[:100],
-                        "FirstName" : agent_first_name[:100],
-                        "Country" : agent_country[:100],
+                        "OrgName" : agent_orgname,
+                        "LastName" : agent_last_name,
+                        "FirstName" : agent_first_name,
+                        "Country" : agent_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -2705,8 +2738,8 @@ def process_APS_grant_content(args_array):
                     # Get the citation text from the line
                     try:
                         agent_name = replace_old_html_characters(line[3:].strip()).split(";")
-                        agent_first_name = agent_name[1].strip()
-                        agent_last_name = agent_name[0].strip()
+                        agent_first_name = agent_name[1].strip()[:100]
+                        agent_last_name = agent_name[0].strip()[:100]
                     except:
                         agent_first_name = None
                         agent_last_name = None
@@ -2715,12 +2748,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : agent_orgname[:300],
-                        "LastName" : agent_last_name[:100],
-                        "FirstName" : agent_first_name[:100],
-                        "Country" : agent_country[:100],
+                        "OrgName" : agent_orgname,
+                        "LastName" : agent_last_name,
+                        "FirstName" : agent_first_name,
+                        "Country" : agent_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -2740,8 +2773,8 @@ def process_APS_grant_content(args_array):
                     # Get the citation text from the line
                     try:
                         agent_name = replace_old_html_characters(line[3:].strip()).split(";")
-                        agent_first_name = agent_name[1].strip()
-                        agent_last_name = agent_name[0].strip()
+                        agent_first_name = agent_name[1].strip()[:100]
+                        agent_last_name = agent_name[0].strip()[:100]
                     except:
                         agent_first_name = None
                         agent_last_name = None
@@ -2750,12 +2783,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id[:45],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : agent_orgname[:300],
-                        "LastName" : agent_last_name[:100],
-                        "FirstName" : agent_first_name[:100],
-                        "Country" : agent_country[:100],
+                        "OrgName" : agent_orgname,
+                        "LastName" : agent_last_name,
+                        "FirstName" : agent_first_name,
+                        "Country" : agent_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -2775,8 +2808,8 @@ def process_APS_grant_content(args_array):
                     # Get the citation text from the line
                     try:
                         agent_name = replace_old_html_characters(line[3:].strip()).split(";")
-                        agent_first_name = agent_name[1].strip()
-                        agent_last_name = agent_name[0].strip()
+                        agent_first_name = agent_name[1].strip()[:100]
+                        agent_last_name = agent_name[0].strip()[:100]
                     except:
                         agent_first_name = None
                         agent_last_name = None
@@ -2785,12 +2818,12 @@ def process_APS_grant_content(args_array):
                     # Append SQL data into dictionary to be written later
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
-                        "GrantID" : document_id[:20],
+                        "GrantID" : document_id,
                         "Position" : position,
-                        "OrgName" : agent_orgname[:300],
-                        "LastName" : agent_last_name[:100],
-                        "FirstName" : agent_first_name[:100],
-                        "Country" : agent_country[:100],
+                        "OrgName" : agent_orgname,
+                        "LastName" : agent_last_name,
+                        "FirstName" : agent_first_name,
+                        "Country" : agent_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -2875,7 +2908,7 @@ def extract_XML4_application(raw_data, args_array):
         except:
             document_id = None
             logger.error("No Patent Number was found for: " + url_link)
-        try: kind = pub_doc.findtext('kind')
+        try: kind = pub_doc.findtext('kind')[:2]
         except: kind = None
         try: pub_date = return_formatted_date(pub_doc.findtext('date'), args_array, document_id)
         except: pub_date = None
@@ -2883,17 +2916,17 @@ def extract_XML4_application(raw_data, args_array):
         # Get application reference data
         ar = r.find('application-reference')
         if ar is not None:
-            try: app_type = ar.attrib['appl-type']
+            try: app_type = ar.attrib['appl-type'][:45]
             except: app_type = None
             app_doc = ar.find('document-id')
             try: app_country = app_doc.findtext('country')
             except: app_country = None
-            try: app_no = app_doc.findtext('doc-number')
+            try: app_no = app_doc.findtext('doc-number')[:20]
             except: app_no = None
             try: app_date = return_formatted_date(app_doc.findtext('date'), args_array, document_id)
             except: app_date = None
             # Get series code
-            try: series_code = r.findtext('us-application-series-code')
+            try: series_code = r.findtext('us-application-series-code')[:2]
             except: series_code = None
 
         # Get priority Claims
@@ -2902,11 +2935,11 @@ def extract_XML4_application(raw_data, args_array):
             for pc in pcs.findall('priority-claim'):
                 try: pc_sequence = strip_leading_zeros(pc.attrib['sequence'])
                 except: pc_sequence = None
-                try: pc_kind = pc.attrib['kind']
+                try: pc_kind = pc.attrib['kind'][:100]
                 except: pc_kind = None
-                try: pc_country = pc.findtext('country')
+                try: pc_country = pc.findtext('country')[:100]
                 except: pc_country = None
-                try: pc_doc_num = pc.findtext('doc-number')
+                try: pc_doc_num = pc.findtext('doc-number')[:100]
                 except: pc_doc_num = None
                 try: pc_date = return_formatted_date(pc.findtext('date'), args_array, document_id)
                 except: pc_date = None
@@ -2914,11 +2947,11 @@ def extract_XML4_application(raw_data, args_array):
                 # Append SQL data into dictionary to be written later
                 processed_priority_claims.append({
                     "table_name" : "uspto.FOREIGNPRIORITY_A",
-                    "ApplicationID" : app_no[:20],
+                    "ApplicationID" : app_no,
                     "Position" : pc_sequence,
-                    "Kind" : pc_kind[:45],
-                    "Country" : pc_country[:100],
-                    "DocumentID" : pc_doc_num[:100],
+                    "Kind" : pc_kind,
+                    "Country" : pc_country,
+                    "DocumentID" : pc_doc_num,
                     "PriorityDate" : pc_date,
                     "FileName" : args_array['file_name']
                 })
@@ -2934,22 +2967,22 @@ def extract_XML4_application(raw_data, args_array):
             for icc in ics.findall('classification-ipcr'):
 
                 for x in icc.getchildren():
-                    if(check_tag_exists(x,'section')): i_class_sec = x.text
-                    if(check_tag_exists(x,'class')): i_class = x.text
-                    if(check_tag_exists(x,'subclass')): i_subclass = x.text
-                    if(check_tag_exists(x,'main-group')): i_class_mgr = x.text
-                    if(check_tag_exists(x,'subgroup')): i_class_sgr = x.text
+                    if(check_tag_exists(x,'section')): i_class_sec = x.text[:100]
+                    if(check_tag_exists(x,'class')): i_class = x.text[:15]
+                    if(check_tag_exists(x,'subclass')): i_subclass = x.text[:15]
+                    if(check_tag_exists(x,'main-group')): i_class_mgr = x.text[:15]
+                    if(check_tag_exists(x,'subgroup')): i_class_sgr = x.text[:15]
 
                 # Append SQL data into dictionary to be written later
                 processed_intclass.append({
                     "table_name" : "uspto.INTCLASS_A",
-                    "ApplicationID" : app_no[:20],
+                    "ApplicationID" : app_no,
                     "Position" : position,
-                    "Section" : i_class_sec[:15],
-                    "Class" : i_class[:15],
-                    "SubClass" : i_subclass[:15],
-                    "MainGroup" : i_class_mgr[:15],
-                    "SubGroup" : i_class_sgr[:15],
+                    "Section" : i_class_sec,
+                    "Class" : i_class,
+                    "SubClass" : i_subclass,
+                    "MainGroup" : i_class_mgr,
+                    "SubGroup" : i_class_sgr,
                     "FileName" : args_array['file_name']
                 })
 
@@ -2967,7 +3000,10 @@ def extract_XML4_application(raw_data, args_array):
             except: n_class_country = None
             try: n_class_info = nc.findtext('main-classification')
             except: n_class_info = None
-            try: n_class_main, n_subclass = return_class(n_class_info)
+            try:
+                n_class_main, n_subclass = return_class(n_class_info)
+                n_class_main = n_class_main[:5]
+                n_subclass = n_subclass[:15]
             except:
                 n_class_main = None
                 n_subclass = None
@@ -2975,10 +3011,10 @@ def extract_XML4_application(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_usclass.append({
                 "table_name" : "uspto.USCLASS_A",
-                "ApplicationID" : app_no[:20],
+                "ApplicationID" : app_no,
                 "Position" : position,
-                "Class" : n_class_main[:5],
-                "SubClass" : n_subclass[:15],
+                "Class" : n_class_main,
+                "SubClass" : n_subclass,
                 "FileName" : args_array['file_name']
             })
 
@@ -2991,7 +3027,10 @@ def extract_XML4_application(raw_data, args_array):
                 for n in nat_class_fur_root:
                     try: n_class_info = n.text
                     except: n_class_info = None
-                    try: n_class_main, n_subclass = return_class(n_class_info)
+                    try:
+                        n_class_main, n_subclass = return_class(n_class_info)
+                        n_class_main = n_class_main[:5]
+                        n_subclass = n_subclass[:15]
                     except:
                         n_class_main = None
                         n_subclass = None
@@ -2999,10 +3038,10 @@ def extract_XML4_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "Class" : n_class_main[:5],
-                        "SubClass" : n_subclass[:15],
+                        "Class" : n_class_main,
+                        "SubClass" : n_subclass,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3017,27 +3056,27 @@ def extract_XML4_application(raw_data, args_array):
             main_cpc_class_element = cpc_class_element.find('main-cpc')
             if main_cpc_class_element is not None:
                 for cpc_class_item in main_cpc_class_element.findall('classification-cpc'):
-                    try: cpc_section = cpc_class_item.findtext('section')
+                    try: cpc_section = cpc_class_item.findtext('section')[:15]
                     except: cpc_section = None
-                    try: cpc_class = cpc_class_item.findtext('class')
+                    try: cpc_class = cpc_class_item.findtext('class')[:15]
                     except: cpc_class = None
-                    try: cpc_subclass = cpc_class_item.findtext('subclass')
+                    try: cpc_subclass = cpc_class_item.findtext('subclass')[:15]
                     except: cpc_subclass = None
-                    try: cpc_mgr = cpc_class_item.findtext('main-group')
+                    try: cpc_mgr = cpc_class_item.findtext('main-group')[:15]
                     except: cpc_mgr = None
-                    try: cpc_sgr = cpc_class_item.findtext('subgroup')
+                    try: cpc_sgr = cpc_class_item.findtext('subgroup')[:15]
                     except: cpc_sgr = None
 
                     # Append SQL data into dictionary to be written later
                     processed_cpcclass.append({
                         "table_name" : "uspto.CPCCLASS_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "Section" : cpc_section[:15],
-                        "Class" : cpc_class[:15],
-                        "SubClass" : cpc_subclass[:15],
-                        "MainGroup" : cpc_mgr[:15],
-                        "SubGroup" : cpc_sgr[:15],
+                        "Section" : cpc_section,
+                        "Class" : cpc_class,
+                        "SubClass" : cpc_subclass,
+                        "MainGroup" : cpc_mgr,
+                        "SubGroup" : cpc_sgr,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3047,27 +3086,27 @@ def extract_XML4_application(raw_data, args_array):
             further_cpc_class = cpc_class_element.find('further-cpc')
             if further_cpc_class is not None:
                 for cpc_class_item in further_cpc_class.findall('classification-cpc'):
-                    try: cpc_section = cpc_class_item.findtext('section')
+                    try: cpc_section = cpc_class_item.findtext('section')[:15]
                     except: cpc_section = None
-                    try: cpc_class = cpc_class_item.findtext('class')
+                    try: cpc_class = cpc_class_item.findtext('class')[:15]
                     except: cpc_class = None
-                    try: cpc_subclass = cpc_class_item.findtext('subclass')
+                    try: cpc_subclass = cpc_class_item.findtext('subclass')[:15]
                     except: cpc_subclass = None
-                    try: cpc_mgr = cpc_class_item.findtext('main-group')
+                    try: cpc_mgr = cpc_class_item.findtext('main-group')[:15]
                     except: cpc_mgr = None
-                    try: cpc_sgr = cpc_class_item.findtext('subgroup')
+                    try: cpc_sgr = cpc_class_item.findtext('subgroup')[:15]
                     except: cpc_sgr = None
 
                     # Append SQL data into dictionary to be written later
                     processed_cpcclass.append({
                         "table_name" : "uspto.CPCCLASS_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "Section" : cpc_section[:15],
-                        "Class" : cpc_class[:15],
-                        "SubClass" : cpc_subclass[:15],
-                        "MainGroup" : cpc_mgr[:15],
-                        "SubGroup" : cpc_sgr[:15],
+                        "Section" : cpc_section,
+                        "Class" : cpc_class,
+                        "SubClass" : cpc_subclass,
+                        "MainGroup" : cpc_mgr,
+                        "SubGroup" : cpc_sgr,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3076,7 +3115,7 @@ def extract_XML4_application(raw_data, args_array):
 
         # Get the title of the application
         try:
-            title = r.findtext('invention-title')
+            title = r.findtext('invention-title')[:500]
         except:
             title = None
             logger.error("Title not Found for :" + url_link + " Application ID: " + app_no)
@@ -3105,32 +3144,32 @@ def extract_XML4_application(raw_data, args_array):
             # Get Applicant data
             for applicant_item in applicant_element.findall('us-applicant'):
                 if(applicant_item.find('addressbook') != None):
-                    try: applicant_orgname = applicant_item.find('addressbook').findtext('orgname')
+                    try: applicant_orgname = applicant_item.find('addressbook').findtext('orgname')[:300]
                     except: applicant_orgname = None
                     try: applicant_role = applicant_item.find('addressbook').findtext('role')
                     except: applicant_role = None
-                    try: applicant_city = applicant_item.find('addressbook').find('address').findtext('city')
+                    try: applicant_city = applicant_item.find('addressbook').find('address').findtext('city')[:100]
                     except: applicant_city = None
-                    try: applicant_state = applicant_item.find('addressbook').find('address').findtext('state')
+                    try: applicant_state = applicant_item.find('addressbook').find('address').findtext('state')[:100]
                     except: applicant_state = None
-                    try: applicant_country = applicant_item.find('addressbook').find('address').findtext('country')
+                    try: applicant_country = applicant_item.find('addressbook').find('address').findtext('country')[:100]
                     except: applicant_country = None
-                    try: applicant_first_name = applicant_item.find('addressbook').findtext('first-name')
+                    try: applicant_first_name = applicant_item.find('addressbook').findtext('first-name')[:100]
                     except: applicant_first_name = None
-                    try: applicant_last_name = applicant_item.find('addressbook').findtext('last-name')
+                    try: applicant_last_name = applicant_item.find('addressbook').findtext('last-name')[:100]
                     except: applicant_last_name = None
 
                     # Append SQL data into dictionary to be written later
                     processed_applicant.append({
                         "table_name" : "uspto.APPLICANT_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "OrgName" : applicant_orgname[:300],
-                        "FirstName" : applicant_first_name[:100],
-                        "LastName" : applicant_last_name[:100],
-                        "City" : applicant_city[:100],
-                        "State" : applicant_state[:100],
-                        "Country" : applicant_country[:100],
+                        "OrgName" : applicant_orgname,
+                        "FirstName" : applicant_first_name,
+                        "LastName" : applicant_last_name,
+                        "City" : applicant_city,
+                        "State" : applicant_state,
+                        "Country" : applicant_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3147,33 +3186,33 @@ def extract_XML4_application(raw_data, args_array):
                 # Get all inventors
                 for inv in invs.findall("inventor"):
                     if(inv.find('addressbook') != None):
-                        try: inventor_first_name = inv.find('addressbook').findtext('first-name')
+                        try: inventor_first_name = inv.find('addressbook').findtext('first-name')[:100]
                         except: inventor_first_name = None
-                        try: inventor_last_name = inv.find('addressbook').findtext('last-name')
+                        try: inventor_last_name = inv.find('addressbook').findtext('last-name')[:100]
                         except: inventor_last_name = None
-                        try: inventor_city = inv.find('addressbook').find('address').findtext('city')
+                        try: inventor_city = inv.find('addressbook').find('address').findtext('city')[:100]
                         except: inventor_city = None
-                        try: inventor_state = inv.find('addressbook').find('address').findtext('state')
+                        try: inventor_state = inv.find('addressbook').find('address').findtext('state')[:100]
                         except: inventor_state = None
-                        try: inventor_country = inv.find('addressbook').find('address').findtext('country')
+                        try: inventor_country = inv.find('addressbook').find('address').findtext('country')[:100]
                         except: inventor_country = None
-                        try: inventor_nationality = inv.find('nationality').findtext('country')
+                        try: inventor_nationality = inv.find('nationality').findtext('country')[:100]
                         except: inventor_nationality = None
-                        try: inventor_residence = inv.find('residence').findtext('country')
+                        try: inventor_residence = inv.find('residence').findtext('country')[:300]
                         except: inventor_residence = None
 
                         # Append SQL data into dictionary to be written later
                         processed_inventor.append({
                             "table_name" : "uspto.INVENTOR_A",
-                            "ApplicationID" : app_no[:20],
+                            "ApplicationID" : app_no,
                             "Position" : position,
-                            "FirstName" : inventor_first_name[:100],
-                            "LastName" : inventor_last_name[:100],
-                            "City" : inventor_city[:100],
-                            "State" : inventor_state[:100],
-                            "Country" : inventor_country[:100],
-                            "Nationality" : inventor_nationality[:100],
-                            "Residence" : inventor_residence[:300],
+                            "FirstName" : inventor_first_name,
+                            "LastName" : inventor_last_name,
+                            "City" : inventor_city,
+                            "State" : inventor_state,
+                            "Country" : inventor_country,
+                            "Nationality" : inventor_nationality,
+                            "Residence" : inventor_residence,
                             "FileName" : args_array['file_name']
                         })
 
@@ -3192,24 +3231,24 @@ def extract_XML4_application(raw_data, args_array):
                     try: asn_sequence = agent_item.attrib['sequence']
                     except: asn_sequence = None
                     if(agent_item.find('addressbook') != None):
-                        try: atn_orgname = agent_item.find('addressbook').findtext('orgname')
+                        try: atn_orgname = agent_item.find('addressbook').findtext('orgname')[:300]
                         except: atn_orgname = None
-                        try: atn_last_name = agent_item.find('addressbook').findtext('last-name')
+                        try: atn_last_name = agent_item.find('addressbook').findtext('last-name')[:100]
                         except: atn_last_name = None
-                        try: atn_first_name = agent_item.find('addressbook').findtext('first-name')
+                        try: atn_first_name = agent_item.find('addressbook').findtext('first-name')[:100]
                         except: atn_first_name = None
-                        try: atn_country = agent_item.find('addressbook').find('address').findtext('country')
+                        try: atn_country = agent_item.find('addressbook').find('address').findtext('country')[:100]
                         except: atn_country = None
 
                         # Append SQL data into dictionary to be written later
                         processed_agent.append({
                             "table_name" : "uspto.AGENT_A",
-                            "ApplicationID" : app_no[:20],
+                            "ApplicationID" : app_no,
                             "Position" : position,
-                            "OrgName" : atn_orgname[:300],
-                            "LastName" : atn_last_name[:100],
-                            "FirstName" : atn_first_name[:100],
-                            "Country" : atn_country[:100],
+                            "OrgName" : atn_orgname,
+                            "LastName" : atn_last_name,
+                            "FirstName" : atn_first_name,
+                            "Country" : atn_country,
                             "FileName" : args_array['file_name']
                         })
 
@@ -3225,27 +3264,27 @@ def extract_XML4_application(raw_data, args_array):
         if assignee_element is not None:
             for assignee_item in assignee_element.findall('assignee'):
                 if(assignee_item.find('addressbook') != None):
-                    try: assignee_orgname = assignee_item.find('addressbook').findtext('orgname')
+                    try: assignee_orgname = assignee_item.find('addressbook').findtext('orgname')[:300]
                     except: assignee_orgname = None
-                    try: assignee_role = assignee_item.find('addressbook').findtext('role')
+                    try: assignee_role = assignee_item.find('addressbook').findtext('role')[:45]
                     except: assignee_role = None
-                    try: assignee_city = assignee_item.find('addressbook').find('address').findtext('city')
+                    try: assignee_city = assignee_item.find('addressbook').find('address').findtext('city')[:100]
                     except: assignee_city = None
-                    try: assignee_state = assignee_item.find('addressbook').find('address').findtext('state')
+                    try: assignee_state = assignee_item.find('addressbook').find('address').findtext('state')[:100]
                     except: assignee_state = None
-                    try: assignee_country = assignee_item.find('addressbook').find('address').findtext('country')
+                    try: assignee_country = assignee_item.find('addressbook').find('address').findtext('country')[:100]
                     except: assignee_country = None
 
                     # Append SQL data into dictionary to be written later
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "OrgName" : assignee_orgname[:300],
-                        "Role" : assignee_role[:45],
-                        "City" : assignee_city[:100],
-                        "State" : assignee_state[:100],
-                        "Country" : assignee_country[:100],
+                        "OrgName" : assignee_orgname,
+                        "Role" : assignee_role,
+                        "City" : assignee_city,
+                        "State" : assignee_state,
+                        "Country" : assignee_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3266,14 +3305,14 @@ def extract_XML4_application(raw_data, args_array):
     # Append SQL data into dictionary to be written later
     processed_application.append({
             "table_name": "uspto.APPLICATION",
-            "ApplicationID" : app_no[:20],
-            "PublicationID" : document_id[:20],
-            "AppType" : app_type[:45],
-            "Title" :  title[:500],
+            "ApplicationID" : app_no,
+            "PublicationID" : document_id,
+            "AppType" : app_type,
+            "Title" :  title,
             "FileDate" : app_date,
             "PublishDate" : pub_date,
-            "Kind" : kind[:2],
-            "USSeriesCode" : series_code[:2],
+            "Kind" : kind,
+            "USSeriesCode" : series_code,
             "Abstract" : abstract,
             "ClaimsNum" : claims_num,
             "DrawingsNum" : number_of_drawings,
@@ -3329,22 +3368,22 @@ def extract_XML1_application(raw_data, args_array):
         except:
             document_id = None
             logger.error("No Patent Number was found for: " + url_link)
-        try: kind = di.findtext('kind-code')
+        try: kind = di.findtext('kind-code')[:2]
         except: kind = None
         try: pub_date = return_formatted_date(di.findtext('document-date'), args_array, document_id)
         except: pub_date = None
-        try: app_type = r.findtext('publication-filing-type')
+        try: app_type = r.findtext('publication-filing-type')[:45]
         except: app_type = None
 
     # Get application filing data
     ar = r.find('domestic-filing-data')
     if ar is not None:
         try:
-            app_no = ar.find('application-number').findtext('doc-number')
+            app_no = ar.find('application-number').findtext('doc-number')[:20]
         except: app_no = None
         try: app_date = return_formatted_date(ar.findtext('filing-date'), args_array, document_id)
         except: app_date = None
-        try: series_code = ar.findtext('application-number-series-code')
+        try: series_code = ar.findtext('application-number-series-code')[:2]
         except: series_code = None
 
     technical_information_element = r.find('technical-information')
@@ -3359,7 +3398,13 @@ def extract_XML1_application(raw_data, args_array):
             icm = ic.find('classification-ipc-primary')
             #TODO: regex the class found into class, subclass and other
             #TODO: find out what maingrou and subgroup are found in this file format
-            try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(icm.findtext('ipc'))
+            try:
+                i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(icm.findtext('ipc'))
+                i_class_sec = i_class_sec[:15]
+                i_class = i_class[:15]
+                i_subclass = i_subclass[:15]
+                i_class_mgr = i_class_mgr[:15]
+                i_class_sgr = i_class_sgr[:15]
             except:
                 i_class_sec = None
                 i_class = None
@@ -3371,13 +3416,13 @@ def extract_XML1_application(raw_data, args_array):
             # Append SQL data into dictionary to be written later
             processed_intclass.append({
                 "table_name" : "uspto.INTCLASS_A",
-                "ApplicationID" : app_no[:20],
+                "ApplicationID" : app_no,
                 "Position" : position,
-                "Section" : i_class_sec[:15],
-                "Class" : i_class[:15],
-                "SubClass" : i_subclass[:15],
-                "MainGroup" : i_class_mgr[:15],
-                "SubGroup" : i_class_sgr[:15],
+                "Section" : i_class_sec,
+                "Class" : i_class,
+                "SubClass" : i_subclass,
+                "MainGroup" : i_class_mgr,
+                "SubGroup" : i_class_sgr,
                 "FileName" : args_array['file_name']
             })
 
@@ -3390,7 +3435,13 @@ def extract_XML1_application(raw_data, args_array):
             ics = ic.findall('classification-ipc-secondary')
             if ics is not None:
                 for ics_item in ics:
-                    try: i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(ics_item.findtext('ipc'))
+                    try:
+                        i_class_sec, i_class, i_subclass, i_class_mgr, i_class_sgr = return_international_class(ics_item.findtext('ipc'))
+                        i_class_sec = i_class_sec[:15]
+                        i_class = i_class[:15]
+                        i_subclass = i_subclass[:15]
+                        i_class_mgr = i_class_mgr[:15]
+                        i_class_sgr = i_class_sgr[:15]
                     except:
                         i_class_sec = None
                         i_class = None
@@ -3402,13 +3453,13 @@ def extract_XML1_application(raw_data, args_array):
                     # Append SQL data into dictionary to be written later
                     processed_intclass.append({
                         "table_name" : "uspto.INTCLASS_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "Section" : i_class_sec[:15],
-                        "Class" : i_class[:15],
-                        "SubClass" : i_subclass[:15],
-                        "MainGroup" : i_class_mgr[:15],
-                        "SubGroup" : i_class_sgr[:15],
+                        "Section" : i_class_sec,
+                        "Class" : i_class,
+                        "SubClass" : i_subclass,
+                        "MainGroup" : i_class_mgr,
+                        "SubGroup" : i_class_sgr,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3424,18 +3475,18 @@ def extract_XML1_application(raw_data, args_array):
     if nc is not None:
 
         uspc = nc.find('classification-us-primary').find('uspc')
-        try: n_class_main = uspc.findtext('class')
+        try: n_class_main = uspc.findtext('class')[:5]
         except: n_class_main = None
-        try: n_subclass = uspc.findtext('subclass')
+        try: n_subclass = uspc.findtext('subclass')[:15]
         except: n_subclass = None
 
         # Append SQL data into dictionary to be written later
         processed_usclass.append({
             "table_name" : "uspto.USCLASS_A",
-            "ApplicationID" : app_no[:20],
+            "ApplicationID" : app_no,
             "Position" : position,
-            "Class" : n_class_main[:5],
-            "SubClass" : n_subclass[:15],
+            "Class" : n_class_main,
+            "SubClass" : n_subclass,
             "FileName" : args_array['file_name']
         })
 
@@ -3447,18 +3498,18 @@ def extract_XML1_application(raw_data, args_array):
         us_classification_secondary_element = nc.find('classification-us-secondary')
         if us_classification_secondary_element is not None:
             uspc = us_classification_secondary_element.find('uspc')
-            try: n_class_main = uspc.findtext('class')
+            try: n_class_main = uspc.findtext('class')[:5]
             except: n_class_main = None
-            try: n_subclass = uspc.findtext('subclass')
+            try: n_subclass = uspc.findtext('subclass')[:5]
             except: n_subclass = None
 
             # Append SQL data into dictionary to be written later
             processed_usclass.append({
                 "table_name" : "uspto.USCLASS_A",
-                "ApplicationID" : app_no[:20],
+                "ApplicationID" : app_no,
                 "Position" : position,
-                "Class" : n_class_main[:5],
-                "SubClass" : n_subclass[:15],
+                "Class" : n_class_main,
+                "SubClass" : n_subclassx,
                 "FileName" : args_array['file_name']
             })
 
@@ -3468,7 +3519,7 @@ def extract_XML1_application(raw_data, args_array):
             #print processed_usclass
 
     # Get invention title
-    try: title = technical_information_element.findtext('title-of-invention')[0:500]
+    try: title = technical_information_element.findtext('title-of-invention')[:500]
     except: title = None
 
     # Get inventor data
@@ -3480,40 +3531,40 @@ def extract_XML1_application(raw_data, args_array):
 
         for inventor in iv.findall('first-named-inventor'):
             n = inventor.find('name')
-            try: inventor_first_name = n.findtext('given-name')
+            try: inventor_first_name = n.findtext('given-name')[:100]
             except: inventor_first_name = None
-            try: inventor_last_name = n.findtext('family-name')
+            try: inventor_last_name = n.findtext('family-name')[:100]
             except: inventor_last_name = None
 
             res = inventor.find('residence')
             if res is not None:
                 residence_us = res.find('residence-us')
                 if residence_us is not None:
-                    try: inventor_city = residence_us.findtext('city')
+                    try: inventor_city = residence_us.findtext('city')[:100]
                     except: inventor_city = None
-                    try: inventor_state = residence_us.findtext('state')
+                    try: inventor_state = residence_us.findtext('state')[:100]
                     except: inventor_state = None
-                    try: inventor_country = residence_us.findtext('country-code')
+                    try: inventor_country = residence_us.findtext('country-code')[:100]
                     except: inventor_country = None
                 residence_non_us = res.find('residence-non-us')
                 if residence_non_us is not None:
-                    try: inventor_city = residence_non_us.findtext('city')
+                    try: inventor_city = residence_non_us.findtext('city')[:100]
                     except: inventor_city = None
-                    try: inventor_state = residence_non_us.findtext('state')
+                    try: inventor_state = residence_non_us.findtext('state')[:100]
                     except: inventor_state = None
-                    try: inventor_country = residence_non_us.findtext('country-code')
+                    try: inventor_country = residence_non_us.findtext('country-code')[:100]
                     except: inventor_country = None
 
             # Append SQL data into dictionary to be written later
             processed_inventor.append({
                 "table_name" : "uspto.INVENTOR_A",
-                "ApplicationID" : app_no[:20],
+                "ApplicationID" : app_no,
                 "Position" : position,
-                "FirstName" : inventor_first_name[:100],
-                "LastName" : inventor_last_name[:100],
-                "City" : inventor_city[:100],
-                "State" : inventor_state[:100],
-                "Country" : inventor_country[:100],
+                "FirstName" : inventor_first_name,
+                "LastName" : inventor_last_name,
+                "City" : inventor_city,
+                "State" : inventor_state,
+                "Country" : inventor_country,
                 "FileName" : args_array['file_name']
             })
 
@@ -3527,40 +3578,40 @@ def extract_XML1_application(raw_data, args_array):
             if inventor is not None:
                 n = inventor.find('name')
                 if n is not None:
-                    try: inventor_first_name = n.findtext('given-name')
+                    try: inventor_first_name = n.findtext('given-name')[:100]
                     except: inventor_first_name = None
-                    try: inventor_last_name = n.findtext('family-name')
+                    try: inventor_last_name = n.findtext('family-name')[:100]
                     except: inventor_last_name = None
 
                 res = inventor.find('residence')
                 if res is not None:
                     residence_us = res.find('residence-us')
                     if residence_us is not None:
-                        try: inventor_city = residence_us.findtext('city')
+                        try: inventor_city = residence_us.findtext('city')[:100]
                         except: inventor_city = None
-                        try: inventor_state = residence_us.findtext('state')
+                        try: inventor_state = residence_us.findtext('state')[:100]
                         except: inventor_state = None
-                        try: inventor_country = residence_us.findtext('country-code')
+                        try: inventor_country = residence_us.findtext('country-code')[:100]
                         except: inventor_country = None
                     residence_non_us = res.find('residence-non-us')
                     if residence_non_us is not None:
-                        try: inventor_city = residence_non_us.findtext('city')
+                        try: inventor_city = residence_non_us.findtext('city')[:100]
                         except: inventor_city = None
-                        try: inventor_state = residence_non_us.findtext('state')
+                        try: inventor_state = residence_non_us.findtext('state')[:100]
                         except: inventor_state = None
-                        try: inventor_country = residence_non_us.findtext('country-code')
+                        try: inventor_country = residence_non_us.findtext('country-code')[:100]
                         except: inventor_country = None
 
                     # Append SQL data into dictionary to be written later
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_A",
-                        "ApplicationID" : app_no[:20],
+                        "ApplicationID" : app_no,
                         "Position" : position,
-                        "FirstName" : inventor_first_name[:100],
-                        "LastName" : inventor_last_name[:100],
-                        "City" : inventor_city[:100],
-                        "State" : inventor_state[:100],
-                        "Country" : inventor_country[:100],
+                        "FirstName" : inventor_first_name,
+                        "LastName" : inventor_last_name,
+                        "City" : inventor_city,
+                        "State" : inventor_state,
+                        "Country" : inventor_country,
                         "FileName" : args_array['file_name']
                     })
 
@@ -3574,29 +3625,29 @@ def extract_XML1_application(raw_data, args_array):
         # init position
         position = 1
 
-        try: asn_role = assignee_element.findtext('assignee-type')
+        try: asn_role = assignee_element.findtext('assignee-type')[:100]
         except: asn_role = None
         on = assignee_element.find('organization-name')
-        try: asn_orgname = return_element_text(on)
+        try: asn_orgname = return_element_text(on)[:300]
         except: asn_orgname = None
         ad = assignee_element.find('address')
-        try: asn_city = ad.findtext('city')
+        try: asn_city = ad.findtext('city')[:100]
         except: asn_city = None
-        try: asn_state = ad.findtext('state')
+        try: asn_state = ad.findtext('state')[:100]
         except: asn_state = None
-        try: asn_country = ad.find('country').findtext('country-code')
+        try: asn_country = ad.find('country').findtext('country-code')[:100]
         except: asn_country = None
 
         # Append SQL data into dictionary to be written later
         processed_assignee.append({
             "table_name" : "uspto.ASSIGNEE_A",
-            "ApplicationID" : app_no[:20],
+            "ApplicationID" : app_no,
             "Position" : position,
-            "OrgName" : asn_orgname[:300],
-            "Role" : asn_role[:100],
-            "City" : asn_city[:100],
-            "State" : asn_state[:100],
-            "Country" : asn_country[:100],
+            "OrgName" : asn_orgname,
+            "Role" : asn_role,
+            "City" : asn_city,
+            "State" : asn_state,
+            "Country" : asn_country,
             "FileName" : args_array['file_name']
         })
 
@@ -3610,16 +3661,18 @@ def extract_XML1_application(raw_data, args_array):
     if agent_element is not None:
         try: agent_orgname = agent_element.findtext('name-1')
         except: agent_orgname = None
-        try: agent_orgname += agent_element.findtext('name-2')
+        try:
+            agent_orgname += agent_element.findtext('name-2')
+            agent_orgname = agent_orgname[:300]
         except: agent_orgname = None
         try:
             adresss_element = agent_element.find('address')
             if address_element is not None:
-                try: agent_city = adresss_element.findtext('city')
+                try: agent_city = adresss_element.findtext('city')[:100]
                 except: agent_city = None
-                try: agent_state = adresss_element.findtext('state')
+                try: agent_state = adresss_element.findtext('state')[:100]
                 except: agent_state = None
-                try: agent_country = adresss_element.find('country').findtext('country-code')
+                try: agent_country = adresss_element.find('country').findtext('country-code')[:100]
                 except: agent_country = None
         except:
             agent_city = None
@@ -3629,10 +3682,10 @@ def extract_XML1_application(raw_data, args_array):
         # Append SQL data into dictionary to be written later
         processed_agent.append({
             "table_name" : "uspto.AGENT_A",
-            "ApplicationID" : app_no[:20],
+            "ApplicationID" : app_no,
             "Position" : position,
-            "OrgName" : agent_orgname[:300],
-            "Country" : agent_country[:100],
+            "OrgName" : agent_orgname,
+            "Country" : agent_country,
             "FileName" : args_array['file_name']
         })
 
@@ -3646,14 +3699,14 @@ def extract_XML1_application(raw_data, args_array):
     # Append SQL data into dictionary to be written later
     processed_application.append({
             "table_name" : "uspto.APPLICATION",
-            "ApplicationID" : app_no[:20],
-            "PublicationID" : document_id[:20],
-            "AppType" : app_type[:45],
-            "Title" :  title[:500],
+            "ApplicationID" : app_no,
+            "PublicationID" : document_id,
+            "AppType" : app_type,
+            "Title" :  title,
             "FileDate" : app_date,
             "PublishDate" : pub_date,
-            "Kind" : kind[:2],
-            "USSeriesCode" : series_code[:2],
+            "Kind" : kind,
+            "USSeriesCode" : series_code,
             "Abstract" : abstract,
             "FileName" : args_array['file_name']
         })

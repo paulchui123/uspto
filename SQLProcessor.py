@@ -118,7 +118,7 @@ class SQLProcess:
                         # TODO: consider "SET foreign_key_checks = 0" to ignore
                         # LOCAL is used to set duplicate key to warning instead of error
                         # IGNORE is also used to ignore rows that violate duplicate unique key constraints
-                        sql = "LOAD DATA LOCAL INFILE " + csv_file['csv_file_name'] + " INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY '|' ENCLOSED BY '' ESCAPED BY '\\' LINES TERMINATED BY '\n' STARTING BY '' IGNORE 1 LINES"
+                        sql = "LOAD DATA LOCAL INFILE '" + csv_file['csv_file_name'] + "' INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n' IGNORE 1 LINES"
                         # Execute the query built above
                         self._cursor.execute(sql)
                         # Return a successfull insertion flag

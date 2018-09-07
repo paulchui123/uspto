@@ -4762,7 +4762,7 @@ def replace_new_html_characters(line):
         line = line.replace("\t", "")
 
         # Remove all non ASCII characters
-        line = line.encode("ascii", "ignore").decode()
+        line = line.decode("ascii", "ignore")
 
     except Exception as e:
         print line
@@ -4791,7 +4791,7 @@ def replace_old_html_characters(line):
         line = line.replace("\t", "")
 
         # Remove all non ASCII characters
-        line = line.encode("ascii", "ignore").decode()
+        line = line.decode("ascii", "ignore")
 
     except Exception as e:
         print line

@@ -142,6 +142,8 @@ def return_formatted_date(time_str, args_array, document_id):
         logger.warning("'0000-00-00' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
         return None
 
+
+
     # Check all other conditions based on string length
     else:
 
@@ -153,7 +155,7 @@ def return_formatted_date(time_str, args_array, document_id):
                 logger.warning("'0000' was found as year for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
                 return None
 
-            time_str[0:4]
+            else: year = time_str[0:4]
 
             # If the month value is out of range
             if time_str[4:6] == "00" : month = "01"
@@ -165,8 +167,17 @@ def return_formatted_date(time_str, args_array, document_id):
             elif int(time_str[6:8]) > 31 or int(time_str[6:8]) < 1 : day = "01"
             else: day = time_str[6:8]
 
+            # Validate the date for other erors such as leap year, etc.
+            try:
+                # Validate the date
+                datetime.datetime(year, month, day)
+                # Finally return the fixed time string
+                return year + '-' + month + '-' + day
+            except ValueError:
+                return False
+
             # Finally return the fixed time string
-            return time_str[0:4] + '-' + month + '-' + day
+            return year + '-' + month + '-' + day
 
         # If the string length is too long
         elif len(time_str) == 9:
@@ -569,7 +580,9 @@ def extract_XML4_grant(raw_data, args_array):
 
         # Find the number of figures and number of drawings
         nof = r.find('figures')
-        try: number_of_drawings = nof.findtext('number-of-drawing-sheets')
+        try:
+            number_of_drawings = nof.findtext('number-of-drawing-sheets')
+            number_of_drawings = number_of_drawings.split("/")[0]
         except: number_of_drawings = None
         try: number_of_figures = nof.findtext('number-of-figures')
         except: number_of_figures = None
@@ -580,9 +593,6 @@ def extract_XML4_grant(raw_data, args_array):
             for apts in prt.findall('us-applicants'):
                 position = 1
                 for apt in apts.findall('us-applicant'):
-                    # TODO: strip leading zeros fromm sequence number
-                    try: applicant_sequence = strip_leading_zeros(apt.attrib['sequence'])
-                    except: applicant_sequence = position
                     if(apt.find('addressbook') != None):
                         try: applicant_orgname = apt.find('addressbook').findtext('orgname')[:300]
                         except: applicant_orgname = None
@@ -603,7 +613,7 @@ def extract_XML4_grant(raw_data, args_array):
                             "table_name" : "uspto.APPLICANT_G",
                             "GrantID" : document_id,
                             "OrgName" : applicant_orgname,
-                            "Position" : applicant_sequence,
+                            "Position" : position,
                             "FirstName" : applicant_first_name,
                             "LastName" : applicant_last_name,
                             "City" : applicant_city,
@@ -846,7 +856,7 @@ def extract_XML2_grant(raw_data, args_array):
         print_xml = raw_data.split("\n")
         for num, line in enumerate(print_xml, start = 1):
             print str(num) + ' : ' + line
-        logger.error("Character Entity prevented ET from parsing XML")
+        logger.error("Character Entity prevented ET from parsing XML in file: " + url_link )
         # Print traceback
         traceback.print_exc()
         # Print exception information to file
@@ -1139,7 +1149,9 @@ def extract_XML2_grant(raw_data, args_array):
             # Collect number of drawings and figures
             for B590 in B500.findall('B590'):
                 for B595 in B590.findall('B595'):
-                    try: number_of_drawings = return_element_text(B595)
+                    try:
+                        number_of_drawings = return_element_text(B595)
+                        number_of_drawings = number_of_drawings.split("/")[0]
                     except: number_of_drawings = None
                 for B596 in B590.findall('B596'):
                     try: number_of_figures = return_element_text(B596)
@@ -1492,6 +1504,15 @@ def process_APS_grant_content(args_array):
                 # Define variables that are not included in APS format
                 kind = None
                 app_type = None
+
+                # Initialize the position variables required for classification
+                # NOTE: this is because there seems to be a rare anomoly of Records
+                # having more than one CLAS tag, otherwise it could be set after the
+                # CLAS tag was found.  Else, it's because a patent had 2 separate Records
+                # one after the other.
+                position_usclass = 1
+                position_intclass = 1
+
                 # Check if variable exists for abstract and claims and create if not set already
                 if 'abstract' not in locals(): abstract = None
                 if 'claims' not in locals(): claims = None
@@ -1629,7 +1650,9 @@ def process_APS_grant_content(args_array):
 
         # Number of Drawings
         elif line[0:4].strip() == "NDR":
-            try: number_of_drawings = replace_old_html_characters(line[3:].strip()).split(",")[0].replace(" ", "")
+            try:
+                number_of_drawings = replace_old_html_characters(line[3:].strip()).split(",")[0].replace(" ", "")
+                number_of_drawings = number_of_drawings.split("/")[0]
             except: number_of_drawings = None
         # Number of Figures
         elif line[0:4].strip() == "NFG":
@@ -1639,6 +1662,10 @@ def process_APS_grant_content(args_array):
         elif line[0:4].strip() == "TRM":
             try: grant_length = replace_old_html_characters(line[3:].strip()).split(",")[0].replace(" ", "")
             except: grant_length = None
+            # NOTE: (could name database column decimal) If grant length is decimal value, then
+            if "." in grant_length:
+                grant_length = grant_length.split(".")[0]
+
         # Assistant Examiner
         elif line[0:4].strip() == "EXA":
             try:
@@ -1970,9 +1997,6 @@ def process_APS_grant_content(args_array):
             # Set the variable that will certainly not be found
             i_class_mgr = None
             i_class_sgr = None
-            # Initialize the position variables required
-            position_uclass = 1
-            position_intclass = 1
             # Initialize empty string to to hold multi-line entries
             temp_data_string = ''
             # Set flag for while loop
@@ -2058,8 +2082,9 @@ def process_APS_grant_content(args_array):
                     # Increment position for US class
                     position_uclass += 1
 
-                # Collect the main class
-                if line[0:3] == "XCL":
+                # Collect the extra class believed to be in INT class format space separated on a single lineself.
+                # if processed needs to be separated on space character and joined in groups of two.
+                '''if line[0:3] == "XCL":
 
                     # Get the US class text from the line
                     try:
@@ -2094,6 +2119,7 @@ def process_APS_grant_content(args_array):
                             n_subclass = n_subclass[:15]
                             malformed_class = 1
                         else:
+
                             logger.warning("A mal-formed US XCL class was found with more than two spaces: " + document_id + " in link: " + args_array['url_link'])
 
                         # if the class is malformed than set variable to = 1
@@ -2130,10 +2156,10 @@ def process_APS_grant_content(args_array):
                     #print processed_usclass
 
                     # Increment position for US class
-                    position_uclass += 1
+                    position_uclass += 1 '''
 
                 # Collect the main class
-                elif line[0:3] == "ICL":
+                if line[0:3] == "ICL":
 
                     # Get the international class text from the line
                     # TODO: find out how to parse the int class code.
@@ -3509,7 +3535,7 @@ def extract_XML1_application(raw_data, args_array):
                 "ApplicationID" : app_no,
                 "Position" : position,
                 "Class" : n_class_main,
-                "SubClass" : n_subclassx,
+                "SubClass" : n_subclass,
                 "FileName" : args_array['file_name']
             })
 
@@ -4735,6 +4761,9 @@ def replace_new_html_characters(line):
         line = line.replace("\n", "")
         line = line.replace("\t", "")
 
+        # Remove all non ASCII characters
+        line = line.encode("ascii", "ignore").decode()
+
     except Exception as e:
         print line
         traceback.print_exc()
@@ -4760,6 +4789,9 @@ def replace_old_html_characters(line):
         line = line.replace("|", "")
         line = line.replace("\n", "")
         line = line.replace("\t", "")
+
+        # Remove all non ASCII characters
+        line = line.encode("ascii", "ignore").decode()
 
     except Exception as e:
         print line
@@ -5384,10 +5416,15 @@ def load_balancer_thread(link_queue, args_array):
     logger = logging.getLogger("USPTO_Database_Construction")
 
     # Print to stdout and log that load balancing process starting
-    print "[Starting load balancing proccess... ]"
-    logger.info("[Starting load balacing process... ]")
+    # Check if CPU load is set to be balanced
+    if "balance" in args_array['command_args']:
+        print "[Starting load balancing proccess... ]"
+        logger.info("[Starting load balacing process... ]")
+    else:
+        print "[Load balancing inactive... ]"
+        logger.info("[Load balancing inactive... ]")
 
-    # get the count of CPU cores
+    # Get the count of CPU cores
     try:
         core_count = psutil.cpu_count()
         print str(core_count) + " CPU cores were detected..."
@@ -5406,29 +5443,29 @@ def load_balancer_thread(link_queue, args_array):
         # Check the 15 minute average CPU load balance
         five_minute_load_average = os.getloadavg()[1] / core_count
 
-        # If the load average is very small, start a group of new threads
-        if (five_minute_load_average) < 0.75:
-            # Print message and log that load balancer is starting another thread
-            print "Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%"
-            logger.info("Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%")
-            # Start another group of threads and pass in i to stagger the downloads
-            for i in range(1):
+        # Check if CPU load is set to be balanced
+        if "balance" in args_array['command_args']:
+            # If the load average is very small, start a group of new threads
+            if five_minute_load_average < 0.75:
+                # Print message and log that load balancer is starting another thread
+                print "Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%"
+                logger.info("Starting another thread group due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%")
+                # Start another group of threads and pass in i to stagger the downloads
+                for i in range(1):
+                    start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
+                    start_new_thread.start()
+                    time.sleep(2)
+                time.sleep(300)
+
+            # If load average less than 1 start single thread
+            elif five_minute_load_average < 1:
+                # Print message and log that load balancer is starting another thread
+                print "Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%"
+                logger.info("Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%")
+                # Start another thread and pass in 0 to start right away
                 start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
                 start_new_thread.start()
-                time.sleep(2)
-            time.sleep(300)
-
-        # If load average less than 1 start single thread
-        elif (five_minute_load_average) < 1:
-            # Print message and log that load balancer is starting another thread
-            print "Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%"
-            logger.info("Starting another single thread due to low CPU load balance of: " + str(five_minute_load_average * 100) + "%")
-            # Start another thread and pass in 0 to start right away
-            start_new_thread = multiprocessing.Process(target=main_process,args=(link_queue, args_array, i))
-            start_new_thread.start()
-            time.sleep(300)
-
-
+                time.sleep(300)
 
         else:
             # Print message and log that load balancer is starting another thread
@@ -5713,7 +5750,7 @@ def build_command_arguments(argument_array, args_array):
         argument_array.pop(0)
 
         # Check that the argument array is proper length (4)
-        if len(argument_array) < 1 or len(argument_array) > 4:
+        if len(argument_array) < 1 or len(argument_array) > 5:
             # Argument length is not ok, print message and return False
             print "Command argument error [incorrect number of arguments]...."
             # Print out full argument help menu
@@ -5750,7 +5787,8 @@ def build_command_arguments(argument_array, args_array):
                         # Return false to the main function to indicate not continue
                         return False
                 else:
-                    # If the argument is expected but not other, append as key to command_args
+                    # If the argument is expected but not requiring a second
+                    # setting argument append as key to command_args
                     command_args[argument_array[i].replace('-', '')] = True
             else:
                 # Argument is not expected, print message and return False
@@ -5789,6 +5827,7 @@ def build_argument_output():
     argument_output += "\nArgument flags:\n\n"
     argument_output += "-h, -help : print help menu.\n"
     argument_output += "-t [int]: set the number of threads.  Must be 1-20 default = 10.\n"
+    argument_output += "-balance : if set turns on thread balancer.\n"
     argument_output += "-csv : write the patent data files to csv.  Setting will be saved and used on update or restart.\n"
     argument_output += "-database : write the patent data to database.  Setting will be saved on update or restart.\n"
     argument_output += "-update : check for new patent bulk data files and process them\n"
@@ -5864,7 +5903,7 @@ if __name__=="__main__":
     # Declare variables
     start_time=time.time()
     working_directory = os.getcwd()
-    allowed_args_array = ["-csv", "-database", "-update", "-h", "-t", "-help"]
+    allowed_args_array = ["-csv", "-database", "-update", "-t", "-balance", "-h", "-help"]
     app_default_threads = 10
     database_insert_mode = "bulk" # values include `each` and `bulk`
 
@@ -5885,15 +5924,26 @@ if __name__=="__main__":
 
     # Database args
     # database_type value should be mysql or postgresql
+    # database_type value should be mysql or postgresql
     database_args = {
-        "database_type" : "postgresql",
+        "database_type" : "mysql",
         "host" : "127.0.0.1",
-        "port" : 54321,
+        "port" : 3306,
         "user" : "uspto",
         "passwd" : "Ld58KimTi06v2PnlXTFuLG4",
         "db" : "uspto",
         "charset" : "utf8"
     }
+
+    #database_args = {
+    #    "database_type" : "postgresql",
+    #    "host" : "127.0.0.1",
+    #    "port" : 54321,
+    #    "user" : "uspto",
+    #    "passwd" : "Ld58KimTi06v2PnlXTFuLG4",
+    #    "db" : "uspto",
+    #    "charset" : "utf8"
+    #}
 
     # Used to create all required directories when application starts
     required_directory_array = [

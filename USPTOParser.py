@@ -1499,19 +1499,26 @@ def process_APS_grant_content(args_array):
         # If the line is start of a patent document
         elif line[0:4] == "PATN":
 
+            # Initialize the position variables required for classification
+            # NOTE: this is because there seems to be a rare anomoly of Records
+            # having more than one CLAS tag, otherwise it could be set after the
+            # CLAS tag was found.  Else, it's because a patent had 2 separate Records
+            # one after the other.
+            position_usclass = 1
+            position_intclass = 1
+            position_uref = 1
+            position_oref = 1
+            position_forpat = 1
+            position_inventor = 1
+            position_assignee = 1
+            position_agent = 1
+
+            # If it is not the first patent, then store the previous patent
             if patent_started == True:
 
                 # Define variables that are not included in APS format
                 kind = None
                 app_type = None
-
-                # Initialize the position variables required for classification
-                # NOTE: this is because there seems to be a rare anomoly of Records
-                # having more than one CLAS tag, otherwise it could be set after the
-                # CLAS tag was found.  Else, it's because a patent had 2 separate Records
-                # one after the other.
-                position_usclass = 1
-                position_intclass = 1
 
                 # Check if variable exists for abstract and claims and create if not set already
                 if 'abstract' not in locals(): abstract = None
@@ -1695,6 +1702,7 @@ def process_APS_grant_content(args_array):
 
         # Primary Examiner
         elif line[0:4].strip() == "EXP":
+
             examiner_fist_name = None
             examiner_last_name = None
             try:
@@ -1731,7 +1739,6 @@ def process_APS_grant_content(args_array):
 
             # Set required variables and arrays
             accepted_headers_array = ["UREF", "OCL", "PNO", "ISD", "NAM", "OCL", "XCL", "UCL"]
-            position = 1
             data_parse_completed = False
 
             while data_parse_completed == False:
@@ -1751,7 +1758,7 @@ def process_APS_grant_content(args_array):
                             processed_gracit.append({
                                 "table_name" : "uspto.GRACIT_G",
                                 "GrantID" : document_id,
-                                "Position" : position,
+                                "Position" : position_uref,
                                 "CitedID" : citation_document_number,
                                 "Name" : citation_name,
                                 "Date" : citation_date,
@@ -1767,7 +1774,7 @@ def process_APS_grant_content(args_array):
                             #print processed_gracit
 
                             # Increment position for next possible foreign patent reference
-                            position += 1
+                            position_uref += 1
                             # Reset the item ready to insert
                             item_ready_to_insert = False
 
@@ -1804,9 +1811,8 @@ def process_APS_grant_content(args_array):
         # Other References
         elif line[0:4] == "OREF":
 
+            # Define the accepted headers in this section
             accepted_headers_array = ["PAL"]
-            # Initialize the position
-            position = 1
             # Initialize empty string to to hold multi-line entries
             temp_data_string = ''
             # End while loop
@@ -1828,7 +1834,7 @@ def process_APS_grant_content(args_array):
                         processed_nonpatcit.append({
                             "table_name" : "uspto.NONPATCIT_G",
                             "GrantID" : document_id,
-                            "Position" : position,
+                            "Position" : position_oref,
                             "Citation" : temp_data_string,
                             "Category" : None,
                             "FileName" : args_array['file_name']
@@ -1840,7 +1846,7 @@ def process_APS_grant_content(args_array):
                         temp_data_string = None
 
                         # Increment counter position
-                        position += 1
+                        position_oref += 1
                         # Set the temp_data_string back to empty
                         temp_data_string = ''
 
@@ -1871,12 +1877,14 @@ def process_APS_grant_content(args_array):
                     processed_nonpatcit.append({
                         "table_name" : "uspto.NONPATCIT_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_oref,
                         "Citation" : temp_data_string,
                         "Category" : None,
                         "FileName" : args_array['file_name']
                     })
 
+                    # Increment the position incase there are data errors
+                    position_oref += 1
                     # Reset variable to avoid overlap
                     temp_data_string = None
 
@@ -1894,8 +1902,7 @@ def process_APS_grant_content(args_array):
             # and when non-foreign nonreference is found set a flag that prevents another line from being
             # read next iteration through main loop
             accepted_headers_array = ["FREF", "PNO", "ISD", "CNT", "ICL", "OCL"]
-            # Init position
-            position = 1
+
             # Init while loop break
             data_parse_completed = False
 
@@ -1917,7 +1924,7 @@ def process_APS_grant_content(args_array):
                             processed_forpatcit.append({
                                 "table_name" : "uspto.FORPATCIT_G",
                                 "GrantID" : document_id,
-                                "Position" : position,
+                                "Position" : position_forpat,
                                 "CitedID" : citation_document_number,
                                 "Date" : citation_date,
                                 "Country" : citation_country,
@@ -1932,7 +1939,7 @@ def process_APS_grant_content(args_array):
                             #print processed_forpatcit
 
                             # Increment position for next possible foreign patent reference
-                            position += 1
+                            position_forpat += 1
                             # Reset the item ready to insert
                             item_ready_to_insert = False
 
@@ -1967,7 +1974,7 @@ def process_APS_grant_content(args_array):
                     processed_forpatcit.append({
                         "table_name" : "uspto.FORPATCIT_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_forpat,
                         "CitedID" : citation_document_number,
                         "Date" : citation_date,
                         "Country" : citation_country,
@@ -1982,7 +1989,7 @@ def process_APS_grant_content(args_array):
                     #print processed_forpatcit
 
                     # Increment position for next possible foreign patent reference
-                    position += 1
+                    position_forpat += 1
 
                     # Set the next_line_loaded_already flag to True
                     next_line_loaded_already = True
@@ -2064,7 +2071,7 @@ def process_APS_grant_content(args_array):
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
                         "GrantID" : document_id,
-                        "Position" : position_uclass,
+                        "Position" : position_usclass,
                         "Class" : n_class_main,
                         "SubClass" : n_subclass,
                         "Malformed" : malformed_class,
@@ -2080,7 +2087,7 @@ def process_APS_grant_content(args_array):
                     #print processed_usclass
 
                     # Increment position for US class
-                    position_uclass += 1
+                    position_usclass += 1
 
                 # Collect the extra class believed to be in INT class format space separated on a single lineself.
                 # if processed needs to be separated on space character and joined in groups of two.
@@ -2140,7 +2147,7 @@ def process_APS_grant_content(args_array):
                     processed_usclass.append({
                         "table_name" : "uspto.USCLASS_G",
                         "GrantID" : document_id,
-                        "Position" : position_uclass,
+                        "Position" : position_usclass,
                         "Class" : n_class_main,
                         "SubClass" : n_subclass,
                         "Malformed" : malformed_class,
@@ -2156,7 +2163,7 @@ def process_APS_grant_content(args_array):
                     #print processed_usclass
 
                     # Increment position for US class
-                    position_uclass += 1 '''
+                    position_usclass += 1 '''
 
                 # Collect the main class
                 if line[0:3] == "ICL":
@@ -2360,8 +2367,6 @@ def process_APS_grant_content(args_array):
         # Inventor
         elif line[0:4] == "INVT":
 
-            # Init the position
-            position = 1
             # Set the multi_line_flag to empty
             multi_line_flag = ""
             # Array of expected header strings
@@ -2397,7 +2402,7 @@ def process_APS_grant_content(args_array):
                             processed_inventor.append({
                                 "table_name" : "uspto.INVENTOR_G",
                                 "GrantID" : document_id,
-                                "Position" : position,
+                                "Position" : position_inventor,
                                 "FirstName" : inventor_first_name,
                                 "LastName" : inventor_last_name,
                                 "City" : inventor_city,
@@ -2420,7 +2425,7 @@ def process_APS_grant_content(args_array):
                             inventor_state = None
 
                             # Increment the position
-                            position += 1
+                            position_inventor += 1
                             # Reset the item ready to insert
                             item_ready_to_insert = False
 
@@ -2512,7 +2517,7 @@ def process_APS_grant_content(args_array):
                     processed_inventor.append({
                         "table_name" : "uspto.INVENTOR_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_inventor,
                         "FirstName" : inventor_first_name,
                         "LastName" : inventor_last_name,
                         "City" : inventor_city,
@@ -2522,6 +2527,9 @@ def process_APS_grant_content(args_array):
                         "Residence" : inventor_residence,
                         "FileName" : args_array['file_name']
                     })
+
+                    # Increment the inventor just in case data has errors
+                    position_inventor += 1
 
                     # Reset all the variables associated so they don't get reused
                     inventor_first_name = None
@@ -2542,8 +2550,6 @@ def process_APS_grant_content(args_array):
         # Inventor
         elif line[0:4] == "ASSG":
 
-            # Init the position
-            position = 1
             multi_line_flag = ''
             # Array of expected header strings
             accepted_headers_array = ["ASSG", "NAM", "STR", "CTY", "STA", "CNT", "ZIP", "COD", "ITX"]
@@ -2577,7 +2583,7 @@ def process_APS_grant_content(args_array):
                             processed_assignee.append({
                                 "table_name" : "uspto.ASSIGNEE_G",
                                 "GrantID" : document_id,
-                                "Position" : position,
+                                "Position" : position_assignee,
                                 "OrgName" : asn_orgname,
                                 "Role" : asn_role,
                                 "City" : asn_city,
@@ -2596,7 +2602,7 @@ def process_APS_grant_content(args_array):
                             #print processed_assignee
 
                             # Increment the position
-                            position += 1
+                            position_assignee += 1
                             # Reset the item ready to insert
                             item_ready_to_insert = False
 
@@ -2672,7 +2678,7 @@ def process_APS_grant_content(args_array):
                     processed_assignee.append({
                         "table_name" : "uspto.ASSIGNEE_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_assignee,
                         "OrgName" : asn_orgname,
                         "Role" : asn_role,
                         "City" : asn_city,
@@ -2689,7 +2695,9 @@ def process_APS_grant_content(args_array):
                     asn_role = None
 
                     #print processed_assignee
-                    position += 1
+
+                    # Increment the position just in case data has errors
+                    position_assignee += 1
                     # Set the next_line_loaded_already flag to True
                     next_line_loaded_already = True
                     # Break the foreign patent citation loop
@@ -2698,8 +2706,6 @@ def process_APS_grant_content(args_array):
         # Get the Agent
         elif line[0:4] == "LREP":
 
-            # Init the position
-            position = 1
             # Set the accepted expected headers allowed in agent dataset
             accepted_headers_array = ["LREP", "FRM", "FR2", "AAT", "AGT", "ATT", "REG", "NAM", "STR", "CTY", "STA", "CNT", "ZIP"]
             # Set loop flag for finished reading inventors to false
@@ -2740,7 +2746,7 @@ def process_APS_grant_content(args_array):
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_agent,
                         "OrgName" : agent_orgname,
                         "LastName" : agent_last_name,
                         "FirstName" : agent_first_name,
@@ -2757,7 +2763,7 @@ def process_APS_grant_content(args_array):
                     #print processed_agent
 
                     # Increment position
-                    position += 1
+                    position_agent += 1
 
                 # Get associate attorney name and append to dataset
                 elif line[0:3] == "AAT":
@@ -2775,7 +2781,7 @@ def process_APS_grant_content(args_array):
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_agent,
                         "OrgName" : agent_orgname,
                         "LastName" : agent_last_name,
                         "FirstName" : agent_first_name,
@@ -2792,7 +2798,7 @@ def process_APS_grant_content(args_array):
                     #print processed_agent
 
                     # Increment position
-                    position += 1
+                    position_agent += 1
 
                 # Get Agent's name and append to dataset
                 elif line[0:3] == "AGT":
@@ -2810,7 +2816,7 @@ def process_APS_grant_content(args_array):
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_agent,
                         "OrgName" : agent_orgname,
                         "LastName" : agent_last_name,
                         "FirstName" : agent_first_name,
@@ -2827,7 +2833,7 @@ def process_APS_grant_content(args_array):
                     #print processed_agent
 
                     # Increment position
-                    position += 1
+                    position_agent += 1
 
                 # Get Agent's name and append to dataset
                 elif line[0:3] == "ATT":
@@ -2845,7 +2851,7 @@ def process_APS_grant_content(args_array):
                     processed_agent.append({
                         "table_name" : "uspto.AGENT_G",
                         "GrantID" : document_id,
-                        "Position" : position,
+                        "Position" : position_agent,
                         "OrgName" : agent_orgname,
                         "LastName" : agent_last_name,
                         "FirstName" : agent_first_name,
@@ -2862,7 +2868,7 @@ def process_APS_grant_content(args_array):
                     #print processed_agent
 
                     # Increment position
-                    position += 1
+                    position_agent += 1
 
                 # Else check if the header is from the next datatype
                 elif line[0:4].strip() not in accepted_headers_array:
@@ -4417,26 +4423,44 @@ def build_sql_insert_query(insert_data_array, args_array):
     return sql_query_string
 
 # Download a link into temporary memory and return filename
-def download_zip_file(link):
+def download_zip_file(args_array):
 
     # Set process start time
     start_time = time.time()
 
     # Try to download the zip file to temporary location
     try:
-        print '[Downloading .zip file: {0}]'.format(link)
-        file_name = urllib.urlretrieve(link)[0]
-        #uuid_path = ''.join([random.choice(string.letters + string.digits) for i in range(10)])
-        #file_name = os.path.join(args_array['temp_dirpath'], uuid_path)
-        #file_name = open(temp_path, 'w')
-        #response = urllib2.urlopen(link)
-        #temp_file.write(response.read())
-        #temp_file.close()
-        print '[Downloaded .zip file: {0} Time:{1} Finish Time: {2}]'.format(file_name,time.time()-start_time, time.strftime("%c"))
+
+        # If Sandbox mode
+        if args_array['sandbox']:
+
+            # Strip the file from the url_link
+            file_name = args_array['url_link'].split("/")[-1]
+
+            # Check if the file is in the downloads folder first
+            if os.path.isfile(args_array['sandbox_downloads_dirpath'] + file_name):
+                # Download the file and use system temp directory
+                print '[Using previosly downloaded .zip file: {0}]'.format(args_array['sandbox_downloads_dirpath'] + file_name)
+                # Use the previously downloaded file as the temp_zip filename
+                return args_array['sandbox_downloads_dirpath'] + file_name
+            else:
+                # Download the file and use system temp directory
+                print '[Downloading .zip file to sandbox directory: {0}]'.format(args_array['sandbox_downloads_dirpath'] + file_name)
+                file_name = urllib.urlretrieve(args_array['url_link'], args_array['sandbox_downloads_dirpath'] + file_name)[0]
+                print '[Downloaded .zip file: {0} Time:{1} Finish Time: {2}]'.format(file_name,time.time()-start_time, time.strftime("%c"))
+
+        # If not sandbox mode
+        else:
+            # Download the file and use system temp directory
+            print '[Downloading .zip file: {0}]'.format(args_array['url_link'])
+            file_name = urllib.urlretrieve(args_array['url_link'])[0]
+            print '[Downloaded .zip file: {0} Time:{1} Finish Time: {2}]'.format(file_name,time.time()-start_time, time.strftime("%c"))
+
+
         # Return the filename
         return file_name
     except Exception as e:
-        print 'Downloading  contents of ' + link + ' failed...'
+        print 'Downloading  contents of ' + args_array['url_link'] + ' failed...'
         traceback.print_exc()
 
 
@@ -4447,7 +4471,7 @@ def process_link_file(args_array):
     logger = logging.getLogger("USPTO_Database_Construction")
 
     # Download the file and append temp location to args array
-    args_array['temp_zip_file_name'] = download_zip_file(args_array['url_link'])
+    args_array['temp_zip_file_name'] = download_zip_file(args_array)
 
     #print args_array['uspto_xml_format']
 
@@ -5567,7 +5591,7 @@ def update_link_arrays_to_file(all_links_array, args_array):
 
 
 # Collect all inks from file
-def collect_all_links_from_file(args_array):
+def collect_all_unstarted_links_from_file(args_array):
 
     logger = logging.getLogger("USPTO_Database_Construction")
 
@@ -5900,6 +5924,9 @@ def handle_application_close(start_time, all_files_processed, args_array):
 
 if __name__=="__main__":
 
+    # If running sandbox mode or not
+    sandbox = True;
+
     # Declare variables
     start_time=time.time()
     working_directory = os.getcwd()
@@ -5909,6 +5936,7 @@ if __name__=="__main__":
 
     # Declare filepaths
     app_temp_dirpath = working_directory + "/TMP/"
+    sandbox_downloads_dirpath = working_directory + "/TMP/"
     app_csv_dirpath = working_directory + "/CSV/"
     app_log_file = working_directory + "/LOG/USPTO_app.log"
     app_config_file = working_directory + "/.USPTO_config.cnf"
@@ -5921,6 +5949,7 @@ if __name__=="__main__":
     classification_text_filename = working_directory + "/CLS/ctaf1204.txt"
     mysql_database_reset_filename = working_directory + "/installation/uspto_create_database_mysql.sql"
     postgresql_database_reset_filename = working_directory + "/installation/uspto_create_database_postgres.sql"
+    sandbox_downloads_dirpath = working_directory + "/TMP/downloads/"
 
     # Database args
     # database_type value should be mysql or postgresql
@@ -5951,12 +5980,15 @@ if __name__=="__main__":
         "/CSV/CSV_G",
         "/CSV/CSV_P",
         "/CLS",
-        "/LOG"
+        "/LOG",
+        "/TMP",
+        "/TMP/downloads"
         ]
 
     # Create an array of args that can be passed as a group
     # and appended to as needed
     args_array = {
+        "sandbox" : sandbox,
         "working_directory" : working_directory,
         "default_threads" : app_default_threads,
         "database_type" : database_args['database_type'],
@@ -5973,7 +6005,8 @@ if __name__=="__main__":
         "application_pair_process_log_file" : application_pair_process_log_file,
         "pair_process_log_file" : pair_process_log_file,
         "temp_directory" : app_temp_dirpath,
-        "csv_directory" : app_csv_dirpath
+        "csv_directory" : app_csv_dirpath,
+        "sandbox_downloads_dirpath" : sandbox_downloads_dirpath
     }
 
     # Setup logger
@@ -6018,7 +6051,8 @@ if __name__=="__main__":
 
                 # Collect all links by passing in log files
                 # TODO: add classification parsing and PAIR link processing
-                all_links_array = collect_all_links_from_file(args_array)
+                all_links_array = collect_all_unstarted_links_from_file(args_array)
+
 
                 #print all_links_array
 

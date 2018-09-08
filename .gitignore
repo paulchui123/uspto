@@ -22,16 +22,6 @@ LOG/old_link_files
 ######################
 *.csv
 
-# Trash Directory
-######################
-
-
-# Old Database Backups
-######################
-
-
-# Quarentine of Infected Uploads
-################################
-
-# Key Files
-######################
+# Temp Storage Directory
+########################
+/TMP/*

@@ -242,7 +242,7 @@ class SQLProcess:
 
             # Print and log found previous attempt to process file
             print "Found previous attempt to process the " + call_type + " file: " + file_name + " in table: uspto.STARTED_FILES"
-            logger.warning("Found previous attempt to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
+            logger.info("Found previous attempt to process the " + call_type + " file:" + file_name + " in table: uspto.STARTED_FILES")
 
             # Build array to hold all table names to have
             # records deleted for patent grants

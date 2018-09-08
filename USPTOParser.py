@@ -134,11 +134,11 @@ def return_formatted_date(time_str, args_array, document_id):
         logger.warning("None Type object was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
         return None
     # Check if '0000-01-01' has been passed in
-    elif time_str == '0000-01-01':
+    elif time_str == '0000-01-01' or time_str == "00000101":
         logger.warning("'0000-01-01' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
         return None
     # Check if '0000-00-00' has been passed in
-    elif time_str == '0000-00-00':
+    elif time_str == '0000-00-00' or time_str == "00000000":
         logger.warning("'0000-00-00' was found as date for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
         return None
 
@@ -154,7 +154,7 @@ def return_formatted_date(time_str, args_array, document_id):
             if time_str[0:4] == "0000":
                 logger.warning("'0000' was found as year for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
                 return None
-
+            # Else set the year value
             else: year = time_str[0:4]
 
             # If the month value is out of range
@@ -174,6 +174,7 @@ def return_formatted_date(time_str, args_array, document_id):
                 # Finally return the fixed time string
                 return year + '-' + month + '-' + day
             except ValueError:
+                logger.warning("Could not validate date: " + time_str +  " for " + args_array['document_type'] + " documentID: " + document_id + " in the link: " + args_array['url_link'])
                 return False
 
             # Finally return the fixed time string

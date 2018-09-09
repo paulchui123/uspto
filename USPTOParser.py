@@ -2883,7 +2883,7 @@ def process_APS_grant_content(args_array):
     close_csv_files(args_array)
 
     # Set a flag file_processed to ensure that the bulk insert succeeds
-    file_processed = True
+    #file_processed = True
 
     # If data is to be inserted as bulk csv files, then call the sql function
     if args_array['database_insert_mode'] == 'bulk':

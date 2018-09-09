@@ -93,6 +93,7 @@ class SQLProcess:
                         #self._cursor.copy_from(open(csv_file['csv_file_name'], "r"), csv_file['table_name'], sep = ",", null = "")
                         self._cursor.copy_expert(sql, open(csv_file['csv_file_name'], "r"))
                         # Return a successfull insertion flag
+                        return True
 
                     except Exception as e:
                         # Roll back the transaction
@@ -114,30 +115,41 @@ class SQLProcess:
                 # If MySQL build query
                 elif self.database_type == "mysql":
 
-                    try:
-                        # TODO: consider "SET foreign_key_checks = 0" to ignore
-                        # LOCAL is used to set duplicate key to warning instead of error
-                        # IGNORE is also used to ignore rows that violate duplicate unique key constraints
-                        sql = "LOAD DATA LOCAL INFILE '" + csv_file['csv_file_name'] + "' INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n' IGNORE 1 LINES"
-                        # Execute the query built above
-                        self._cursor.execute(sql)
-                        # Return a successfull insertion flag
+                    # Set flag to determine if the query was successful
+                    bulk_insert_successful = False
+                    bulk_insert_failed_attempts = 1
+                    # Loop until the file was successfully deleted
+                    # NOTE : Used because MySQL has table lock errors
+                    while bulk_insert_successful = False and bulk_insert_failed_attempts <= 10:
 
-                    except Exception as e:
+                        try:
+                            # TODO: consider "SET foreign_key_checks = 0" to ignore
+                            # LOCAL is used to set duplicate key to warning instead of error
+                            # IGNORE is also used to ignore rows that violate duplicate unique key constraints
+                            bulk_insert_sql = "LOAD DATA LOCAL INFILE '" + csv_file['csv_file_name'] + "' INTO TABLE " + csv_file['table_name'] + " FIELDS TERMINATED BY '|' LINES TERMINATED BY '\n' IGNORE 1 LINES"
+                            # Execute the query built above
+                            self._cursor.execute(bulk_insert_sql)
+                            # Return a successfull insertion flag
+                            bulk_insert_successful = True
 
-                        # Print and log general fail comment
-                        print "Database bulk load query failed... " + csv_file['csv_file_name'] + " into table: " + csv_file['table_name']
-                        logger.error("Database bulk load query failed..." + csv_file['csv_file_name'] + " into table: " + csv_file['table_name'])
-                        print "Query string: " + sql
-                        logger.error("Query string: " + sql)
-                        # Print traceback
-                        traceback.print_exc()
-                        # Print exception information to file
-                        exc_type, exc_obj, exc_tb = sys.exc_info()
-                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
-                        # Return a unsucessful flag
-                        return False
+                        except Exception as e:
+
+                            # Increment the failed counter
+                            bulk_insert_failed_attempts += 1
+                            # Print and log general fail comment
+                            print "Database bulk load query failed... " + csv_file['csv_file_name'] + " into table: " + csv_file['table_name']
+                            logger.error("Database bulk load query failed..." + csv_file['csv_file_name'] + " into table: " + csv_file['table_name'])
+                            print "Query string: " + bulk_insert_sql
+                            logger.error("Query string: " + bulk_insert_sql)
+                            # Print traceback
+                            traceback.print_exc()
+                            # Print exception information to file
+                            exc_type, exc_obj, exc_tb = sys.exc_info()
+                            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                            logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+                            # Return a unsucessful flag
+                            if bulk_insert_failed_attempts > 9:
+                                return False
 
         # Return a successfull message from the database query insert.
         return True

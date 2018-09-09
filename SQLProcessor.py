@@ -120,7 +120,7 @@ class SQLProcess:
                     bulk_insert_failed_attempts = 1
                     # Loop until the file was successfully deleted
                     # NOTE : Used because MySQL has table lock errors
-                    while bulk_insert_successful = False and bulk_insert_failed_attempts <= 10:
+                    while bulk_insert_successful == False and bulk_insert_failed_attempts <= 10:
 
                         try:
                             # TODO: consider "SET foreign_key_checks = 0" to ignore
@@ -300,7 +300,7 @@ class SQLProcess:
                 records_deleted_failed_attempts = 1
                 # Loop until the file was successfully deleted
                 # NOTE : Used because MySQL has table lock errors
-                while records_deleted = False and records_deleted_failed_attempts < 10:
+                while records_deleted == False and records_deleted_failed_attempts < 10:
                     # Execute the query pass into funtion
                     try:
                         self._cursor.execute(remove_previous_record_sql)

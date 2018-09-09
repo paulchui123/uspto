@@ -189,6 +189,8 @@ class SQLProcess:
             #print check_file_started
 
         except Exception as e:
+            # Set the variable and automatically check if database records exist
+            check_file_started = True
             # If there is an error and using databse postgresql
             # Then rollback the commit??
             if self.database_type == "postgresql":
@@ -279,31 +281,42 @@ class SQLProcess:
             for table_name in table_name_array:
 
                 # Build the SQL query here
-                sql = "DELETE FROM uspto." + table_name + " WHERE FileName = '" + file_name + "'"
+                remove_previous_record_sql = "DELETE FROM uspto." + table_name + " WHERE FileName = '" + file_name + "'"
 
-                # Execute the query pass into funtion
-                try:
-                    self._cursor.execute(sql)
-                    #TODO: check the numer of records deleted from each table and log/print
-                    # Print and log finished check for previous attempt to process file
-                    print "Finished database delete of previous attempt to process the " + call_type + " file: " + file_name + " table: " + table_name
-                    logger.info("Finished database delete of previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
+                # Set flag to determine if the query was successful
+                records_deleted = False
+                records_deleted_failed_attempts = 1
+                # Loop until the file was successfully deleted
+                # NOTE : Used because MySQL has table lock errors
+                while records_deleted = False and records_deleted_failed_attempts < 10:
+                    # Execute the query pass into funtion
+                    try:
+                        self._cursor.execute(remove_previous_record_sql)
+                        records_deleted = True
+                        #TODO: check the numer of records deleted from each table and log/print
+                        # Print and log finished check for previous attempt to process file
+                        print "Finished database delete of previous attempt to process the " + call_type + " file: " + file_name + " table: " + table_name
+                        logger.info("Finished database delete of previous attempt to process the " + call_type + " file:" + file_name + " table: " + table_name)
 
-                except Exception as e:
-                    # If there is an error and using databse postgresql
-                    # Then rollback the commit??
-                    if self.database_type == "postgresql":
-                        self._conn.rollback()
+                    except Exception as e:
 
-                    # Print and log general fail comment
-                    print "Database delete failed... " + file_name + " from table: " + table_name + " Document ID Number "
-                    logger.error("Database delete failed..." + file_name + " from table: " + table_name + " Document ID Number ")
-                    # Print traceback
-                    traceback.print_exc()
-                    # Print exception information to file
-                    exc_type, exc_obj, exc_tb = sys.exc_info()
-                    fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
+                        # Increment the failed attempts
+                        records_deleted_failed_attempts += 1
+
+                        # If there is an error and using databse postgresql
+                        # Then rollback the commit??
+                        if self.database_type == "postgresql":
+                            self._conn.rollback()
+
+                        # Print and log general fail comment
+                        print "Database delete attempt " + str(records_deleted_failed_attempts) + " failed... " + file_name + " from table: " + table_name
+                        logger.error("Database delete attempt " + str(records_deleted_failed_attempts) + " failed..." + file_name + " from table: " + table_name)
+                        # Print traceback
+                        traceback.print_exc()
+                        # Print exception information to file
+                        exc_type, exc_obj, exc_tb = sys.exc_info()
+                        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+                        logger.error("Exception: " + str(exc_type) + " in Filename: " + str(fname) + " on Line: " + str(exc_tb.tb_lineno) + " Traceback: " + traceback.format_exc())
 
 
     # used to verify whether the applicationID is in the current table APPLICATION

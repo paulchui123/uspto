@@ -1,13 +1,20 @@
 # **USPTO PATENT DATA PARSER**
 
-Author: Joseph Lee
+Copyright (c) 2018 Ripple Software. All rights reserved.
 
-Email: joseph@ripplesoftware.ca
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+
+**Author:** Joseph Lee
+
+**Email:** joseph@ripplesoftware.ca
 
 ## **Description:**
-This python script is based on a script from University of Illinois (http://abel.lis.illinois.edu/UPDC/Downloads.html).
-Several parts of the script have been improved to increase the data integrity and memory utilization of the
-original script.  The whole packages is therefore contained into one file which can be run from the command line.
+This python script is based on a script from University of Illinois (http://abel.lis.illinois.edu/UPDC/Downloads.html). Several parts of the script have been improved to increase the data integrity and memory utilization of the original script.  The whole packages is therefore contained into one file which can be run from the command line.
+
 The usage of the script is outlined below:
 
 ## **Instructions:**
@@ -58,4 +65,4 @@ The script currently uses a load balancer which initially calculates the number 
 
 The option to insert each document's data into the database can be done two ways.  The script can insert each document record immediately after it is parsed or in bulk after a file is finished being parsed.  Using bulk storage utilizes .csv files to temporarily store the data before it is inserted in bulk.  If the `-csv` command line argument is not set, then the .csv. files are erased after being used to load the data.  
 
-Performance of using bulk uploader resulted in... ??? 
+Performance of using bulk uploader resulted in... ???

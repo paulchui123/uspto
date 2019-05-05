@@ -400,3 +400,89 @@ class SQLProcess:
             self._conn.close()
             self._conn = None
         print 'Connection to database closed successfully.'
+
+
+# Reset the database using os.system command line
+def reset_database(database_args, args_array):
+
+    print "Resetting database contents...."
+
+    try:
+        # Set the variables to pass to SQL
+        user = database_args['user']
+        passwd = database_args['passwd']
+        host = database_args['host']
+        port = database_args['port']
+        db = database_args['db']
+        filename = args_array['database_reset_file']
+
+        if args_array['database_type'] == "mysql":
+            command = """mysql -u %s -p="%s" -h %s -P %s %s < %s""" %(user, passwd, host, port, db, filename)
+            print command
+            command_return_string = os.system(command)
+            print command_return_string
+        else:
+            print "PostgreSQL cannot be automatically reset from commmand argument...."
+
+    except Exception as e:
+        traceback.print_exc()
+
+# This function accepts a table name and a dictionary with keys as column names and values as data.
+# It builds an sql query out of this array.
+def build_sql_insert_query(insert_data_array, args_array):
+
+    uspto_xml_format = args_array['uspto_xml_format']
+
+    # Set a length counter used to find when the last item is appended to query string
+    array_length_counter = 1
+    length_of_array = len(insert_data_array) - 1
+    # Pass the table name to variable
+    table_name = insert_data_array['table_name']
+    # Pop the table name off the array to be stored into database
+    del insert_data_array['table_name']
+
+    sql_query_string = "INSERT INTO " + table_name + " "
+    sql_column_string = "("
+    sql_value_string = " VALUES ("
+    # Concatenate the list of keys and values to sql format
+    for key, value in insert_data_array.items():
+
+        # Don't escape values that are None (NULL)
+        if value is not None and isinstance(value, int) == False:
+            # escape all values for sql insertion
+            value = USPTOSanitizer.escape_value_for_sql(str(value.encode('utf-8')))
+            # Since postgresql uses `$` as delimiter, must  strip from first and last char
+            value = value.strip("$").replace("$$$", "$").replace("$$", "$")
+
+        # If the last item in the array then append line without comma at end
+        if length_of_array == array_length_counter:
+            sql_column_string += key
+            # Check for None value and append
+            if value == None:
+                sql_value_string += 'NULL'
+            else:
+                # PostgreSQL strings will be escaped slightly different than MySQL
+                if args_array['database_type'] == 'postgresql':
+                    sql_value_string += "$$" + str(value)+ "$$"
+                elif args_array['database_type'] == 'mysql':
+                    sql_value_string += '"' + str(value) + '"'
+        # If not the last item then append with comma
+        else:
+            sql_column_string += key + ", "
+            # Check if value is None
+            if value == None:
+                sql_value_string +=  'NULL,'
+            else:
+                if args_array['database_type'] == 'postgresql':
+                    sql_value_string +=  "$$" + str(value) + "$$,"
+                elif args_array['database_type'] == 'mysql':
+                    sql_value_string += '"' + str(value) + '",'
+        array_length_counter += 1
+    # Add the closing bracket
+    sql_column_string += ") "
+    sql_value_string += ");"
+
+    # Concatnate the pieces of the query
+    sql_query_string += sql_column_string + sql_value_string
+    # Return the query string
+    return sql_query_string

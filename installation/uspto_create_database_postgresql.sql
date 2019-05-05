@@ -1,6 +1,8 @@
 -- -----------------------------------------------------
 -- Create Databse uspto
 -- -----------------------------------------------------
+DROP DATABASE IF EXISTS uspto;
+CREATE DATABASE uspto;
 
 DROP SCHEMA IF EXISTS uspto CASCADE;
 CREATE SCHEMA IF NOT EXISTS uspto;

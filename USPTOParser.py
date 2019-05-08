@@ -457,6 +457,11 @@ def build_command_arguments(argument_array, args_array):
         return False
 
 def build_argument_output():
+
+    # Print the ASCII header
+    print_ascii_header()
+
+    # Build the command line output
     argument_output = "\nUsage : USPTOParser.py [-t [int]] & [-csv, &| -database] | [-update]\n\n"
     # Add the description of how to run the parser
     argument_output += "USPTOParser.py requires data destination (-csv, -database) when running for the first time. \n"
@@ -566,16 +571,6 @@ if __name__=="__main__":
         "charset" : "utf8"
     }
 
-    #database_args = {
-    #    "database_type" : "postgresql",
-    #    "host" : "127.0.0.1",
-    #    "port" : 54321,
-    #    "user" : "uspto",
-    #    "passwd" : "Ld58KimTi06v2PnlXTFuLG4",
-    #    "db" : "uspto",
-    #    "charset" : "utf8"
-    #}
-
     # Used to create all required directories when application starts
     required_directory_array = [
         "/CSV/CSV_A",
@@ -657,7 +652,6 @@ if __name__=="__main__":
                 # Collect all links by passing in log files
                 # TODO: add classification parsing and PAIR link processing
                 all_links_array = USPTOLogger.collect_all_unstarted_links_from_file(args_array)
-
 
                 #print all_links_array
 

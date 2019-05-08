@@ -13,6 +13,7 @@ import sys
 import traceback
 import zipfile
 import urllib
+import subprocess
 
 # Import USPTO Parser Functions
 import USPTOLogger
@@ -38,18 +39,27 @@ def process_XML_grant_content(args_array):
     start_time = time.time()
 
     # Extract the zipfile to read it
-    zip_file = zipfile.ZipFile(args_array['temp_zip_file_name'],'r')
+    try:
+        zip_file = zipfile.ZipFile(args_array['temp_zip_file_name'], 'r')
+        # Find the xml file from the extracted filenames
+        for name in zip_file.namelist():
+            if '.xml' in name:
+                xml_file_name = name
 
-    # Find the xml file from the extracted filenames
-    for name in zip_file.namelist():
-        if '.xml' in name:
-            xml_file_name = name
-            # Print stdout message that xml file was found
-            print '[xml file found. Filename: {0}]'.format(xml_file_name)
-            logger.info('xml file found. Filename: ' + xml_file_name)
+    # The zip file has failed using python's ZipFile
+    # Unzip the file using subprocess and find the xml file
+    except:
+        # Check if an unzip directory exists
+
+        # Use a subprocess to linux unzip command
+        subprocess.call("unzip " + args_array['temp_zip_file_name'] + " -d " + args_array["temp_directory"], shell=True)
+        #
 
     # Look for the found xml file
     try:
+        # Print stdout message that xml file was found
+        print '[xml file found. Filename: {0}]'.format(xml_file_name)
+        logger.info('xml file found. Filename: ' + xml_file_name)
         # Open the file to read lines out of
         xml_file = zip_file.open(xml_file_name, 'r')
     except:

@@ -11,9 +11,7 @@ import time
 import os
 import sys
 import traceback
-import zipfile
 import urllib
-import subprocess
 
 # Import USPTO Parser Functions
 import USPTOLogger
@@ -21,7 +19,7 @@ import USPTOSanitizer
 import USPTOCSVHandler
 import USPTOProcessLinks
 import USPTOStoreGrantData
-
+import USPTOProcessZipFile
 
 # Function opens the zip file for XML based patent grant files and parses, inserts to database
 # and writes log file success
@@ -38,45 +36,8 @@ def process_XML_grant_content(args_array):
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
 
-    # Extract the zipfile to read it
-    try:
-        zip_file = zipfile.ZipFile(args_array['temp_zip_file_name'], 'r')
-        # Find the xml file from the extracted filenames
-        for name in zip_file.namelist():
-            if '.xml' in name:
-                xml_file_name = name
-
-    # The zip file has failed using python's ZipFile
-    # Unzip the file using subprocess and find the xml file
-    except:
-        # Check if an unzip directory exists
-
-        # Use a subprocess to linux unzip command
-        subprocess.call("unzip " + args_array['temp_zip_file_name'] + " -d " + args_array["temp_directory"], shell=True)
-        #
-
-    # Look for the found xml file
-    try:
-        # Print stdout message that xml file was found
-        print '[xml file found. Filename: {0}]'.format(xml_file_name)
-        logger.info('xml file found. Filename: ' + xml_file_name)
-        # Open the file to read lines out of
-        xml_file = zip_file.open(xml_file_name, 'r')
-    except:
-        # Print and log that the xml file was not found
-        print '[xml file not found.  Filename{0}]'.format(args_array['url_link'])
-        logger.error('xml file not found. Filename: ' + args_array['url_link'])
-
-    # Clean up the zip file
-    try:
-        # Remove the temp files
-        urllib.urlcleanup()
-        #os.remove(file_name)
-        zip_file.close()
-    except:
-        # Print and log that xml file could not be closed properly
-        print '[Error cleaning up .zip file.  Filename{0}]'.format(args_array['url_link'])
-        logger.error('Error cleaning up .zip file. Filename: ' + args_array['url_link'])
+    # Extract the XML file from the ZIP file
+    xml_file_contents = USPTOProcessZipFile.extract_zip_to_array(args_array)
 
     # create variables needed to parse the file
     xml_string = ''
@@ -90,7 +51,7 @@ def process_XML_grant_content(args_array):
         #print "The xml format is: " + args_array['uspto_xml_format']
 
         # Loop through all lines in the xml file
-        for line in xml_file.readlines():
+        for line in xml_file_contents:
 
             # This identifies the start of well formed XML segment for patent
             # grant bibliographic information

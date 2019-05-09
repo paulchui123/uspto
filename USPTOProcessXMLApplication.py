@@ -20,6 +20,7 @@ import USPTOSanitizer
 import USPTOCSVHandler
 import USPTOProcessLinks
 import USPTOStoreApplicationData
+import USPTOProcessZipFile
 
 # Function opens the zip file for XML based patent application files and parses, inserts to database
 # and writes log file success
@@ -36,19 +37,8 @@ def process_XML_application_content(args_array):
     # Process zip file by getting .dat or .txt file and .xml filenames
     start_time = time.time()
 
-    zip_file = zipfile.ZipFile(args_array['temp_zip_file_name'],'r')
-    for name in zip_file.namelist():
-        #print name
-        if '.xml' in name:
-            xml_file_name = name
-            print '[xml file found. Filename:{0}]'.format(xml_file_name)
-
-    # Open the file to read lines out of
-    xml_file = zip_file.open(xml_file_name, 'r')
-    # Remove the temp files
-    urllib.urlcleanup()
-    #os.remove(file_name)
-    zip_file.close()
+    # Extract the XML file from the ZIP file
+    xml_file_contents = USPTOProcessZipFile.extract_zip_to_array(args_array)
 
     # create variables needed to parse the file
     xml_string = ''
